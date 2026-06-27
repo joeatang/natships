@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NATSHIPS · Experience Launcher</title>
+  <style>
+    :root {
+      --bg: #04070d;
+      --panel: rgba(10, 16, 31, 0.78);
+      --line: rgba(124, 231, 255, 0.18);
+      --text: #e8f1ff;
+      --muted: rgba(232, 241, 255, 0.62);
+      --cyan: #7ce7ff;
+      --amber: #ffb14d;
+      --ember: #ff6a3d;
+      --violet: #b59dff;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(124, 231, 255, 0.16) 0%, transparent 28%),
+        radial-gradient(circle at 18% 74%, rgba(181, 157, 255, 0.11) 0%, transparent 22%),
+        radial-gradient(circle at 84% 14%, rgba(255, 177, 77, 0.12) 0%, transparent 22%),
+        linear-gradient(180deg, #04070d 0%, #060b16 50%, #04070d 100%);
+      overflow: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      background:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 100% 100%, 72px 72px;
+      opacity: 0.16;
+      transform: perspective(1200px) rotateX(70deg) translateY(28vh) scale(1.12);
+      transform-origin: center bottom;
+      mask-image: radial-gradient(circle at center, rgba(0,0,0,0.65) 0%, transparent 76%);
+    }
+
+    body::after {
+      background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+      mix-blend-mode: screen;
+      opacity: 0.45;
+      animation: scan 12s linear infinite;
+    }
+
+    @keyframes scan {
+      from { transform: translateY(-22%); }
+      to { transform: translateY(22%); }
+    }
+
+    .shell {
+      min-height: 100vh;
+      padding: 24px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 18px;
+    }
+
+    .hero,
+    .dock,
+    .footer {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(14, 22, 41, 0.88), rgba(8, 11, 20, 0.72));
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.03) inset,
+        0 24px 90px rgba(0, 0, 0, 0.36);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero {
+      padding: 18px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+    }
+
+    .eyebrow {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.42em;
+      text-transform: uppercase;
+      color: rgba(232, 241, 255, 0.5);
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 4vw, 58px);
+      line-height: 0.95;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #ffffff 0%, var(--cyan) 34%, var(--amber) 70%, #ffffff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .lede {
+      margin: 10px 0 0;
+      max-width: 860px;
+      color: rgba(232, 241, 255, 0.72);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .signal {
+      min-width: 220px;
+      text-align: right;
+      font: 11px "JetBrains Mono", monospace;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: rgba(232, 241, 255, 0.62);
+      display: grid;
+      gap: 6px;
+    }
+
+    .signal strong {
+      color: var(--cyan);
+      font-size: 12px;
+    }
+
+    .dock {
+      padding: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .card {
+      border-radius: 20px;
+      border: 1px solid rgba(124, 231, 255, 0.16);
+      background: linear-gradient(180deg, rgba(12, 18, 34, 0.92), rgba(7, 10, 18, 0.8));
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 0;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.03) inset;
+    }
+
+    .card .cover {
+      position: relative;
+      aspect-ratio: 16 / 11;
+      overflow: hidden;
+    }
+
+    .card .cover::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.32));
+    }
+
+    .card .cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform: scale(1.01);
+    }
+
+    .card .body {
+      padding: 16px 16px 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px 16px;
+    }
+
+    .chip {
+      font: 10px "JetBrains Mono", monospace;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(232, 241, 255, 0.72);
+      border: 1px solid rgba(124, 231, 255, 0.16);
+      border-radius: 999px;
+      padding: 8px 10px;
+      background: rgba(5, 8, 14, 0.62);
+    }
+
+    .launch {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      border: 0;
+      border-top: 1px solid rgba(124, 231, 255, 0.12);
+      padding: 14px 16px;
+      text-decoration: none;
+      color: #fff;
+      font: 10px "JetBrains Mono", monospace;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, rgba(26, 38, 64, 0.98), rgba(8, 12, 22, 0.98));
+      transition: transform 180ms ease, border-color 180ms ease;
+    }
+
+    .launch:hover {
+      transform: translateY(-1px);
+      border-color: rgba(124, 231, 255, 0.5);
+    }
+
+    .footer {
+      padding: 16px 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      color: rgba(232, 241, 255, 0.56);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .footer b {
+      color: var(--cyan);
+      font-weight: 600;
+    }
+
+    @media (max-width: 1100px) {
+      body { overflow: auto; }
+      .dock { grid-template-columns: 1fr; }
+      .hero, .footer { flex-direction: column; align-items: flex-start; }
+      .signal { text-align: left; min-width: 0; }
+    }
+
+    @media (max-width: 720px) {
+      .shell { padding: 14px; }
+      .hero, .dock, .footer { border-radius: 18px; }
+      h1 { letter-spacing: 0.12em; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">NATSHIPS / experience launcher</div>
+        <h1>NATSHIPS</h1>
+        <p class="lede">One page to open three DMT-forward, spaceborne prototypes. Start with the cockpit for the most polished read, cargo bay for collectible artifact energy, and black box for the most distinctive replayable signal.</p>
+      </div>
+      <div class="signal">
+        <span>launch mode</span>
+        <strong>one click access</strong>
+        <span>three distinct experiences</span>
+      </div>
+    </section>
+
+    <section class="dock">
+      <article class="card">
+        <div class="cover">
+          <img src="../gallery/natships-102816.png" alt="Cockpit Ritual preview">
+        </div>
+        <div class="body">
+          <h2>Cockpit Ritual</h2>
+          <p>Clean launch deck. One ignition action. Most product-like and the clearest expression of a DMT ship in space.</p>
+        </div>
+        <div class="meta">
+          <span class="chip">ignition</span>
+          <span class="chip">cockpit</span>
+          <span class="chip">high signal</span>
+        </div>
+        <a class="launch" href="./cockpit-prototype.html">open cockpit</a>
+      </article>
+
+      <article class="card">
+        <div class="cover">
+          <img src="../gallery/natships-104500.png" alt="Cargo Bay Observatory preview">
+        </div>
+        <div class="body">
+          <h2>Cargo Bay Observatory</h2>
+          <p>Art as sacred freight. Strongest artifact / museum feel and the most physical reading of a DMT payload in transit.</p>
+        </div>
+        <div class="meta">
+          <span class="chip">manifest</span>
+          <span class="chip">cargo bay</span>
+          <span class="chip">collectible</span>
+        </div>
+        <a class="launch" href="./cargo-bay-prototype.html">open cargo bay</a>
+      </article>
+
+      <article class="card">
+        <div class="cover">
+          <img src="../gallery/natships-107200.png" alt="Black Box Echo Chamber preview">
+        </div>
+        <div class="body">
+          <h2>Black Box / Echo Chamber</h2>
+          <p>Most strange and rewatchable. Reads like a recorded voyage or tuned signal from deep space, not a normal UI.</p>
+        </div>
+        <div class="meta">
+          <span class="chip">signal</span>
+          <span class="chip">black box</span>
+          <span class="chip">cultable</span>
+        </div>
+        <a class="launch" href="./black-box-prototype.html">open black box</a>
+      </article>
+    </section>
+
+    <section class="footer">
+      <span><b>Recommended order:</b> cockpit, cargo bay, black box.</span>
+      <span>Each link opens a standalone file directly, so you can compare them without switching context.</span>
+    </section>
+  </main>
+</body>
+</html>

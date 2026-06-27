@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NATSHIPS · Cockpit Exhibit</title>
+  <style>
+    :root {
+      --void: #050810;
+      --panel: rgba(9, 16, 30, 0.72);
+      --line: rgba(142, 193, 255, 0.18);
+      --text: #dbe7ff;
+      --muted: rgba(219, 231, 255, 0.62);
+      --cyan: #7ce7ff;
+      --amber: #ffb14d;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 16%, rgba(122, 220, 255, 0.18) 0%, transparent 28%),
+        radial-gradient(circle at 84% 14%, rgba(255, 178, 79, 0.14) 0%, transparent 24%),
+        linear-gradient(180deg, #04070d 0%, #050914 45%, #090e19 100%);
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      background:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 100% 100%, 72px 72px;
+      mask-image: radial-gradient(circle at center, rgba(0,0,0,0.55) 0%, transparent 74%);
+      opacity: 0.18;
+      transform: perspective(1200px) rotateX(68deg) translateY(24vh) scale(1.15);
+      transform-origin: center bottom;
+    }
+
+    body::after {
+      background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+      mix-blend-mode: screen;
+      opacity: 0.5;
+      animation: scan 12s linear infinite;
+    }
+
+    @keyframes scan {
+      from { transform: translateY(-22%); }
+      to { transform: translateY(22%); }
+    }
+
+    .shell {
+      width: 100vw;
+      height: 100vh;
+      padding: 22px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 18px;
+    }
+
+    .masthead {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      padding: 18px 20px;
+      background: linear-gradient(180deg, rgba(14, 22, 41, 0.88), rgba(9, 13, 24, 0.68));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      backdrop-filter: blur(18px);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.03) inset,
+        0 24px 90px rgba(0, 0, 0, 0.38);
+    }
+
+    .brand { display: flex; flex-direction: column; gap: 8px; }
+
+    .eyebrow {
+      font-family: "JetBrains Mono", monospace;
+      letter-spacing: 0.42em;
+      text-transform: uppercase;
+      font-size: 10px;
+      color: rgba(219, 231, 255, 0.48);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 4vw, 58px);
+      line-height: 0.95;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #ffffff 0%, var(--cyan) 35%, var(--amber) 70%, #ffffff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .lede {
+      max-width: 860px;
+      color: rgba(219, 231, 255, 0.74);
+      font-size: 13px;
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .signal {
+      display: grid;
+      gap: 6px;
+      text-align: right;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: rgba(219, 231, 255, 0.6);
+      min-width: 220px;
+    }
+
+    .signal strong {
+      color: var(--cyan);
+      font-size: 12px;
+    }
+
+    .cockpit {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(220px, 280px);
+      gap: 18px;
+      min-height: 0;
+    }
+
+    .panel,
+    .viewport {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(12, 18, 34, 0.92), rgba(7, 10, 18, 0.72));
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.03) inset,
+        0 24px 80px rgba(0, 0, 0, 0.34);
+      backdrop-filter: blur(18px);
+      min-height: 0;
+    }
+
+    .panel {
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 16px;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 12px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      font-family: "JetBrains Mono", monospace;
+      color: rgba(219, 231, 255, 0.7);
+    }
+
+    .panel p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .stat-grid { display: grid; gap: 10px; }
+
+    .stat {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(124, 231, 255, 0.14);
+      background: linear-gradient(180deg, rgba(13, 20, 36, 0.88), rgba(7, 10, 18, 0.6));
+    }
+
+    .stat span {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(219, 231, 255, 0.5);
+      margin-bottom: 5px;
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      color: #f2f6ff;
+    }
+
+    .log { display: grid; gap: 8px; align-content: start; }
+
+    .log-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(124, 231, 255, 0.08);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .log-row b { color: var(--cyan); font-weight: 500; text-align: right; }
+
+    .viewport {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      isolation: isolate;
+    }
+
+    .viewport::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 44%, rgba(124,231,255,0.22) 0%, rgba(124,231,255,0.03) 28%, transparent 55%),
+        radial-gradient(circle at 50% 92%, rgba(255,177,77,0.16) 0%, transparent 35%);
+      opacity: calc(0.65 + var(--glow, 0) * 0.25);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .viewport::after {
+      content: "";
+      position: absolute;
+      inset: 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(219, 231, 255, 0.08);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .window {
+      position: relative;
+      width: min(100%, 960px);
+      aspect-ratio: 16 / 11;
+      border-radius: 20px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01)),
+        radial-gradient(circle at 50% 100%, rgba(255,255,255,0.05), transparent 42%),
+        linear-gradient(180deg, rgba(6,9,15,0.9), rgba(12,17,29,0.95));
+      border: 1px solid rgba(160, 194, 255, 0.2);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04) inset,
+        0 32px 120px rgba(0, 0, 0, 0.42),
+        0 0 100px rgba(124, 231, 255, 0.12);
+      overflow: hidden;
+      transform: translate3d(var(--parallax-x, 0px), var(--parallax-y, 0px), 0) scale(calc(1 + var(--glow, 0) * 0.01));
+      transition: transform 240ms ease, box-shadow 240ms ease;
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    .window img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: saturate(1.08) contrast(1.02);
+      transform: scale(1.01);
+    }
+
+    .hud {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .hud-top,
+    .hud-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(235, 242, 255, 0.72);
+    }
+
+    .hud-pill {
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(3, 7, 14, 0.56);
+      border: 1px solid rgba(124, 231, 255, 0.14);
+      backdrop-filter: blur(12px);
+    }
+
+    .hud-accent { color: var(--cyan); }
+
+    .rail {
+      display: grid;
+      gap: 10px;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(12, 18, 34, 0.82), rgba(7, 10, 18, 0.7));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      backdrop-filter: blur(18px);
+    }
+
+    .rail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(219, 231, 255, 0.55);
+    }
+
+    .deck {
+      display: grid;
+      grid-template-columns: repeat(15, minmax(0, 1fr));
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .ship-chip {
+      border: 1px solid rgba(124, 231, 255, 0.14);
+      background: rgba(7, 12, 23, 0.86);
+      border-radius: 12px;
+      padding: 8px 6px 7px;
+      color: rgba(219, 231, 255, 0.7);
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, color 180ms ease;
+      font-family: "JetBrains Mono", monospace;
+      min-height: 76px;
+      display: grid;
+      align-content: space-between;
+      gap: 8px;
+    }
+
+    .ship-chip:hover {
+      transform: translateY(-2px);
+      border-color: rgba(124, 231, 255, 0.45);
+      color: #fff;
+    }
+
+    .ship-chip.active {
+      background: linear-gradient(180deg, rgba(25, 41, 69, 0.98), rgba(8, 13, 23, 0.95));
+      border-color: rgba(124, 231, 255, 0.58);
+      color: #fff;
+      box-shadow: 0 0 0 1px rgba(124, 231, 255, 0.18) inset, 0 10px 20px rgba(0,0,0,0.24);
+    }
+
+    .ship-chip img {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      object-fit: cover;
+      display: block;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .ship-chip .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      line-height: 1.1;
+      text-align: left;
+      letter-spacing: 0.08em;
+    }
+
+    .ship-chip .meta span:first-child {
+      font-size: 9px;
+      color: rgba(219, 231, 255, 0.52);
+    }
+
+    .ship-chip .meta span:last-child {
+      font-size: 10px;
+      color: currentColor;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(124, 231, 255, 0.18);
+      background: linear-gradient(180deg, rgba(16, 25, 43, 0.96), rgba(7, 11, 20, 0.96));
+      color: #f7fbff;
+      font: inherit;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 12px 16px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(124, 231, 255, 0.5);
+      box-shadow: 0 0 0 1px rgba(124, 231, 255, 0.1) inset, 0 12px 24px rgba(0, 0, 0, 0.26);
+    }
+
+    .primary {
+      background: linear-gradient(180deg, rgba(31, 63, 93, 0.96), rgba(10, 20, 30, 0.98));
+      border-color: rgba(124, 231, 255, 0.36);
+    }
+
+    .footer-note {
+      margin: 0;
+      color: rgba(219, 231, 255, 0.48);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1200px) {
+      body { overflow: auto; }
+      .shell { height: auto; min-height: 100vh; }
+      .cockpit { grid-template-columns: 1fr; }
+      .deck { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .signal { text-align: left; min-width: 0; }
+      .masthead { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (max-width: 720px) {
+      .shell { padding: 14px; gap: 12px; }
+      .masthead, .panel, .viewport, .rail { border-radius: 16px; }
+      .deck { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .window { aspect-ratio: 4 / 5; }
+      h1 { letter-spacing: 0.12em; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell" id="shell">
+    <section class="masthead">
+      <div class="brand">
+        <div class="eyebrow">NATSHIPS / cockpit exhibit / DMT vessel theater</div>
+        <h1>NATSHIPS</h1>
+        <p class="lede">A single cockpit, a living view, and a fleet of DMT ships. The user is not browsing art here. They are inside the vessel while the work comes online around them.</p>
+      </div>
+      <div class="signal">
+        <span>flight state</span>
+        <strong id="stateLabel">pre-ignition</strong>
+        <span id="missionLabel">mission log // ns-01</span>
+      </div>
+    </section>
+
+    <section class="cockpit">
+      <aside class="panel">
+        <h2>bridge notes</h2>
+        <p id="summaryText">Tap the ignition control or the viewport to advance the ship. Each vessel becomes a new frame in the voyage; the UI stays constant so the art does the work.</p>
+        <div class="stat-grid">
+          <div class="stat">
+            <span>current vessel</span>
+            <strong id="vesselName">NATSHIP 01</strong>
+          </div>
+          <div class="stat">
+            <span>route</span>
+            <strong id="routeName">sector dawn</strong>
+          </div>
+          <div class="stat">
+            <span>signal</span>
+            <strong id="signalName">stable / warm / alive</strong>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="igniteBtn" type="button">ignite ship</button>
+          <button id="prevBtn" type="button">prev</button>
+          <button id="nextBtn" type="button">next</button>
+        </div>
+        <p class="footer-note">Built around a fixed ship identity and a deterministic voyage order, so the experience can be referenced over time without depending on future block numbers.</p>
+      </aside>
+
+      <section class="viewport" id="viewport" aria-label="NATSHIPS cockpit viewport">
+        <div class="window" id="window">
+          <img id="artFrame" alt="NATSHIPS artwork" src="./natships-102816.png">
+          <div class="hud">
+            <div class="hud-top">
+              <div class="hud-pill">cockpit // <span class="hud-accent" id="phaseLabel">quiet</span></div>
+              <div class="hud-pill">velocity // <span class="hud-accent" id="velocityLabel">0.0</span></div>
+            </div>
+            <div class="hud-bottom">
+              <div class="hud-pill" id="glyphLabel">frame 01 / sector dawn</div>
+              <div class="hud-pill">tap to advance route</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>telemetry</h2>
+        <div class="log">
+          <div class="log-row"><span>deck</span><b id="deckCount">15 ships</b></div>
+          <div class="log-row"><span>mode</span><b id="modeLabel">manual drift</b></div>
+          <div class="log-row"><span>tone</span><b id="toneLabel">cinematic / restrained</b></div>
+          <div class="log-row"><span>reference</span><b>evergreen</b></div>
+        </div>
+        <p>Every ship remains inspectable as a distinct artifact while the cockpit logic stays the same. The repeated frame makes the collection feel coherent; the art itself carries the variation.</p>
+        <div class="stat-grid">
+          <div class="stat">
+            <span>interaction</span>
+            <strong id="interactionLabel">tap / click / key</strong>
+          </div>
+          <div class="stat">
+            <span>archive slot</span>
+            <strong id="archiveLabel">ns-voyage-01</strong>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="rail">
+      <div class="rail-head">
+        <span>vessel deck</span>
+        <span id="counterLabel">01 / 15</span>
+      </div>
+      <div class="deck" id="deck"></div>
+    </section>
+  </main>
+
+  <script>
+    const files = [
+      'natships-102816.png',
+      'natships-104500.png',
+      'natships-107200.png',
+      'natships-109000.png',
+      'natships-110500.png',
+      'natships-111337.png',
+      'natships-111774.png',
+      'natships-112009.png',
+      'natships-112016.png',
+      'natships-102884.png',
+      'natships-103481.png',
+      'natships-112895.png',
+      'natships-105678.png',
+      'natships-108345.png',
+      'natships-110999.png',
+    ];
+
+    const routes = [
+      'sector dawn',
+      'ion corridor',
+      'amber wake',
+      'glass horizon',
+      'rift bloom',
+      'lumen drift',
+      'halo transit',
+      'deep wake',
+      'aurora burn',
+      'static sea',
+      'gravity lull',
+      'signal reef',
+      'vector tide',
+      'night ascent',
+      'final lantern',
+    ];
+
+    const phases = [
+      { label: 'quiet', velocity: '0.0', mode: 'manual drift', tone: 'cinematic / restrained', summary: 'The cockpit is live but waiting. The art sits inside the frame like a vessel in standby.' },
+      { label: 'burn', velocity: '1.8', mode: 'route lock', tone: 'luminous / active', summary: 'Ignition wakes the ship. Panels brighten, the window glows, and the current ship feels in motion.' },
+      { label: 'coast', velocity: '0.7', mode: 'signal hold', tone: 'calm / expansive', summary: 'The engine settles. The experience becomes a long look through the glass, letting the artwork breathe.' },
+    ];
+
+    const state = { index: 0, phase: 0, active: false, hoverX: 0, hoverY: 0 };
+
+    const artFrame = document.getElementById('artFrame');
+    const deck = document.getElementById('deck');
+    const windowEl = document.getElementById('window');
+    const shell = document.getElementById('shell');
+
+    const refs = {
+      stateLabel: document.getElementById('stateLabel'),
+      missionLabel: document.getElementById('missionLabel'),
+      vesselName: document.getElementById('vesselName'),
+      routeName: document.getElementById('routeName'),
+      signalName: document.getElementById('signalName'),
+      summaryText: document.getElementById('summaryText'),
+      phaseLabel: document.getElementById('phaseLabel'),
+      velocityLabel: document.getElementById('velocityLabel'),
+      glyphLabel: document.getElementById('glyphLabel'),
+      counterLabel: document.getElementById('counterLabel'),
+      deckCount: document.getElementById('deckCount'),
+      modeLabel: document.getElementById('modeLabel'),
+      toneLabel: document.getElementById('toneLabel'),
+      archiveLabel: document.getElementById('archiveLabel'),
+      interactionLabel: document.getElementById('interactionLabel'),
+      igniteBtn: document.getElementById('igniteBtn'),
+      prevBtn: document.getElementById('prevBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+    };
+
+    const shipLabels = files.map((_, index) => {
+      const serial = String(index + 1).padStart(2, '0');
+      return {
+        serial,
+        title: `NATSHIP ${serial}`,
+        route: routes[index],
+        archive: `ns-voyage-${serial}`,
+      };
+    });
+
+    function renderDeck() {
+      deck.innerHTML = '';
+      files.forEach((file, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'ship-chip';
+        button.innerHTML = `
+          <img src="./${file}" alt="${shipLabels[index].title}">
+          <div class="meta">
+            <span>${shipLabels[index].serial}</span>
+            <span>${shipLabels[index].route}</span>
+          </div>
+        `;
+        button.addEventListener('click', () => selectShip(index, true));
+        deck.appendChild(button);
+      });
+    }
+
+    function updateUI() {
+      const current = shipLabels[state.index];
+      const phase = phases[state.phase];
+      artFrame.src = `./${files[state.index]}`;
+
+      refs.stateLabel.textContent = state.active ? phase.label : 'pre-ignition';
+      refs.missionLabel.textContent = `mission log // ${current.archive}`;
+      refs.vesselName.textContent = current.title;
+      refs.routeName.textContent = current.route;
+      refs.signalName.textContent = state.active ? phase.tone : 'stable / warm / alive';
+      refs.summaryText.textContent = phase.summary;
+      refs.phaseLabel.textContent = phase.label;
+      refs.velocityLabel.textContent = state.active ? phase.velocity : '0.0';
+      refs.glyphLabel.textContent = `frame ${current.serial} / ${current.route}`;
+      refs.counterLabel.textContent = `${current.serial} / ${String(files.length).padStart(2, '0')}`;
+      refs.deckCount.textContent = `${files.length} ships`;
+      refs.modeLabel.textContent = state.active ? 'live cockpit' : 'manual drift';
+      refs.toneLabel.textContent = phase.tone;
+      refs.archiveLabel.textContent = current.archive;
+      refs.igniteBtn.textContent = state.active ? 'advance ship' : 'ignite ship';
+      refs.interactionLabel.textContent = state.active ? 'tap / click / key' : 'tap to awaken';
+
+      deck.querySelectorAll('.ship-chip').forEach((chip, index) => {
+        chip.classList.toggle('active', index === state.index);
+      });
+
+      shell.style.setProperty('--glow', state.active ? '1' : '0.3');
+      windowEl.style.setProperty('--parallax-x', `${state.hoverX * 10}px`);
+      windowEl.style.setProperty('--parallax-y', `${state.hoverY * 8}px`);
+    }
+
+    function selectShip(index, advancePhase) {
+      state.index = (index + files.length) % files.length;
+      if (advancePhase) {
+        state.active = true;
+        state.phase = (state.phase + 1) % phases.length;
+      }
+      updateUI();
+    }
+
+    function stepShip(delta) {
+      state.active = true;
+      state.phase = (state.phase + 1) % phases.length;
+      selectShip(state.index + delta, false);
+      updateUI();
+    }
+
+    renderDeck();
+    updateUI();
+
+    refs.igniteBtn.addEventListener('click', () => {
+      state.active = true;
+      state.phase = (state.phase + 1) % phases.length;
+      updateUI();
+    });
+
+    refs.prevBtn.addEventListener('click', () => stepShip(-1));
+    refs.nextBtn.addEventListener('click', () => stepShip(1));
+    windowEl.addEventListener('click', () => stepShip(1));
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        stepShip(-1);
+      }
+      if (event.key === 'ArrowRight' || event.key === ' ') {
+        event.preventDefault();
+        stepShip(1);
+      }
+      if (event.key.toLowerCase() === 'i') {
+        event.preventDefault();
+        refs.igniteBtn.click();
+      }
+    });
+
+    document.addEventListener('pointermove', (event) => {
+      const x = (event.clientX / window.innerWidth) - 0.5;
+      const y = (event.clientY / window.innerHeight) - 0.5;
+      state.hoverX = Math.max(-0.5, Math.min(0.5, x));
+      state.hoverY = Math.max(-0.5, Math.min(0.5, y));
+      updateUI();
+    }, { passive: true });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>NATSHIPS · Vessel 701,824 — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #03060c;
+    --space: #060b18;
+    --steel: #b8c2cf;
+    --titanium: #8b96a8;
+    --amber: #ffb347;
+    --ember: #ff5a1f;
+    --cyan: #4dd4f0;
+    --gold: #e6b85a;
+    --brass: #c4923a;
+    --crimson: #ff3355;
+  }
+  html, body { margin: 0; padding: 0; min-height: 100vh; }
+  body {
+    background:
+      radial-gradient(ellipse at 50% -10%, #0a1428 0%, #03060c 60%, #010205 100%);
+    color: var(--steel);
+    font-family: 'Space Grotesk', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 56px 24px 80px;
+    gap: 28px;
+  }
+  .preamble { text-align: center; max-width: 800px; }
+  .preamble .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.45em;
+    color: rgba(184,194,207,0.55);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .preamble h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 38px;
+    letter-spacing: 0.42em;
+    color: #d8e2f0;
+    margin: 0 0 18px 0;
+    text-shadow: 0 0 30px rgba(77,212,240,0.25), 0 0 80px rgba(255,90,31,0.12);
+  }
+  .preamble .lede {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: rgba(184,194,207,0.85);
+    font-size: 18px;
+    line-height: 1.55;
+    margin: 0 0 8px 0;
+  }
+  .preamble .tagline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    color: var(--cyan);
+    text-transform: uppercase;
+    margin-top: 12px;
+  }
+  canvas#card {
+    display: block;
+    box-shadow:
+      0 0 80px rgba(77,212,240,0.18),
+      0 0 160px rgba(255,90,31,0.10),
+      0 0 240px rgba(184,194,207,0.06);
+    border-radius: 4px;
+    background: var(--void);
+  }
+  .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px 36px;
+    max-width: 800px;
+    width: 100%;
+    padding: 28px 32px;
+    border: 1px solid rgba(77,212,240,0.18);
+    background: rgba(6,11,24,0.7);
+    border-radius: 4px;
+    margin-top: 6px;
+  }
+  .meta div { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .meta .k { color: rgba(184,194,207,0.45); letter-spacing: 0.18em; text-transform: uppercase; }
+  .meta .v { color: var(--cyan); margin-top: 4px; }
+  .caption {
+    text-align: center;
+    color: rgba(184,194,207,0.4);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    max-width: 800px;
+  }
+</style>
+</head>
+<body>
+
+<div class="preamble">
+  <div class="eyebrow">prototype · vessel certification card · v0.1</div>
+  <h1>N A T S H I P S</h1>
+  <p class="lede">"The Reusable Fleet of the Substrate" — every spec, fleet, livery, and flight log of this vessel is forced by Bitcoin block 701,824. Nothing here was drawn by hand.</p>
+  <div class="tagline">— matter conserved · vessels reused · non-arbitrary by construction —</div>
+</div>
+
+<canvas id="card" width="720" height="1040"></canvas>
+
+<div class="meta" id="meta"></div>
+
+<div class="caption">a head-nod to <span style="color:var(--cyan)">HI</span> · engraver's mark, bottom-right · this is one ship of a possible 10,080-vessel fleet</div>
+
+<script>
+// ===========================================================================
+// NATSHIPS — Vessel Renderer v0.1 (prototype)
+// DMT × Bitcoin × reusability. Every property forced by one block.
+// ===========================================================================
+
+const block = {
+  height:    701824,
+  hash:      '00000000000000000003a8fbc9e7d4b1f2a90c8d5e6b7c4a1d2e3f5a6b7c8d9e0',
+  txCount:   2843,
+  totalFees: 0.428,
+  miner:     'AntPool',
+  timestamp: 1631290920,
+  weight:    3992514
+};
+
+// ----- text helper: letter-spaced text (cross-browser safe) -----------------
+function drawSpacedText(ctx, str, x, y, extra) {
+  let cx = x;
+  for (const ch of str) {
+    ctx.fillText(ch, cx, y);
+    cx += ctx.measureText(ch).width + extra;
+  }
+}
+
+// ----- deterministic hash readers -------------------------------------------
+// Wrap index into the 28 valid byte slots of the 64-char hash (offset 8..63).
+const hashByte  = (h, i) => {
+  const idx = ((i % 28) + 28) % 28;
+  const v = parseInt(h.substr(8 + idx*2, 2), 16);
+  return isNaN(v) ? 0 : v;
+};
+const hashFloat = (h, i) => hashByte(h, i) / 255;
+const hashPick  = (h, i, arr) => arr[hashByte(h, i) % arr.length];
+
+// ----- derived traits -------------------------------------------------------
+const FLEET_NAMES = [
+  'NORDLAND','TYCHO','VANTABLACK','HALCYON','MIDAS','OBLIVION','HELIOS','PERSEPHONE',
+  'OROBORO','CETUS','BOREAS','LYRA','ANTARES','VERMILION','THANATOS','CIRRUS',
+  'OCTAVIAN','CASSIOPEIA','AUREA','ELYSIUM','PROMETHEUS','CAELESTIS','NYX','GORGON',
+  'ARGON','DELPHINUS','PHOENIX','SCYTHIA','XENON','ZODIAC','HYPERION','ZEPHYR'
+];
+
+const VESSEL_CLASSES = [
+  { key: 'STARSHIP', name: 'Starship-class',  noseStyle: 'sharp',  bodyWidth: 92, height: 480 },
+  { key: 'FALCON',   name: 'Falcon-class',    noseStyle: 'capsule', bodyWidth: 70, height: 500 },
+  { key: 'HEAVY',    name: 'Heavy-class',     noseStyle: 'blunt',  bodyWidth: 110, height: 440 },
+  { key: 'LANCER',   name: 'Lancer-class',    noseStyle: 'spike',  bodyWidth: 60, height: 520 },
+  { key: 'NIMBUS',   name: 'Nimbus-class',    noseStyle: 'dome',   bodyWidth: 84, height: 460 },
+];
+
+const PROPULSION_TYPES = ['CRYOGENIC', 'HYPERGOLIC', 'METHALOX', 'ION', 'SOLID'];
+const FUEL_CHEMISTRY = ['CH4 + LOX', 'RP-1 + LOX', 'UDMH + N2O4', 'LH2 + LOX', 'Xe + e⁻'];
+
+const fleetIdx       = hashByte(block.hash, 0) % FLEET_NAMES.length;
+const fleet          = FLEET_NAMES[fleetIdx];
+const vesselClass    = VESSEL_CLASSES[hashByte(block.hash, 1) % VESSEL_CLASSES.length];
+const propIdx        = hashByte(block.hash, 2) % PROPULSION_TYPES.length;
+const propulsion     = PROPULSION_TYPES[propIdx];
+const fuel           = FUEL_CHEMISTRY[propIdx];
+const engineCount    = [3, 5, 7, 9, 27, 33][hashByte(block.hash, 3) % 6];
+const flightCount    = 1 + (hashByte(block.hash, 4) % 24);  // reusability tally
+const stages         = 1 + (hashByte(block.hash, 5) % 3);   // 1-3 stages
+const payload_kg     = 800 + hashByte(block.hash, 6) * 80;  // 800-21,200 kg
+const dv_ms          = 7800 + hashByte(block.hash, 7) * 30; // 7,800-15,450 m/s
+const orbitClass     = hashPick(block.hash, 8, ['LEO','MEO','GEO','HEO','TLI','TMI','SOI']);
+const status         = hashPick(block.hash, 9, ['RECOVERED','IN-FLIGHT','REFUELING','DOCKED','LANDED']);
+
+const callSign       = `${fleet.substr(0,3)}-${(block.height % 10000).toString().padStart(4,'0')}`;
+const vesselName     = `${vesselClass.key}/${callSign}`;
+const discoveryDate  = new Date(block.timestamp * 1000).toLocaleDateString('en-GB', {
+  day: '2-digit', month: 'short', year: 'numeric'
+});
+
+// === RENDER =================================================================
+const W = 720, H = 1040;
+const canvas = document.getElementById('card');
+const ctx = canvas.getContext('2d');
+
+// Render once immediately (system fonts), then again after web fonts load.
+render();
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(render).catch(() => {});
+}
+
+function render() {
+  const layers = [
+    ['background', drawSpaceBackground],
+    ['starfield',  drawStarfield],
+    ['aurora',     drawAuroraVeil],
+    ['trajectory', drawTrajectoryArc],
+    ['earthLimb',  drawEarthLimb],
+    ['horizonHaze', drawHorizonHaze],
+    ['vessel',     drawVessel],
+    ['engineFlame', drawEngineFlame],
+    ['HUD',        drawHUDOverlays],
+    ['header',     drawHeaderStamp],
+    ['dataPlate',  drawDataPlate],
+    ['frame',      drawFrame],
+  ];
+  for (const [name, fn] of layers) {
+    try { fn(); } catch (e) {
+      console.error(`[NATSHIPS] layer "${name}" failed:`, e);
+      ctx.save();
+      ctx.fillStyle = '#ff3355';
+      ctx.font = '600 11px monospace';
+      ctx.fillText(`render error in ${name}: ${e.message}`, 40, 980);
+      ctx.restore();
+    }
+  }
+  try { fillMeta(); } catch (e) { console.error('meta failed', e); }
+}
+
+// ----- 1. SPACE BACKGROUND --------------------------------------------------
+function drawSpaceBackground() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0,    '#030610');
+  g.addColorStop(0.55, '#060b18');
+  g.addColorStop(0.88, '#0a1428');
+  g.addColorStop(1,    '#02050a');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+}
+
+// ----- 2. STARFIELD ---------------------------------------------------------
+function drawStarfield() {
+  // hash-seeded pseudo-random stars
+  const starCount = 280;
+  ctx.save();
+  for (let i = 0; i < starCount; i++) {
+    const px = (hashFloat(block.hash, (i*3) % 60) + (i * 0.1734)) % 1;
+    const py = (hashFloat(block.hash, (i*3+1) % 60) + (i * 0.2719)) % 1;
+    const pb = (hashFloat(block.hash, (i*3+2) % 60) + (i * 0.4317)) % 1;
+    const x = px * W;
+    const y = py * (H * 0.78);   // confine stars to upper section
+    const r = pb < 0.85 ? 0.6 : (pb < 0.97 ? 1.1 : 1.8);
+    const a = 0.4 + pb * 0.6;
+    const warm = i % 17 === 0;
+    ctx.fillStyle = warm
+      ? `rgba(255,210,140,${a})`
+      : `rgba(220,230,245,${a})`;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+    if (r > 1.0) {
+      // tiny glow halo
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, r*5);
+      glow.addColorStop(0, `rgba(220,230,245,${a*0.5})`);
+      glow.addColorStop(1, 'rgba(220,230,245,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(x, y, r*5, 0, Math.PI*2); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+// ----- 3. AURORA / NEBULA VEIL ----------------------------------------------
+function drawAuroraVeil() {
+  const hasAurora = hashByte(block.hash, 10) % 3 !== 0;
+  if (!hasAurora) return;
+  ctx.save();
+  const colors = [
+    `hsla(${180 + hashByte(block.hash,11) % 80}, 80%, 55%, 0.10)`,
+    `hsla(${290 + hashByte(block.hash,12) % 50}, 75%, 55%, 0.08)`,
+  ];
+  colors.forEach((c, idx) => {
+    const cy = 200 + idx * 120 + hashByte(block.hash, 13+idx) * 0.4;
+    const g = ctx.createRadialGradient(W/2 + (idx === 0 ? -90 : 110), cy, 20, W/2, cy, 380);
+    g.addColorStop(0, c);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 100, W, 540);
+  });
+  ctx.restore();
+}
+
+// ----- 4. TRAJECTORY ARC ----------------------------------------------------
+function drawTrajectoryArc() {
+  // Glowing curved line representing the ship's flight path
+  ctx.save();
+  const ax = 80 + hashByte(block.hash, 14);
+  const ay = 760 + hashByte(block.hash, 15) * 0.3;
+  const bx = 560 + hashByte(block.hash, 16) * 0.3;
+  const by = 180 + hashByte(block.hash, 17) * 0.4;
+  const cpx = 360;
+  const cpy = 250 - hashByte(block.hash, 18) * 0.5;
+
+  // soft glow
+  ctx.strokeStyle = 'rgba(77, 212, 240, 0.18)';
+  ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(cpx, cpy, bx, by); ctx.stroke();
+
+  // crisp line
+  ctx.strokeStyle = 'rgba(77, 212, 240, 0.5)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(cpx, cpy, bx, by); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // burn nodes along the trajectory
+  const burns = [0.18, 0.42, 0.74];
+  burns.forEach(t => {
+    const x = (1-t)*(1-t)*ax + 2*(1-t)*t*cpx + t*t*bx;
+    const y = (1-t)*(1-t)*ay + 2*(1-t)*t*cpy + t*t*by;
+    const ng = ctx.createRadialGradient(x, y, 0, x, y, 9);
+    ng.addColorStop(0, 'rgba(255,180,80,1)');
+    ng.addColorStop(0.4, 'rgba(255,180,80,0.4)');
+    ng.addColorStop(1, 'rgba(255,180,80,0)');
+    ctx.fillStyle = ng;
+    ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ffeacc';
+    ctx.beginPath(); ctx.arc(x, y, 1.6, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+}
+
+// ----- 5. EARTH LIMB (planetary horizon) ------------------------------------
+function drawEarthLimb() {
+  const planetTypes = [
+    { color: ['#1a3a7a', '#0a1830', '#3060a0'], atmo: 'rgba(120,180,255,0.35)', name: 'EARTH'   },
+    { color: ['#8a3520', '#3a1408', '#b04520'], atmo: 'rgba(255,140,90,0.32)',  name: 'MARS'    },
+    { color: ['#888888', '#2a2a2a', '#aaaaaa'], atmo: 'rgba(180,180,180,0.18)', name: 'MOON'    },
+    { color: ['#3a2a48', '#160c20', '#5a4068'], atmo: 'rgba(190,140,230,0.30)', name: 'SUBSTRATE'},
+  ];
+  const planet = planetTypes[hashByte(block.hash, 19) % planetTypes.length];
+
+  // Huge sphere arc at the bottom (limb of planet)
+  const cx = W/2, cy = H + 220;
+  const r = 720;
+
+  ctx.save();
+  // planet body
+  const pg = ctx.createRadialGradient(cx - 200, H - 40, 50, cx, cy, r);
+  pg.addColorStop(0,    planet.color[2]);
+  pg.addColorStop(0.55, planet.color[0]);
+  pg.addColorStop(1,    planet.color[1]);
+  ctx.fillStyle = pg;
+  ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, 0); ctx.closePath(); ctx.fill();
+
+  // surface noise (very subtle)
+  for (let i = 0; i < 60; i++) {
+    const a = (hashFloat(block.hash, (20+i) % 40)) * Math.PI - Math.PI;
+    const rr = r - 4 - hashFloat(block.hash, (40+i) % 24) * 80;
+    const x = cx + Math.cos(a) * rr;
+    const y = cy + Math.sin(a) * rr;
+    if (y < H && y > H - 220) {
+      ctx.fillStyle = `rgba(255,255,255,${0.04 + hashFloat(block.hash, (i)%24)*0.06})`;
+      ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // atmosphere glow rim
+  ctx.strokeStyle = planet.atmo;
+  ctx.lineWidth = 14;
+  ctx.beginPath(); ctx.arc(cx, cy, r+3, Math.PI, 0); ctx.stroke();
+  ctx.strokeStyle = planet.atmo.replace('0.3', '0.12');
+  ctx.lineWidth = 32;
+  ctx.beginPath(); ctx.arc(cx, cy, r+12, Math.PI, 0); ctx.stroke();
+
+  // label
+  ctx.fillStyle = 'rgba(184,194,207,0.45)';
+  ctx.font = '500 9px "JetBrains Mono"';
+  ctx.textAlign = 'left';
+  ctx.fillText(`⊙ ${planet.name}`, 44, H - 56);
+  ctx.restore();
+
+  // stash planet name globally for HUD
+  window._planetName = planet.name;
+}
+
+// ----- 6. HORIZON HAZE band -------------------------------------------------
+function drawHorizonHaze() {
+  ctx.save();
+  const g = ctx.createLinearGradient(0, 700, 0, 820);
+  g.addColorStop(0, 'rgba(0,0,0,0)');
+  g.addColorStop(1, 'rgba(77,212,240,0.05)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 700, W, 120);
+  ctx.restore();
+}
+
+// ----- 7. THE VESSEL --------------------------------------------------------
+function drawVessel() {
+  const cx = W/2;
+  const baseY = 740;
+  const bodyW = vesselClass.bodyWidth;
+  const bodyH = vesselClass.height;
+  const topY = baseY - bodyH;
+
+  ctx.save();
+
+  // hash-driven livery colors
+  const baseHue   = hashByte(block.hash, 30);
+  const isBlackOps = hashByte(block.hash, 31) % 5 === 0;
+  const isWeathered = hashByte(block.hash, 32) % 3 === 0;
+  const hullCol = isBlackOps
+    ? '#1a1c22'
+    : `hsl(${(baseHue * 360 / 255)}, ${isWeathered ? 8 : 18}%, ${isWeathered ? 32 : 52}%)`;
+  const hullCol2 = isBlackOps ? '#0a0c12' : `hsl(${(baseHue * 360 / 255)}, ${isWeathered ? 6 : 14}%, ${isWeathered ? 22 : 36}%)`;
+  const accentCol = `hsl(${(baseHue + 60) % 360}, 75%, 60%)`;
+
+  // === BODY (cylindrical) ===
+  const bodyGrad = ctx.createLinearGradient(cx - bodyW/2, 0, cx + bodyW/2, 0);
+  bodyGrad.addColorStop(0,    hullCol2);
+  bodyGrad.addColorStop(0.45, hullCol);
+  bodyGrad.addColorStop(0.5,  isBlackOps ? '#2a2c32' : '#dde2eb');  // specular highlight
+  bodyGrad.addColorStop(0.55, hullCol);
+  bodyGrad.addColorStop(1,    hullCol2);
+  ctx.fillStyle = bodyGrad;
+  ctx.fillRect(cx - bodyW/2, topY + 60, bodyW, bodyH - 60);
+
+  // === NOSE CONE ===
+  ctx.beginPath();
+  if (vesselClass.noseStyle === 'sharp') {
+    ctx.moveTo(cx - bodyW/2, topY + 60);
+    ctx.lineTo(cx, topY - 30);
+    ctx.lineTo(cx + bodyW/2, topY + 60);
+  } else if (vesselClass.noseStyle === 'capsule') {
+    ctx.moveTo(cx - bodyW/2, topY + 60);
+    ctx.quadraticCurveTo(cx, topY - 50, cx + bodyW/2, topY + 60);
+  } else if (vesselClass.noseStyle === 'blunt') {
+    ctx.moveTo(cx - bodyW/2, topY + 60);
+    ctx.quadraticCurveTo(cx, topY + 0, cx + bodyW/2, topY + 60);
+  } else if (vesselClass.noseStyle === 'spike') {
+    ctx.moveTo(cx - bodyW/2, topY + 60);
+    ctx.lineTo(cx, topY - 70);
+    ctx.lineTo(cx + bodyW/2, topY + 60);
+  } else { // dome
+    ctx.moveTo(cx - bodyW/2, topY + 60);
+    ctx.quadraticCurveTo(cx, topY - 20, cx + bodyW/2, topY + 60);
+  }
+  ctx.closePath();
+  ctx.fillStyle = bodyGrad;
+  ctx.fill();
+  ctx.strokeStyle = isBlackOps ? '#3a3c44' : '#aab3c0';
+  ctx.lineWidth = 0.6;
+  ctx.stroke();
+
+  // === STAGE SEPARATION RINGS ===
+  ctx.strokeStyle = isBlackOps ? '#000' : 'rgba(0,0,0,0.4)';
+  ctx.lineWidth = 1;
+  for (let s = 1; s < stages; s++) {
+    const sy = topY + 60 + ((bodyH - 60) / stages) * s;
+    ctx.beginPath();
+    ctx.moveTo(cx - bodyW/2, sy);
+    ctx.lineTo(cx + bodyW/2, sy);
+    ctx.stroke();
+    // rivets
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    for (let r = 0; r < 6; r++) {
+      const rx = cx - bodyW/2 + 8 + r * ((bodyW - 16) / 5);
+      ctx.beginPath(); ctx.arc(rx, sy + 2, 0.8, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // === HULL WORDMARK + CALL SIGN (vertical) ===
+  ctx.save();
+  ctx.translate(cx - bodyW/2 + 12, topY + 180);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillStyle = accentCol;
+  ctx.font = '700 11px "Space Grotesk"';
+  drawSpacedText(ctx, 'NATSHIPS', 0, 0, 2);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(cx + bodyW/2 - 5, topY + 240);
+  ctx.rotate(Math.PI/2);
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.font = '500 9px "JetBrains Mono"';
+  ctx.fillText(callSign, 0, 0);
+  ctx.restore();
+
+  // === MISSION PATCH on hull (small circular) ===
+  const patchX = cx;
+  const patchY = topY + 130;
+  const patchR = 22;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(patchX, patchY, patchR, 0, Math.PI*2);
+  ctx.fillStyle = '#1a1d24';
+  ctx.fill();
+  ctx.strokeStyle = accentCol;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // patch glyph: hash-derived polygon
+  const sides = 3 + (hashByte(block.hash, 33) % 6);
+  ctx.beginPath();
+  for (let i = 0; i < sides; i++) {
+    const a = (i / sides) * Math.PI * 2 - Math.PI/2;
+    const rr = patchR - 8;
+    const x = patchX + Math.cos(a) * rr;
+    const y = patchY + Math.sin(a) * rr;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = accentCol;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = `${accentCol.replace(')', ', 0.25)').replace('hsl','hsla')}`;
+  ctx.fill();
+  // tiny fleet initial
+  ctx.fillStyle = '#fff';
+  ctx.font = '700 8px "JetBrains Mono"';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(fleet.substr(0,1), patchX, patchY);
+  ctx.restore();
+
+  // === GRID FINS (top of body, near nose) ===
+  if (vesselClass.key !== 'NIMBUS') {
+    const finY = topY + 80;
+    const finW = 14;
+    const finH = 22;
+    [-1, 1].forEach(side => {
+      ctx.save();
+      ctx.fillStyle = isBlackOps ? '#2a2c32' : '#aab3c0';
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 0.6;
+      ctx.fillRect(cx + side * (bodyW/2 + 1), finY, side * finW, finH);
+      ctx.strokeRect(cx + side * (bodyW/2 + 1), finY, side * finW, finH);
+      // grid pattern
+      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+      ctx.lineWidth = 0.3;
+      for (let g = 1; g < 4; g++) {
+        const gx = cx + side * (bodyW/2 + 1 + (g * finW/4) * (side > 0 ? 1 : 1));
+        ctx.beginPath(); ctx.moveTo(gx, finY); ctx.lineTo(gx, finY + finH); ctx.stroke();
+      }
+      for (let g = 1; g < 4; g++) {
+        ctx.beginPath();
+        ctx.moveTo(cx + side * (bodyW/2 + 1), finY + g * finH/4);
+        ctx.lineTo(cx + side * (bodyW/2 + 1) + side * finW, finY + g * finH/4);
+        ctx.stroke();
+      }
+      ctx.restore();
+    });
+  }
+
+  // === LANDING LEGS (bottom of body, splayed) ===
+  const legY = baseY - 20;
+  ctx.strokeStyle = isBlackOps ? '#2a2c32' : '#8a93a0';
+  ctx.lineWidth = 3;
+  [-1, 1].forEach(side => {
+    ctx.beginPath();
+    ctx.moveTo(cx + side * bodyW/2 * 0.8, legY);
+    ctx.lineTo(cx + side * (bodyW/2 + 32), baseY + 8);
+    ctx.stroke();
+    // foot
+    ctx.fillStyle = '#1a1c22';
+    ctx.fillRect(cx + side * (bodyW/2 + 28), baseY + 6, side * 12, 3);
+  });
+
+  // === ENGINE CLUSTER (visible nozzles at base) ===
+  const engineBaseY = baseY;
+  const nozzleW = Math.min(14, (bodyW - 14) / Math.min(engineCount, 9));
+  const nozzlesToShow = Math.min(engineCount, 9);
+  for (let i = 0; i < nozzlesToShow; i++) {
+    const ex = cx - ((nozzlesToShow - 1) * nozzleW)/2 + i * nozzleW;
+    ctx.fillStyle = '#0a0c12';
+    ctx.beginPath();
+    ctx.ellipse(ex, engineBaseY, nozzleW/2 - 1, 4, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = isBlackOps ? '#444' : '#666';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+    // inner glow
+    const eg = ctx.createRadialGradient(ex, engineBaseY, 0, ex, engineBaseY, nozzleW/2);
+    eg.addColorStop(0, 'rgba(255,180,80,0.8)');
+    eg.addColorStop(1, 'rgba(255,90,30,0)');
+    ctx.fillStyle = eg;
+    ctx.beginPath();
+    ctx.ellipse(ex, engineBaseY, nozzleW/2 - 1.5, 3, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // === SCORCH MARKS (more for higher reuse count) ===
+  const scorchIntensity = Math.min(flightCount / 24, 1);
+  const sgrad = ctx.createLinearGradient(0, baseY - 90, 0, baseY);
+  sgrad.addColorStop(0, 'rgba(0,0,0,0)');
+  sgrad.addColorStop(1, `rgba(0,0,0,${0.3 + scorchIntensity * 0.5})`);
+  ctx.fillStyle = sgrad;
+  ctx.fillRect(cx - bodyW/2, baseY - 90, bodyW, 90);
+
+  // small flight-tally dots high on body
+  ctx.fillStyle = accentCol;
+  for (let i = 0; i < flightCount; i++) {
+    const dx = cx + bodyW/2 - 6 - (i % 6) * 4;
+    const dy = topY + 80 + Math.floor(i/6) * 4;
+    ctx.beginPath(); ctx.arc(dx, dy, 1.1, 0, Math.PI*2); ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+// ----- 8. ENGINE FLAME (only if IN-FLIGHT or LANDED status) ----------------
+function drawEngineFlame() {
+  if (status === 'RECOVERED' || status === 'DOCKED' || status === 'REFUELING') return;
+  const cx = W/2;
+  const baseY = 740;
+
+  ctx.save();
+  // outer plume
+  const pg = ctx.createRadialGradient(cx, baseY + 10, 5, cx, baseY + 70, 90);
+  pg.addColorStop(0,   'rgba(255,255,200,0.9)');
+  pg.addColorStop(0.3, 'rgba(255,170,60,0.6)');
+  pg.addColorStop(0.7, 'rgba(255,90,30,0.25)');
+  pg.addColorStop(1,   'rgba(255,90,30,0)');
+  ctx.fillStyle = pg;
+  ctx.beginPath();
+  ctx.ellipse(cx, baseY + 50, 60, 90, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // inner core
+  const cg = ctx.createRadialGradient(cx, baseY + 4, 1, cx, baseY + 30, 30);
+  cg.addColorStop(0, '#ffffff');
+  cg.addColorStop(0.4, 'rgba(255,220,140,0.9)');
+  cg.addColorStop(1, 'rgba(255,140,40,0)');
+  ctx.fillStyle = cg;
+  ctx.beginPath();
+  ctx.ellipse(cx, baseY + 20, 22, 36, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// ----- 9. HUD OVERLAYS ------------------------------------------------------
+function drawHUDOverlays() {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(77,212,240,0.55)';
+  ctx.lineWidth = 0.8;
+  ctx.font = '500 9px "JetBrains Mono"';
+
+  // === TOP-LEFT: CALL SIGN + FLEET ===
+  const tl = { x: 56, y: 168, w: 200, h: 70 };
+  hudBox(tl);
+  ctx.fillStyle = 'rgba(184,194,207,0.55)';
+  ctx.fillText('CALL SIGN', tl.x + 10, tl.y + 18);
+  ctx.fillStyle = '#d8e2f0';
+  ctx.font = '700 16px "Space Grotesk"';
+  ctx.fillText(callSign, tl.x + 10, tl.y + 38);
+  ctx.font = '500 9px "JetBrains Mono"';
+  ctx.fillStyle = 'rgba(77,212,240,0.85)';
+  ctx.fillText(`FLEET · ${fleet}`, tl.x + 10, tl.y + 56);
+
+  // === TOP-RIGHT: STATUS + ORBIT ===
+  const tr = { x: W - 56 - 200, y: 168, w: 200, h: 70 };
+  hudBox(tr);
+  ctx.fillStyle = 'rgba(184,194,207,0.55)';
+  ctx.font = '500 9px "JetBrains Mono"';
+  ctx.fillText('STATUS', tr.x + 10, tr.y + 18);
+  const statusCol = status === 'IN-FLIGHT' ? '#ff5a1f' : status === 'RECOVERED' ? '#4dd4f0' : '#e6b85a';
+  ctx.fillStyle = statusCol;
+  ctx.font = '700 14px "Space Grotesk"';
+  ctx.fillText(`▸ ${status}`, tr.x + 10, tr.y + 36);
+  ctx.font = '500 9px "JetBrains Mono"';
+  ctx.fillStyle = 'rgba(184,194,207,0.75)';
+  ctx.fillText(`ORBIT ${orbitClass}  ·  Δv ${dv_ms.toLocaleString()} m/s`, tr.x + 10, tr.y + 56);
+
+  // === MID-LEFT: ENGINE diagram inset (top-down) ===
+  const ml = { x: 56, y: 410, w: 110, h: 110 };
+  hudBox(ml);
+  ctx.fillStyle = 'rgba(184,194,207,0.55)';
+  ctx.font = '500 8px "JetBrains Mono"';
+  ctx.fillText(`ENGINE × ${engineCount}`, ml.x + 8, ml.y + 14);
+  // top-down nozzle layout
+  const emcx = ml.x + ml.w/2;
+  const emcy = ml.y + ml.h/2 + 4;
+  const cluster = engineCount <= 9 ? engineCount : 9;
+  if (cluster === 1) {
+    nozzleDot(emcx, emcy, 14, '#ff5a1f');
+  } else if (cluster <= 7) {
+    nozzleDot(emcx, emcy, 7, '#ff5a1f');
+    for (let i = 0; i < cluster - 1; i++) {
+      const a = (i / (cluster - 1)) * Math.PI * 2;
+      nozzleDot(emcx + Math.cos(a) * 22, emcy + Math.sin(a) * 22, 6, '#ff5a1f');
+    }
+  } else {
+    // 9 in a hex-ish grid
+    nozzleDot(emcx, emcy, 6, '#ff5a1f');
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const r = i % 2 === 0 ? 18 : 22;
+      nozzleDot(emcx + Math.cos(a) * r, emcy + Math.sin(a) * r, 5, '#ff5a1f');
+    }
+  }
+  // showing real count vs displayed
+  if (engineCount > 9) {
+    ctx.fillStyle = 'rgba(255,90,30,0.85)';
+    ctx.font = '600 8px "JetBrains Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText(`(${engineCount} total)`, emcx, ml.y + ml.h - 8);
+    ctx.textAlign = 'left';
+  }
+
+  // === MID-RIGHT: FUEL/PROPULSION ===
+  const mr = { x: W - 56 - 200, y: 410, w: 200, h: 110 };
+  hudBox(mr);
+  ctx.fillStyle = 'rgba(184,194,207,0.55)';
+  ctx.font = '500 8px "JetBrains Mono"';
+  ctx.fillText('PROPULSION', mr.x + 10, mr.y + 14);
+  ctx.fillStyle = '#d8e2f0';
+  ctx.font = '700 13px "Space Grotesk"';
+  ctx.fillText(propulsion, mr.x + 10, mr.y + 32);
+  ctx.fillStyle = 'rgba(77,212,240,0.85)';
+  ctx.font = '500 11px "JetBrains Mono"';
+  ctx.fillText(fuel, mr.x + 10, mr.y + 52);
+  // payload + stages
+  ctx.fillStyle = 'rgba(184,194,207,0.45)';
+  ctx.font = '500 8px "JetBrains Mono"';
+  ctx.fillText('PAYLOAD', mr.x + 10, mr.y + 74);
+  ctx.fillStyle = 'rgba(230,184,90,0.95)';
+  ctx.font = '600 11px "JetBrains Mono"';
+  ctx.fillText(`${payload_kg.toLocaleString()} kg`, mr.x + 10, mr.y + 90);
+  ctx.fillStyle = 'rgba(184,194,207,0.45)';
+  ctx.font = '500 8px "JetBrains Mono"';
+  ctx.fillText('STAGES', mr.x + 100, mr.y + 74);
+  ctx.fillStyle = 'rgba(230,184,90,0.95)';
+  ctx.font = '600 11px "JetBrains Mono"';
+  ctx.fillText(`${stages}`, mr.x + 100, mr.y + 90);
+
+  // === REUSABILITY METER (top-center small) ===
+  const ru = { x: W/2 - 80, y: 260, w: 160, h: 30 };
+  hudBox(ru);
+  ctx.fillStyle = 'rgba(184,194,207,0.55)';
+  ctx.font = '500 8px "JetBrains Mono"';
+  ctx.textAlign = 'left';
+  ctx.fillText('FLIGHT', ru.x + 10, ru.y + 12);
+  ctx.fillStyle = '#ff5a1f';
+  ctx.font = '700 11px "Space Grotesk"';
+  ctx.fillText(`${flightCount.toString().padStart(2,'0')} / ∞`, ru.x + 10, ru.y + 24);
+  // tally bars
+  const barX = ru.x + 60;
+  const barY = ru.y + 14;
+  const barW = 92;
+  ctx.strokeStyle = 'rgba(255,90,30,0.4)';
+  ctx.strokeRect(barX, barY, barW, 8);
+  ctx.fillStyle = 'rgba(255,90,30,0.85)';
+  ctx.fillRect(barX, barY, barW * Math.min(flightCount/24, 1), 8);
+
+  ctx.restore();
+
+  function hudBox(b) {
+    ctx.save();
+    // box bg
+    ctx.fillStyle = 'rgba(6,11,24,0.78)';
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+    // thin border
+    ctx.strokeStyle = 'rgba(77,212,240,0.5)';
+    ctx.lineWidth = 0.6;
+    ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.w - 1, b.h - 1);
+    // corner ticks
+    const t = 4;
+    ctx.strokeStyle = 'rgba(77,212,240,0.95)';
+    ctx.lineWidth = 1.2;
+    [[b.x, b.y, 1, 1], [b.x+b.w, b.y, -1, 1], [b.x, b.y+b.h, 1, -1], [b.x+b.w, b.y+b.h, -1, -1]].forEach(([x,y,sx,sy]) => {
+      ctx.beginPath();
+      ctx.moveTo(x + sx*t, y);    ctx.lineTo(x, y);    ctx.lineTo(x, y + sy*t);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+  function nozzleDot(x, y, r, col) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, '#fff');
+    g.addColorStop(0.35, col);
+    g.addColorStop(1, 'rgba(0,0,0,0.85)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+    ctx.lineWidth = 0.4;
+    ctx.stroke();
+  }
+}
+
+// ----- 10. HEADER STAMP -----------------------------------------------------
+function drawHeaderStamp() {
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(216,226,240,0.9)';
+  ctx.font = '700 12px "Space Grotesk"';
+  ctx.fillText('N A T S H I P S', W/2, 78);
+
+  ctx.fillStyle = 'rgba(184,194,207,0.65)';
+  ctx.font = 'italic 13px "Cormorant Garamond"';
+  ctx.fillText('The Reusable Fleet of the Substrate', W/2, 100);
+
+  ctx.fillStyle = 'rgba(77,212,240,0.75)';
+  ctx.font = '500 9px "JetBrains Mono"';
+  ctx.fillText(`VESSEL Nº ${block.height.toLocaleString()}  ·  ${vesselClass.name.toUpperCase()}  ·  CERT. REUSABLE`, W/2, 120);
+  ctx.restore();
+}
+
+// ----- 11. DATA PLATE -------------------------------------------------------
+function drawDataPlate() {
+  const plateY = 824;
+  const plateH = 180;
+  const margin = 48;
+
+  ctx.save();
+  // plate body
+  const pg = ctx.createLinearGradient(0, plateY, 0, plateY + plateH);
+  pg.addColorStop(0, 'rgba(6, 11, 24, 0.96)');
+  pg.addColorStop(1, 'rgba(3, 6, 12, 0.98)');
+  ctx.fillStyle = pg;
+  ctx.fillRect(margin, plateY, W - margin*2, plateH);
+
+  // hairlines
+  ctx.strokeStyle = 'rgba(77,212,240,0.5)';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(margin, plateY); ctx.lineTo(W - margin, plateY);
+  ctx.moveTo(margin, plateY + plateH); ctx.lineTo(W - margin, plateY + plateH);
+  ctx.stroke();
+
+  // corner ticks on plate
+  const t = 6;
+  ctx.strokeStyle = 'rgba(77,212,240,0.9)';
+  ctx.lineWidth = 1.2;
+  [[margin, plateY, 1, 1], [W-margin, plateY, -1, 1], [margin, plateY+plateH, 1, -1], [W-margin, plateY+plateH, -1, -1]].forEach(([x,y,sx,sy]) => {
+    ctx.beginPath();
+    ctx.moveTo(x + sx*t, y); ctx.lineTo(x, y); ctx.lineTo(x, y + sy*t);
+    ctx.stroke();
+  });
+
+  // === LEFT: vessel ID ===
+  const lx = margin + 22;
+  ctx.fillStyle = 'rgba(184,194,207,0.55)';
+  ctx.font = '500 9px "JetBrains Mono"';
+  ctx.textAlign = 'left';
+  ctx.fillText('VESSEL', lx, plateY + 22);
+
+  ctx.fillStyle = '#d8e2f0';
+  ctx.font = '700 30px "Space Grotesk"';
+  ctx.fillText(callSign, lx, plateY + 56);
+
+  ctx.fillStyle = 'rgba(77,212,240,0.85)';
+  ctx.font = '500 11px "JetBrains Mono"';
+  ctx.fillText(vesselClass.name.toUpperCase(), lx, plateY + 76);
+
+  ctx.fillStyle = 'rgba(184,194,207,0.55)';
+  ctx.font = 'italic 12px "Cormorant Garamond"';
+  ctx.fillText(`Fleet ${fleet} · ${stages}-stage · ${status.toLowerCase()}`, lx, plateY + 96);
+
+  // === RIGHT: stats grid ===
+  const rx = lx + 280;
+  const rxEnd = W - margin - 22;
+  const rows = [
+    ['FLIGHT',       `${flightCount}/∞`],
+    ['Δv',           `${dv_ms.toLocaleString()} m/s`],
+    ['PAYLOAD',      `${payload_kg.toLocaleString()} kg`],
+    ['ORBIT',        orbitClass],
+    ['ORIGIN',       window._planetName || 'EARTH'],
+    ['LAUNCHED',     discoveryDate],
+  ];
+  let ry = plateY + 22;
+  rows.forEach(([k, v]) => {
+    ctx.fillStyle = 'rgba(184,194,207,0.5)';
+    ctx.font = '500 8.5px "JetBrains Mono"';
+    ctx.textAlign = 'left';
+    ctx.fillText(k, rx, ry);
+    ctx.fillStyle = 'rgba(216,226,240,0.95)';
+    ctx.font = '600 10.5px "JetBrains Mono"';
+    ctx.textAlign = 'right';
+    ctx.fillText(v, rxEnd, ry);
+    ry += 18;
+  });
+
+  // === FLIGHT LOG STRIP (bottom of plate) ===
+  const logY = plateY + plateH - 30;
+  const logX = lx;
+  const logW = W - margin*2 - 44;
+  const logH = 18;
+
+  ctx.fillStyle = '#000';
+  ctx.fillRect(logX, logY, logW, logH);
+  ctx.strokeStyle = 'rgba(77,212,240,0.3)';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(logX, logY, logW, logH);
+
+  // log entries — ticks for each completed flight
+  const segments = 24;
+  const segW = logW / segments;
+  for (let i = 0; i < segments; i++) {
+    const completed = i < flightCount;
+    const x = logX + i * segW + 2;
+    ctx.fillStyle = completed
+      ? `rgba(255,90,30,${0.55 + (i % 3)*0.15})`
+      : 'rgba(184,194,207,0.06)';
+    ctx.fillRect(x, logY + 3, segW - 4, logH - 6);
+  }
+
+  ctx.fillStyle = 'rgba(184,194,207,0.45)';
+  ctx.font = '500 8px "JetBrains Mono"';
+  ctx.textAlign = 'left';
+  ctx.fillText(`FLIGHT LOG  ·  ${flightCount} OF 24 SLOTS USED  ·  REUSABLE CERTIFIED`, logX, logY - 4);
+
+  ctx.restore();
+}
+
+// ----- 12. FRAME ------------------------------------------------------------
+function drawFrame() {
+  ctx.save();
+
+  // mil-spec stencil border
+  ctx.strokeStyle = 'rgba(184,194,207,0.35)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(18, 18, W - 36, H - 36);
+
+  ctx.strokeStyle = 'rgba(77,212,240,0.45)';
+  ctx.lineWidth = 0.6;
+  ctx.strokeRect(26, 26, W - 52, H - 52);
+
+  // corner brackets (industrial / tactical)
+  const t = 22;
+  const corners = [
+    [34, 34, 1, 1],
+    [W-34, 34, -1, 1],
+    [34, H-34, 1, -1],
+    [W-34, H-34, -1, -1],
+  ];
+  ctx.strokeStyle = 'rgba(77,212,240,0.95)';
+  ctx.lineWidth = 1.5;
+  corners.forEach(([cx, cy, sx, sy]) => {
+    ctx.beginPath();
+    ctx.moveTo(cx + sx*t, cy);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, cy + sy*t);
+    ctx.stroke();
+    // tick mark
+    ctx.beginPath();
+    ctx.arc(cx + sx*3, cy + sy*3, 2, 0, Math.PI*2);
+    ctx.stroke();
+  });
+
+  // top edge stencil text (centered)
+  ctx.fillStyle = 'rgba(184,194,207,0.55)';
+  ctx.font = '500 9px "JetBrains Mono"';
+  ctx.textAlign = 'left';
+  ctx.fillText('// RECOVERED', 50, 50);
+  ctx.textAlign = 'right';
+  ctx.fillText(`CLASSIFICATION · DMT-VARIANT //`, W - 50, 50);
+
+  // bottom edge engraver mark — the HI nod
+  ctx.fillStyle = 'rgba(77,212,240,0.65)';
+  ctx.font = 'italic 600 10px "Cormorant Garamond"';
+  ctx.textAlign = 'right';
+  ctx.fillText('— HI —', W - 52, H - 50);
+  ctx.font = '500 7.5px "JetBrains Mono"';
+  ctx.fillStyle = 'rgba(184,194,207,0.6)';
+  ctx.fillText('IMPRINT STUDIO · NATSHIPS DIV.', W - 52, H - 38);
+
+  // bottom-left hash signature (serial)
+  ctx.fillStyle = 'rgba(184,194,207,0.55)';
+  ctx.font = '500 7.5px "JetBrains Mono"';
+  ctx.textAlign = 'left';
+  ctx.fillText(`SN ${block.hash.substr(0, 24).toUpperCase()}…`, 52, H - 38);
+  ctx.fillStyle = 'rgba(77,212,240,0.5)';
+  ctx.fillText(`BLOCK ${block.height.toLocaleString()} · ${block.miner.toUpperCase()}`, 52, H - 50);
+
+  ctx.restore();
+}
+
+// ----- META PANEL -----------------------------------------------------------
+function fillMeta() {
+  const items = [
+    ['Block height',     block.height.toLocaleString()],
+    ['Hash prefix',      block.hash.substr(0,16).toUpperCase()],
+    ['Vessel class',     vesselClass.name],
+    ['Call sign',        callSign],
+    ['Fleet',            fleet],
+    ['Engine count',     `${engineCount} × ${propulsion}`],
+    ['Fuel chemistry',   fuel],
+    ['Stages',           `${stages}`],
+    ['Δv envelope',      `${dv_ms.toLocaleString()} m/s`],
+    ['Payload mass',     `${payload_kg.toLocaleString()} kg`],
+    ['Orbit class',      orbitClass],
+    ['Status',           status],
+    ['Flight count',     `${flightCount} of 24`],
+    ['Origin body',      window._planetName || 'EARTH'],
+    ['Launched',         discoveryDate],
+    ['Engraver mark',    'HI · Imprint Studio, NATSHIPS Div.'],
+  ];
+  const meta = document.getElementById('meta');
+  meta.innerHTML = items.map(([k,v]) => `<div><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+}
+</script>
+
+</body>
+</html>

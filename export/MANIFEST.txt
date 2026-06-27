@@ -1,0 +1,23 @@
+NATSHIPS · Vessels of the Substrate
+Export Manifest
+Generated: $(date)
+
+Files:
+- natships-hero-series0.png (1500×1500) — Primary submission image
+- natships-variety-proof.png — Five-block showcase for judges
+- MANIFEST.txt — This file
+
+Collection Info:
+- Element: blastoff
+- Total supply: 10,080 UNATs
+- Block range: 102,816–112,895
+- Trait categories: 12 (fleet, class, propulsion, engines, orbits, statuses, origins, stages, flights, nebula, stars, sigil)
+- Uniqueness: 10,080/10,080 categorical signatures verified
+
+Usage:
+1. Upload natships-hero-series0.png as primary vibe image on nat.fun
+2. Use natships-variety-proof.png for Vibeathon judges
+3. Reference block range 102816–112895 in collection config
+4. Element field: blastoff
+
+Next: Create vibe at https://nat.fun/

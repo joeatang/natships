@@ -1,0 +1,21 @@
+# OS / editor noise
+.DS_Store
+.vscode/
+
+# Node (if we add any tooling later)
+node_modules/
+npm-debug.log
+yarn-error.log
+.env
+.env.local
+
+# Render outputs (heavy; regenerate from source)
+renders/
+out/
+dist/
+
+# Misc
+*.log
+
+# Heavy GIF source frames + outputs (regenerable, not needed for site)
+gallery/gifs/

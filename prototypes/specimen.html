@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>NONARBITRARIUM · Specimen 701,824 — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #050208;
+    --void-2: #0a0410;
+    --plum: #15081f;
+    --brass: #c4923a;
+    --gold: #e6b85a;
+    --gold-deep: #7a5a23;
+    --cyan: #4dd4f0;
+    --magenta: #ff5fa8;
+    --peach: #ff8a3d;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse at 50% -10%, #1a0822 0%, #0a0410 55%, #020106 100%);
+    color: var(--gold);
+    font-family: 'Cormorant Garamond', serif;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 56px 24px 80px;
+    gap: 28px;
+  }
+  .preamble { text-align: center; max-width: 760px; }
+  .preamble .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.45em;
+    color: var(--gold-deep);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .preamble h1 {
+    font-family: 'Cinzel', serif;
+    font-weight: 800;
+    font-size: 36px;
+    letter-spacing: 0.38em;
+    color: var(--gold);
+    margin: 0 0 18px 0;
+    text-shadow: 0 0 30px rgba(230,184,90,0.35), 0 0 80px rgba(77,212,240,0.12);
+  }
+  .preamble .lede {
+    font-style: italic;
+    color: var(--brass);
+    opacity: 0.85;
+    font-size: 18px;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  canvas#card {
+    display: block;
+    box-shadow:
+      0 0 80px rgba(196,146,58,0.18),
+      0 0 160px rgba(77,212,240,0.08),
+      0 0 240px rgba(255,95,168,0.06);
+    border-radius: 6px;
+    background: var(--void);
+  }
+
+  .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px 36px;
+    max-width: 760px;
+    width: 100%;
+    padding: 28px 32px;
+    border: 1px solid rgba(196,146,58,0.25);
+    background: rgba(10,4,16,0.6);
+    border-radius: 4px;
+    margin-top: 6px;
+  }
+  .meta div { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .meta .k { color: var(--gold-deep); letter-spacing: 0.18em; text-transform: uppercase; }
+  .meta .v { color: var(--gold); margin-top: 4px; }
+
+  .caption {
+    text-align: center;
+    color: var(--gold-deep);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    max-width: 760px;
+  }
+</style>
+</head>
+<body>
+
+<div class="preamble">
+  <div class="eyebrow">prototype · series 0 · specimen card</div>
+  <h1>N O N A R B I T R A R I U M</h1>
+  <p class="lede">"The First Elements" — every visual property of this card is mathematically forced by Bitcoin block 701,824. Nothing here was drawn by hand.</p>
+</div>
+
+<canvas id="card" width="720" height="1040"></canvas>
+
+<div class="meta" id="meta"></div>
+
+<div class="caption">a head-nod to <span style="color:var(--gold)">HI</span> · engraver's mark, bottom-right corner</div>
+
+<script>
+// ===========================================================================
+// NONARBITRARIUM — Specimen Renderer v0.1 (prototype)
+// All visual properties derive from a single Bitcoin block.
+// ===========================================================================
+
+const block = {
+  height:    701824,
+  hash:      '00000000000000000003a8fbc9e7d4b1f2a90c8d5e6b7c4a1d2e3f5a6b7c8d9e0',
+  txCount:   2843,
+  totalFees: 0.428,   // BTC
+  miner:     'AntPool',
+  timestamp: 1631290920,
+  weight:    3992514
+};
+
+// --- deterministic hash readers ----------------------------------------------
+const hashByte  = (h, i) => parseInt(h.substr(8 + i*2, 2), 16);
+const hashFloat = (h, i) => hashByte(h, i) / 255;
+const hashPick  = (h, i, arr) => arr[hashByte(h, i) % arr.length];
+
+// --- derived traits ----------------------------------------------------------
+const HALVING_INTERVAL = 210000;
+const blocksUntilHalving = HALVING_INTERVAL - (block.height % HALVING_INTERVAL);
+const states = ['solid', 'liquid', 'gas', 'plasma', 'breakthrough'];
+const stateIdx = Math.min(4, Math.floor(block.totalFees * 8));
+const state = states[stateIdx];
+
+const symbol = (block.miner.substr(0,2) + (block.height % 10)).toUpperCase();
+const elementName = block.miner + 'ium';
+const fullName = `${elementName}-${block.height}`;
+const discoveryDate = new Date(block.timestamp * 1000).toLocaleDateString('en-GB', {
+  day: 'numeric', month: 'short', year: 'numeric'
+});
+
+// derive a crystal class + group name from hash for flavor
+const crystalClass = hashPick(block.hash, 60, [
+  'Cubic', 'Tetragonal', 'Hexagonal', 'Orthorhombic', 'Monoclinic', 'Triclinic', 'Trigonal'
+]);
+
+// === RENDER =================================================================
+const W = 720, H = 1040;
+const canvas = document.getElementById('card');
+const ctx = canvas.getContext('2d');
+
+document.fonts.ready.then(render);
+
+function render() {
+  // ----- void background -----
+  const bgGrad = ctx.createRadialGradient(W/2, H*0.45, 40, W/2, H*0.45, H*0.85);
+  bgGrad.addColorStop(0,    '#1a0a28');
+  bgGrad.addColorStop(0.45, '#0a0410');
+  bgGrad.addColorStop(1,    '#020106');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  drawCymaticMandala();
+  drawAuraGlow();
+  drawBohrShells();
+  drawMolecule();
+  drawHeader();
+  drawDataPlate();
+  drawEngravedFrame();
+  fillMeta();
+}
+
+// ----- LAYER 1: CYMATIC MANDALA ---------------------------------------------
+// hash-driven superposition of radial modes → glowing nodal lacework
+function drawCymaticMandala() {
+  const cx = W/2, cy = 470;
+  const modes = [
+    3 + (hashByte(block.hash, 0) % 6),
+    5 + (hashByte(block.hash, 1) % 8),
+    7 + (hashByte(block.hash, 2) % 9),
+  ];
+  const palette = [
+    'rgba(77, 212, 240, 0.18)',
+    'rgba(255, 95, 168, 0.16)',
+    'rgba(230, 184, 90, 0.14)',
+  ];
+
+  ctx.save();
+  modes.forEach((m, idx) => {
+    const phase = hashFloat(block.hash, 4 + idx) * Math.PI * 2;
+    ctx.strokeStyle = palette[idx];
+    ctx.lineWidth = 1;
+    for (let r = 28; r < 320; r += 10) {
+      ctx.beginPath();
+      for (let t = 0; t <= Math.PI*2 + 0.02; t += 0.018) {
+        const wob = Math.cos(m*t + phase) * Math.sin(r*0.045 + idx*0.7);
+        const rr = r + wob * 9;
+        const x = cx + rr * Math.cos(t);
+        const y = cy + rr * Math.sin(t);
+        if (t === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  });
+
+  // central radial spokes
+  ctx.strokeStyle = 'rgba(230,184,90,0.10)';
+  ctx.lineWidth = 0.6;
+  const spokeCount = 16 + (hashByte(block.hash, 9) % 12);
+  for (let i = 0; i < spokeCount; i++) {
+    const a = (i / spokeCount) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a)*24, cy + Math.sin(a)*24);
+    ctx.lineTo(cx + Math.cos(a)*310, cy + Math.sin(a)*310);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ----- AURA glow behind molecule --------------------------------------------
+function drawAuraGlow() {
+  const cx = W/2, cy = 470;
+  const aura = ctx.createRadialGradient(cx, cy, 60, cx, cy, 260);
+  aura.addColorStop(0,   'rgba(77, 212, 240, 0.28)');
+  aura.addColorStop(0.4, 'rgba(255, 95, 168, 0.10)');
+  aura.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = aura;
+  ctx.fillRect(0, 200, W, 540);
+}
+
+// ----- LAYER 3: BOHR SHELLS -------------------------------------------------
+function drawBohrShells() {
+  const cx = W/2, cy = 470;
+  const shells = [
+    { r: 128, n: 2 + (hashByte(block.hash, 5) % 3) },
+    { r: 178, n: 4 + (hashByte(block.hash, 6) % 5) },
+    { r: 232, n: 6 + (hashByte(block.hash, 7) % 7) },
+  ];
+
+  ctx.save();
+  shells.forEach((s, idx) => {
+    // orbit
+    ctx.strokeStyle = 'rgba(196, 146, 58, 0.32)';
+    ctx.lineWidth = 0.7;
+    ctx.setLineDash([2, 5]);
+    ctx.beginPath();
+    ctx.arc(cx, cy, s.r, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // electrons
+    for (let i = 0; i < s.n; i++) {
+      const phase = hashFloat(block.hash, 8 + idx*3 + (i%3)) * Math.PI * 2;
+      const a = (i / s.n) * Math.PI * 2 + phase;
+      const ex = cx + Math.cos(a) * s.r;
+      const ey = cy + Math.sin(a) * s.r;
+      const eg = ctx.createRadialGradient(ex, ey, 0, ex, ey, 14);
+      eg.addColorStop(0,   'rgba(77, 212, 240, 1)');
+      eg.addColorStop(0.4, 'rgba(77, 212, 240, 0.45)');
+      eg.addColorStop(1,   'rgba(77, 212, 240, 0)');
+      ctx.fillStyle = eg;
+      ctx.beginPath(); ctx.arc(ex, ey, 14, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#eaf9ff';
+      ctx.beginPath(); ctx.arc(ex, ey, 2.6, 0, Math.PI*2); ctx.fill();
+    }
+  });
+  ctx.restore();
+}
+
+// ----- LAYER 2: MOLECULAR STRUCTURE ----------------------------------------
+function drawMolecule() {
+  const cx = W/2, cy = 470;
+  const ringSize = 5 + (hashByte(block.hash, 10) % 3); // 5,6,7
+  const ringR = 58;
+
+  // ring atoms
+  const atoms = [];
+  for (let i = 0; i < ringSize; i++) {
+    const a = (i / ringSize) * Math.PI * 2 - Math.PI/2;
+    atoms.push({
+      x: cx + Math.cos(a) * ringR,
+      y: cy + Math.sin(a) * ringR,
+      type: hashPick(block.hash, 11+i, ['C','N','O','C','S','C']),
+      r: 15,
+    });
+  }
+  // branches
+  for (let i = 0; i < ringSize; i++) {
+    if (hashByte(block.hash, 18+i) % 3 === 0) {
+      const a = (i / ringSize) * Math.PI * 2 - Math.PI/2;
+      atoms.push({
+        x: atoms[i].x + Math.cos(a) * 52,
+        y: atoms[i].y + Math.sin(a) * 52,
+        type: hashPick(block.hash, 25+i, ['O','N','C','F']),
+        r: 13,
+        parent: i,
+      });
+    }
+  }
+
+  // bonds
+  ctx.save();
+  ctx.strokeStyle = 'rgba(230, 184, 90, 0.9)';
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = 'rgba(230, 184, 90, 0.4)';
+  ctx.shadowBlur = 6;
+  for (let i = 0; i < ringSize; i++) {
+    const a = atoms[i], b = atoms[(i+1) % ringSize];
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  atoms.slice(ringSize).forEach(at => {
+    const p = atoms[at.parent];
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(at.x, at.y); ctx.stroke();
+  });
+  ctx.shadowBlur = 0;
+
+  // atoms
+  const atomPalette = {
+    C: ['#b8b8d0', '#2a2a3a'],
+    N: ['#5fa8ff', '#1a3a6a'],
+    O: ['#ff6fb0', '#6a1a3a'],
+    S: ['#e6b85a', '#6a4a1a'],
+    F: ['#4dd4f0', '#1a4a5a'],
+  };
+  atoms.forEach(a => {
+    const [hi, lo] = atomPalette[a.type];
+    // halo
+    const halo = ctx.createRadialGradient(a.x, a.y, 0, a.x, a.y, a.r * 2.6);
+    halo.addColorStop(0,   hi);
+    halo.addColorStop(0.35, hi + '88');
+    halo.addColorStop(1,   hi + '00');
+    ctx.fillStyle = halo;
+    ctx.beginPath(); ctx.arc(a.x, a.y, a.r * 2.6, 0, Math.PI*2); ctx.fill();
+    // sphere
+    const sg = ctx.createRadialGradient(a.x - a.r*0.35, a.y - a.r*0.35, 1, a.x, a.y, a.r);
+    sg.addColorStop(0,   '#ffffff');
+    sg.addColorStop(0.3, hi);
+    sg.addColorStop(1,   lo);
+    ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI*2); ctx.fill();
+    // label
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 11px "JetBrains Mono"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(a.type, a.x, a.y);
+  });
+  ctx.restore();
+}
+
+// ----- HEADER ----------------------------------------------------------------
+function drawHeader() {
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(230,184,90,0.92)';
+  ctx.font = '700 13px Cinzel';
+  ctx.fillText('— N O N A R B I T R A R I U M —', W/2, 78);
+
+  ctx.fillStyle = 'rgba(122,90,35,0.95)';
+  ctx.font = 'italic 14px "Cormorant Garamond"';
+  ctx.fillText('The First Elements · Series 0', W/2, 102);
+
+  ctx.fillStyle = 'rgba(196,146,58,0.7)';
+  ctx.font = '500 10px "JetBrains Mono"';
+  ctx.fillText(`SPECIMEN N° ${block.height.toLocaleString()}  ·  ${crystalClass.toUpperCase()} CLASS`, W/2, 124);
+  ctx.restore();
+}
+
+// ----- LAYER 4: DATA PLATE --------------------------------------------------
+function drawDataPlate() {
+  const plateY = 778;
+  const plateH = 222;
+  const margin = 48;
+
+  ctx.save();
+  // plate body
+  const pg = ctx.createLinearGradient(0, plateY, 0, plateY + plateH);
+  pg.addColorStop(0, 'rgba(15, 8, 25, 0.94)');
+  pg.addColorStop(1, 'rgba(8, 4, 14, 0.97)');
+  ctx.fillStyle = pg;
+  ctx.fillRect(margin, plateY, W - margin*2, plateH);
+
+  // top + bottom hairlines
+  ctx.strokeStyle = 'rgba(230, 184, 90, 0.55)';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(margin, plateY); ctx.lineTo(W - margin, plateY);
+  ctx.moveTo(margin, plateY + plateH); ctx.lineTo(W - margin, plateY + plateH);
+  ctx.stroke();
+
+  // === LEFT BLOCK: atomic number + symbol + name ===
+  const lx = margin + 26;
+
+  ctx.fillStyle = 'rgba(122,90,35,0.95)';
+  ctx.font = '600 10px "JetBrains Mono"';
+  ctx.textAlign = 'left';
+  ctx.fillText('Nº', lx, plateY + 26);
+  ctx.fillStyle = 'rgba(196,146,58,1)';
+  ctx.font = '600 14px "JetBrains Mono"';
+  ctx.fillText(block.height.toLocaleString(), lx + 22, plateY + 26);
+
+  ctx.fillStyle = 'rgba(230,184,90,1)';
+  ctx.font = '800 86px Cinzel';
+  ctx.textAlign = 'left';
+  ctx.fillText(symbol, lx, plateY + 116);
+
+  ctx.fillStyle = 'rgba(196,146,58,1)';
+  ctx.font = '600 15px Cinzel';
+  ctx.fillText(fullName, lx, plateY + 144);
+
+  ctx.fillStyle = 'rgba(122,90,35,1)';
+  ctx.font = 'italic 13px "Cormorant Garamond"';
+  ctx.fillText(`${state} · ${crystalClass.toLowerCase()} lattice`, lx, plateY + 163);
+
+  // === RIGHT BLOCK: property grid ===
+  const rx = lx + 250;
+  const rxEnd = W - margin - 26;
+  const rows = [
+    ['ATOMIC MASS',   `${block.totalFees.toFixed(3)} BTC`],
+    ['HALF-LIFE',     `${blocksUntilHalving.toLocaleString()} blocks`],
+    ['STATE',         state.toUpperCase()],
+    ['REACTIVITY',    `${block.txCount.toLocaleString()} tx`],
+    ['DISCOVERED BY', block.miner],
+    ['DISCOVERY',     discoveryDate],
+  ];
+  let ry = plateY + 22;
+  rows.forEach(([k, v]) => {
+    ctx.fillStyle = 'rgba(122,90,35,1)';
+    ctx.font = '500 9px "JetBrains Mono"';
+    ctx.textAlign = 'left';
+    ctx.fillText(k, rx, ry);
+    ctx.fillStyle = 'rgba(230,184,90,1)';
+    ctx.font = '600 11px "JetBrains Mono"';
+    ctx.textAlign = 'right';
+    ctx.fillText(v, rxEnd, ry);
+    ry += 22;
+  });
+
+  // === EMISSION SPECTRUM STRIP ===
+  const specX = lx;
+  const specY = plateY + 180;
+  const specW = W - margin*2 - 52;
+  const specH = 28;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(specX, specY, specW, specH);
+  ctx.strokeStyle = 'rgba(230, 184, 90, 0.45)';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(specX, specY, specW, specH);
+
+  const lineCount = 18 + (hashByte(block.hash, 28) % 14);
+  for (let i = 0; i < lineCount; i++) {
+    const pos = hashFloat(block.hash, 30 + (i % 28));
+    const inten = 0.35 + hashFloat(block.hash, 40 + (i % 22)) * 0.65;
+    const hue = (hashByte(block.hash, 50 + (i % 12)) * 360 / 255);
+    const x = specX + pos * specW;
+    // soft glow
+    ctx.strokeStyle = `hsla(${hue}, 95%, 65%, ${inten * 0.32})`;
+    ctx.lineWidth = 3.5 + inten*1.5;
+    ctx.beginPath(); ctx.moveTo(x, specY+2); ctx.lineTo(x, specY+specH-2); ctx.stroke();
+    // crisp line
+    ctx.strokeStyle = `hsla(${hue}, 95%, 70%, ${inten})`;
+    ctx.lineWidth = 1 + inten;
+    ctx.beginPath(); ctx.moveTo(x, specY+2); ctx.lineTo(x, specY+specH-2); ctx.stroke();
+  }
+
+  ctx.fillStyle = 'rgba(122,90,35,0.9)';
+  ctx.font = '500 8.5px "JetBrains Mono"';
+  ctx.textAlign = 'left';
+  ctx.fillText(`EMISSION SPECTRUM · ${lineCount} LINES · LAB-OBSERVED`, specX, specY + specH + 12);
+
+  ctx.restore();
+}
+
+// ----- ENGRAVED FRAME -------------------------------------------------------
+function drawEngravedFrame() {
+  ctx.save();
+
+  ctx.strokeStyle = 'rgba(196,146,58,0.55)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(18, 18, W - 36, H - 36);
+
+  ctx.strokeStyle = 'rgba(230,184,90,0.85)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(26, 26, W - 52, H - 52);
+
+  ctx.strokeStyle = 'rgba(196,146,58,0.4)';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(32, 32, W - 64, H - 64);
+
+  // corner flourishes (engraved cross + diamond)
+  const corners = [
+    [42, 42,  1,  1],
+    [W-42, 42, -1,  1],
+    [42, H-42, 1, -1],
+    [W-42, H-42,-1, -1],
+  ];
+  ctx.strokeStyle = 'rgba(230,184,90,0.75)';
+  ctx.lineWidth = 1;
+  corners.forEach(([cx, cy, sx, sy]) => {
+    ctx.beginPath();
+    ctx.moveTo(cx + sx*4, cy);    ctx.lineTo(cx + sx*18, cy);
+    ctx.moveTo(cx, cy + sy*4);    ctx.lineTo(cx, cy + sy*18);
+    ctx.stroke();
+    // diamond
+    ctx.beginPath();
+    ctx.moveTo(cx + sx*9, cy);
+    ctx.lineTo(cx + sx*12, cy + sy*3);
+    ctx.lineTo(cx + sx*9, cy + sy*6);
+    ctx.lineTo(cx + sx*6, cy + sy*3);
+    ctx.closePath();
+    ctx.stroke();
+  });
+
+  // engraver's mark — the subtle HI nod
+  ctx.fillStyle = 'rgba(196,146,58,0.6)';
+  ctx.font = 'italic 600 9px Cinzel';
+  ctx.textAlign = 'right';
+  ctx.fillText('— HI —', W - 48, H - 46);
+  ctx.font = '500 7px "JetBrains Mono"';
+  ctx.fillText('VOL. II  ·  IMPRINT STUDIO', W - 48, H - 34);
+
+  // hash signature, bottom-left
+  ctx.fillStyle = 'rgba(122,90,35,0.6)';
+  ctx.font = '500 7px "JetBrains Mono"';
+  ctx.textAlign = 'left';
+  ctx.fillText(`HASH ${block.hash.substr(0,28).toUpperCase()}…`, 48, H - 34);
+
+  ctx.restore();
+}
+
+// ----- META PANEL -----------------------------------------------------------
+function fillMeta() {
+  const items = [
+    ['Block height',     block.height.toLocaleString()],
+    ['Transactions',     block.txCount.toLocaleString()],
+    ['Total fees',       `${block.totalFees} BTC`],
+    ['Miner',            block.miner],
+    ['Block weight',     block.weight.toLocaleString()],
+    ['Atomic symbol',    symbol],
+    ['Element name',     fullName],
+    ['State of matter',  state],
+    ['Crystal class',    crystalClass],
+    ['Half-life',        `${blocksUntilHalving.toLocaleString()} blocks`],
+    ['Hash prefix',      block.hash.substr(0,16).toUpperCase()],
+    ['Engraver mark',    'HI · Vol. II'],
+  ];
+  const meta = document.getElementById('meta');
+  meta.innerHTML = items.map(([k,v]) => `<div><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+}
+</script>
+
+</body>
+</html>

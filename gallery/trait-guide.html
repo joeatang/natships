@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NATSHIPS Trait Guide</title>
+  <style>
+    @page { size: A4 portrait; margin: 14mm; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", "JetBrains Mono", system-ui, sans-serif;
+      color: #e7eeff;
+      background: radial-gradient(circle at 15% -10%, #203870 0%, transparent 36%),
+                  radial-gradient(circle at 92% -12%, #4e2f44 0%, transparent 30%),
+                  #070b16;
+    }
+    .wrap { padding: 20px; }
+    .hero {
+      border: 1px solid #2a3658;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(20,29,52,.95), rgba(10,15,31,.93));
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    h1 { margin: 0; font-size: 30px; letter-spacing: .4px; color: #8ce7ff; }
+    .sub { margin: 6px 0 0; color: #b7caea; font-size: 13px; }
+    .pillrow { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+      font-size: 11px; color: #cce6ff; border: 1px solid #334772; border-radius: 999px;
+      padding: 6px 10px; background: rgba(9,16,32,.72);
+    }
+    .explain {
+      margin-top: 12px; font-size: 12px; line-height: 1.45; color: #d8e5ff;
+      border-left: 3px solid #80e5ff; padding-left: 10px;
+    }
+    .section { margin-top: 16px; }
+    .section h2 { margin: 0 0 8px; font-size: 18px; color: #ffd5a8; }
+
+    table {
+      width: 100%; border-collapse: collapse; font-size: 10px;
+      border: 1px solid #2f4167; border-radius: 10px; overflow: hidden;
+      background: rgba(7, 12, 26, .82);
+    }
+    th, td { border-bottom: 1px solid #243353; padding: 6px 7px; text-align: left; }
+    th { background: rgba(20, 32, 58, .88); color: #a6d9ff; font-weight: 700; }
+    tr:last-child td { border-bottom: 0; }
+
+    .grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .card {
+      border: 1px solid #2d3d61;
+      border-radius: 12px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(18,26,47,.95), rgba(8,13,27,.95));
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .card img { width: 100%; display: block; aspect-ratio: 1/1; object-fit: cover; }
+    .card-head { padding: 8px 10px 7px; border-top: 1px solid #2f436f; }
+    .card-head h3 { margin: 0; font-size: 13px; color: #a3ebff; }
+    .card-head p { margin: 2px 0 0; font-size: 10px; color: #91a9d3; }
+    .traits {
+      padding: 8px 10px 10px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 8px;
+    }
+    .t { border: 1px solid #2a3a5c; border-radius: 7px; padding: 5px 6px; background: rgba(9,14,29,.6); }
+    .t span { display: block; font-size: 9px; color: #8da8d6; }
+    .t b { display: block; margin-top: 2px; font-size: 10px; color: #e4eeff; font-weight: 600; }
+
+    .footer {
+      margin-top: 12px;
+      font-size: 10px;
+      color: #8fa5cf;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>NATSHIPS Trait Guide</h1>
+      <p class="sub">Visual Assignment Map from Bitcoin Blocks · Generated 2026-06-25 07:48:24</p>
+      <div class="pillrow">
+        <span class="pill">Range mode: blocks 102,816 → 112,895 (10,080 total)</span>
+        <span class="pill">Guide sample: 19 blocks</span>
+        <span class="pill">Unique origin bodies in sample: 4</span>
+        <span class="pill">Deterministic: same block always yields same traits</span>
+      </div>
+      <p class="explain">
+        Each block height is converted to a block hash, then hash bytes deterministically assign vessel, sky, origin body,
+        propulsion, mission phase, sigil style, and rarity marker. No hand-tuning per image. This PDF shows a visual subset
+        of the collection and the exact trait values tied to each sampled Bitcoin block.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Block → Trait Overview</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Block</th>
+            <th>Hash Prefix</th>
+            <th>Vessel</th>
+            <th>Origin</th>
+            <th>Sigil</th>
+            <th>Hi Rarity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+      <td>102,816</td>
+      <td>0000000000036E1B</td>
+      <td>Heavy-class · NYX-2816</td>
+      <td>MOON</td>
+      <td>CARVED SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>104,500</td>
+      <td>7246133FD2483EB5</td>
+      <td>Starship-class · XEN-4500</td>
+      <td>EARTH</td>
+      <td>STAR SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>107,200</td>
+      <td>A2B58B8703574392</td>
+      <td>Starship-class · CIR-7200</td>
+      <td>SUBSTRATE</td>
+      <td>BEACON SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>109,000</td>
+      <td>A40CFAE61FC6C820</td>
+      <td>Falcon-class · HYP-9000</td>
+      <td>MOON</td>
+      <td>BEACON SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>110,500</td>
+      <td>02453CFB24C05B2D</td>
+      <td>Nimbus-class · CAE-0500</td>
+      <td>EARTH</td>
+      <td>WHISPER SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>111,337</td>
+      <td>CACF1559DD93E002</td>
+      <td>Starship-class · OBL-1337</td>
+      <td>EARTH</td>
+      <td>WHISPER SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>111,774</td>
+      <td>16E229E1D886685D</td>
+      <td>Lancer-class · SCY-1774</td>
+      <td>MARS</td>
+      <td>BEACON SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>112,009</td>
+      <td>6AD5ED8D9EF9BBE0</td>
+      <td>Lancer-class · PER-2009</td>
+      <td>MOON</td>
+      <td>CARVED SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>112,016</td>
+      <td>50BF647F6EAB247C</td>
+      <td>Heavy-class · NYX-2016</td>
+      <td>SUBSTRATE</td>
+      <td>CARVED SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>102,884</td>
+      <td>C9FCC6F78A8F23B5</td>
+      <td>Heavy-class · OCT-2884</td>
+      <td>SUBSTRATE</td>
+      <td>BEACON SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>103,481</td>
+      <td>14B496FC6D051515</td>
+      <td>Falcon-class · PHO-3481</td>
+      <td>SUBSTRATE</td>
+      <td>WHISPER SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>112,895</td>
+      <td>DB64763939301ECC</td>
+      <td>Starship-class · SCY-2895</td>
+      <td>MARS</td>
+      <td>CARVED SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>105,678</td>
+      <td>E19AAC78D444933F</td>
+      <td>Starship-class · MID-5678</td>
+      <td>MARS</td>
+      <td>STAR SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>108,345</td>
+      <td>136742229FD72CB9</td>
+      <td>Heavy-class · AUR-8345</td>
+      <td>EARTH</td>
+      <td>STAR SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>110,999</td>
+      <td>3CDC633DA0976240</td>
+      <td>Lancer-class · PHO-0999</td>
+      <td>MARS</td>
+      <td>BEACON SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>103,210</td>
+      <td>09BB7185EC006917</td>
+      <td>Heavy-class · NOR-3210</td>
+      <td>MARS</td>
+      <td>WHISPER SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>106,060</td>
+      <td>29578D6D713807B0</td>
+      <td>Starship-class · MID-6060</td>
+      <td>MARS</td>
+      <td>STAR SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>109,420</td>
+      <td>46A9E04FBAF8B273</td>
+      <td>Falcon-class · AUR-9420</td>
+      <td>MARS</td>
+      <td>STAR SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+<tr>
+      <td>112,420</td>
+      <td>89EE48FA5F1A1DF9</td>
+      <td>Nimbus-class · MID-2420</td>
+      <td>MARS</td>
+      <td>CARVED SIGIL</td>
+      <td>STANDARD</td>
+    </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Visual Variety Cards</h2>
+      <div class="grid">
+        <article class="card">
+      <img src="./natships-102816.png" alt="NATSHIPS block 102816" />
+      <div class="card-head">
+        <h3>Block 102,816</h3>
+        <p>0000000000036E1B</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Heavy-class · NYX-2816</b></div><div class="t"><span>Fleet</span><b>NYX</b></div><div class="t"><span>Origin</span><b>MOON</b></div><div class="t"><span>World sign</span><b>☽ CANCER</b></div><div class="t"><span>Status</span><b>IN-FLIGHT</b></div><div class="t"><span>Orbit</span><b>SOI</b></div><div class="t"><span>Propulsion</span><b>CRYOGENIC · CH4 + LOX</b></div><div class="t"><span>Sigil</span><b>CARVED SIGIL</b></div><div class="t"><span>Phase</span><b>TRANSIT</b></div><div class="t"><span>Destination</span><b>GATE OF RETURN</b></div><div class="t"><span>Nebula</span><b>sable drift</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-104500.png" alt="NATSHIPS block 104500" />
+      <div class="card-head">
+        <h3>Block 104,500</h3>
+        <p>7246133FD2483EB5</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Starship-class · XEN-4500</b></div><div class="t"><span>Fleet</span><b>XENON</b></div><div class="t"><span>Origin</span><b>EARTH</b></div><div class="t"><span>World sign</span><b>⊕ TAURUS</b></div><div class="t"><span>Status</span><b>LANDED</b></div><div class="t"><span>Orbit</span><b>GEO</b></div><div class="t"><span>Propulsion</span><b>HYPERGOLIC · RP-1 + LOX</b></div><div class="t"><span>Sigil</span><b>STAR SIGIL</b></div><div class="t"><span>Phase</span><b>ASCENT</b></div><div class="t"><span>Destination</span><b>BEACON SHORE</b></div><div class="t"><span>Nebula</span><b>sable drift</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-107200.png" alt="NATSHIPS block 107200" />
+      <div class="card-head">
+        <h3>Block 107,200</h3>
+        <p>A2B58B8703574392</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Starship-class · CIR-7200</b></div><div class="t"><span>Fleet</span><b>CIRRUS</b></div><div class="t"><span>Origin</span><b>SUBSTRATE</b></div><div class="t"><span>World sign</span><b>◉ AQUARIUS</b></div><div class="t"><span>Status</span><b>REFUELING</b></div><div class="t"><span>Orbit</span><b>GEO</b></div><div class="t"><span>Propulsion</span><b>HYPERGOLIC · RP-1 + LOX</b></div><div class="t"><span>Sigil</span><b>BEACON SIGIL</b></div><div class="t"><span>Phase</span><b>ASCENT</b></div><div class="t"><span>Destination</span><b>BEACON SHORE</b></div><div class="t"><span>Nebula</span><b>emerald spiral</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-109000.png" alt="NATSHIPS block 109000" />
+      <div class="card-head">
+        <h3>Block 109,000</h3>
+        <p>A40CFAE61FC6C820</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Falcon-class · HYP-9000</b></div><div class="t"><span>Fleet</span><b>HYPERION</b></div><div class="t"><span>Origin</span><b>MOON</b></div><div class="t"><span>World sign</span><b>☽ CANCER</b></div><div class="t"><span>Status</span><b>DOCKED</b></div><div class="t"><span>Orbit</span><b>MEO</b></div><div class="t"><span>Propulsion</span><b>METHALOX · UDMH + N2O4</b></div><div class="t"><span>Sigil</span><b>BEACON SIGIL</b></div><div class="t"><span>Phase</span><b>ASCENT</b></div><div class="t"><span>Destination</span><b>DEEP RELAY</b></div><div class="t"><span>Nebula</span><b>emerald spiral</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-110500.png" alt="NATSHIPS block 110500" />
+      <div class="card-head">
+        <h3>Block 110,500</h3>
+        <p>02453CFB24C05B2D</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Nimbus-class · CAE-0500</b></div><div class="t"><span>Fleet</span><b>CAELESTIS</b></div><div class="t"><span>Origin</span><b>EARTH</b></div><div class="t"><span>World sign</span><b>⊕ TAURUS</b></div><div class="t"><span>Status</span><b>DOCKED</b></div><div class="t"><span>Orbit</span><b>SOI</b></div><div class="t"><span>Propulsion</span><b>HYPERGOLIC · RP-1 + LOX</b></div><div class="t"><span>Sigil</span><b>WHISPER SIGIL</b></div><div class="t"><span>Phase</span><b>APPROACH</b></div><div class="t"><span>Destination</span><b>BEACON SHORE</b></div><div class="t"><span>Nebula</span><b>ember cloud</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-111337.png" alt="NATSHIPS block 111337" />
+      <div class="card-head">
+        <h3>Block 111,337</h3>
+        <p>CACF1559DD93E002</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Starship-class · OBL-1337</b></div><div class="t"><span>Fleet</span><b>OBLIVION</b></div><div class="t"><span>Origin</span><b>EARTH</b></div><div class="t"><span>World sign</span><b>⊕ TAURUS</b></div><div class="t"><span>Status</span><b>IN-FLIGHT</b></div><div class="t"><span>Orbit</span><b>LEO</b></div><div class="t"><span>Propulsion</span><b>HYPERGOLIC · RP-1 + LOX</b></div><div class="t"><span>Sigil</span><b>WHISPER SIGIL</b></div><div class="t"><span>Phase</span><b>APPROACH</b></div><div class="t"><span>Destination</span><b>DEEP RELAY</b></div><div class="t"><span>Nebula</span><b>ion storm</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-111774.png" alt="NATSHIPS block 111774" />
+      <div class="card-head">
+        <h3>Block 111,774</h3>
+        <p>16E229E1D886685D</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Lancer-class · SCY-1774</b></div><div class="t"><span>Fleet</span><b>SCYTHIA</b></div><div class="t"><span>Origin</span><b>MARS</b></div><div class="t"><span>World sign</span><b>♂ ARIES</b></div><div class="t"><span>Status</span><b>RECOVERED</b></div><div class="t"><span>Orbit</span><b>GEO</b></div><div class="t"><span>Propulsion</span><b>METHALOX · UDMH + N2O4</b></div><div class="t"><span>Sigil</span><b>BEACON SIGIL</b></div><div class="t"><span>Phase</span><b>ASCENT</b></div><div class="t"><span>Destination</span><b>DEEP RELAY</b></div><div class="t"><span>Nebula</span><b>sable drift</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-112009.png" alt="NATSHIPS block 112009" />
+      <div class="card-head">
+        <h3>Block 112,009</h3>
+        <p>6AD5ED8D9EF9BBE0</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Lancer-class · PER-2009</b></div><div class="t"><span>Fleet</span><b>PERSEPHONE</b></div><div class="t"><span>Origin</span><b>MOON</b></div><div class="t"><span>World sign</span><b>☽ CANCER</b></div><div class="t"><span>Status</span><b>LANDED</b></div><div class="t"><span>Orbit</span><b>MEO</b></div><div class="t"><span>Propulsion</span><b>HYPERGOLIC · RP-1 + LOX</b></div><div class="t"><span>Sigil</span><b>CARVED SIGIL</b></div><div class="t"><span>Phase</span><b>TRANSIT</b></div><div class="t"><span>Destination</span><b>GATE OF RETURN</b></div><div class="t"><span>Nebula</span><b>emerald spiral</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-112016.png" alt="NATSHIPS block 112016" />
+      <div class="card-head">
+        <h3>Block 112,016</h3>
+        <p>50BF647F6EAB247C</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Heavy-class · NYX-2016</b></div><div class="t"><span>Fleet</span><b>NYX</b></div><div class="t"><span>Origin</span><b>SUBSTRATE</b></div><div class="t"><span>World sign</span><b>◉ AQUARIUS</b></div><div class="t"><span>Status</span><b>RECOVERED</b></div><div class="t"><span>Orbit</span><b>SOI</b></div><div class="t"><span>Propulsion</span><b>ION · LH2 + LOX</b></div><div class="t"><span>Sigil</span><b>CARVED SIGIL</b></div><div class="t"><span>Phase</span><b>LAUNCH</b></div><div class="t"><span>Destination</span><b>DEEP RELAY</b></div><div class="t"><span>Nebula</span><b>sable drift</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-102884.png" alt="NATSHIPS block 102884" />
+      <div class="card-head">
+        <h3>Block 102,884</h3>
+        <p>C9FCC6F78A8F23B5</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Heavy-class · OCT-2884</b></div><div class="t"><span>Fleet</span><b>OCTAVIAN</b></div><div class="t"><span>Origin</span><b>SUBSTRATE</b></div><div class="t"><span>World sign</span><b>◉ AQUARIUS</b></div><div class="t"><span>Status</span><b>IN-FLIGHT</b></div><div class="t"><span>Orbit</span><b>MEO</b></div><div class="t"><span>Propulsion</span><b>METHALOX · UDMH + N2O4</b></div><div class="t"><span>Sigil</span><b>BEACON SIGIL</b></div><div class="t"><span>Phase</span><b>APPROACH</b></div><div class="t"><span>Destination</span><b>DEEP RELAY</b></div><div class="t"><span>Nebula</span><b>ember cloud</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-103481.png" alt="NATSHIPS block 103481" />
+      <div class="card-head">
+        <h3>Block 103,481</h3>
+        <p>14B496FC6D051515</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Falcon-class · PHO-3481</b></div><div class="t"><span>Fleet</span><b>PHOENIX</b></div><div class="t"><span>Origin</span><b>SUBSTRATE</b></div><div class="t"><span>World sign</span><b>◉ AQUARIUS</b></div><div class="t"><span>Status</span><b>LANDED</b></div><div class="t"><span>Orbit</span><b>TMI</b></div><div class="t"><span>Propulsion</span><b>SOLID · Xe + e-</b></div><div class="t"><span>Sigil</span><b>WHISPER SIGIL</b></div><div class="t"><span>Phase</span><b>GATE CROSSING</b></div><div class="t"><span>Destination</span><b>DEEP RELAY</b></div><div class="t"><span>Nebula</span><b>nova lace</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-112895.png" alt="NATSHIPS block 112895" />
+      <div class="card-head">
+        <h3>Block 112,895</h3>
+        <p>DB64763939301ECC</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Starship-class · SCY-2895</b></div><div class="t"><span>Fleet</span><b>SCYTHIA</b></div><div class="t"><span>Origin</span><b>MARS</b></div><div class="t"><span>World sign</span><b>♂ ARIES</b></div><div class="t"><span>Status</span><b>IN-FLIGHT</b></div><div class="t"><span>Orbit</span><b>LEO</b></div><div class="t"><span>Propulsion</span><b>HYPERGOLIC · RP-1 + LOX</b></div><div class="t"><span>Sigil</span><b>CARVED SIGIL</b></div><div class="t"><span>Phase</span><b>LAUNCH</b></div><div class="t"><span>Destination</span><b>GATE OF RETURN</b></div><div class="t"><span>Nebula</span><b>deep cobalt</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-105678.png" alt="NATSHIPS block 105678" />
+      <div class="card-head">
+        <h3>Block 105,678</h3>
+        <p>E19AAC78D444933F</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Starship-class · MID-5678</b></div><div class="t"><span>Fleet</span><b>MIDAS</b></div><div class="t"><span>Origin</span><b>MARS</b></div><div class="t"><span>World sign</span><b>♂ ARIES</b></div><div class="t"><span>Status</span><b>REFUELING</b></div><div class="t"><span>Orbit</span><b>GEO</b></div><div class="t"><span>Propulsion</span><b>ION · LH2 + LOX</b></div><div class="t"><span>Sigil</span><b>STAR SIGIL</b></div><div class="t"><span>Phase</span><b>TRANSIT</b></div><div class="t"><span>Destination</span><b>HOME RING</b></div><div class="t"><span>Nebula</span><b>sable drift</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-108345.png" alt="NATSHIPS block 108345" />
+      <div class="card-head">
+        <h3>Block 108,345</h3>
+        <p>136742229FD72CB9</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Heavy-class · AUR-8345</b></div><div class="t"><span>Fleet</span><b>AUREA</b></div><div class="t"><span>Origin</span><b>EARTH</b></div><div class="t"><span>World sign</span><b>⊕ TAURUS</b></div><div class="t"><span>Status</span><b>RECOVERED</b></div><div class="t"><span>Orbit</span><b>LEO</b></div><div class="t"><span>Propulsion</span><b>CRYOGENIC · CH4 + LOX</b></div><div class="t"><span>Sigil</span><b>STAR SIGIL</b></div><div class="t"><span>Phase</span><b>TRANSIT</b></div><div class="t"><span>Destination</span><b>DEEP RELAY</b></div><div class="t"><span>Nebula</span><b>sable drift</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-110999.png" alt="NATSHIPS block 110999" />
+      <div class="card-head">
+        <h3>Block 110,999</h3>
+        <p>3CDC633DA0976240</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Lancer-class · PHO-0999</b></div><div class="t"><span>Fleet</span><b>PHOENIX</b></div><div class="t"><span>Origin</span><b>MARS</b></div><div class="t"><span>World sign</span><b>♂ ARIES</b></div><div class="t"><span>Status</span><b>IN-FLIGHT</b></div><div class="t"><span>Orbit</span><b>HEO</b></div><div class="t"><span>Propulsion</span><b>CRYOGENIC · CH4 + LOX</b></div><div class="t"><span>Sigil</span><b>BEACON SIGIL</b></div><div class="t"><span>Phase</span><b>TRANSIT</b></div><div class="t"><span>Destination</span><b>DEEP RELAY</b></div><div class="t"><span>Nebula</span><b>emerald spiral</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-103210.png" alt="NATSHIPS block 103210" />
+      <div class="card-head">
+        <h3>Block 103,210</h3>
+        <p>09BB7185EC006917</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Heavy-class · NOR-3210</b></div><div class="t"><span>Fleet</span><b>NORDLAND</b></div><div class="t"><span>Origin</span><b>MARS</b></div><div class="t"><span>World sign</span><b>♂ ARIES</b></div><div class="t"><span>Status</span><b>IN-FLIGHT</b></div><div class="t"><span>Orbit</span><b>HEO</b></div><div class="t"><span>Propulsion</span><b>CRYOGENIC · CH4 + LOX</b></div><div class="t"><span>Sigil</span><b>WHISPER SIGIL</b></div><div class="t"><span>Phase</span><b>ASCENT</b></div><div class="t"><span>Destination</span><b>GATE OF RETURN</b></div><div class="t"><span>Nebula</span><b>ember cloud</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-106060.png" alt="NATSHIPS block 106060" />
+      <div class="card-head">
+        <h3>Block 106,060</h3>
+        <p>29578D6D713807B0</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Starship-class · MID-6060</b></div><div class="t"><span>Fleet</span><b>MIDAS</b></div><div class="t"><span>Origin</span><b>MARS</b></div><div class="t"><span>World sign</span><b>♂ ARIES</b></div><div class="t"><span>Status</span><b>RECOVERED</b></div><div class="t"><span>Orbit</span><b>TLI</b></div><div class="t"><span>Propulsion</span><b>METHALOX · UDMH + N2O4</b></div><div class="t"><span>Sigil</span><b>STAR SIGIL</b></div><div class="t"><span>Phase</span><b>DOCK</b></div><div class="t"><span>Destination</span><b>DEEP RELAY</b></div><div class="t"><span>Nebula</span><b>cinder bloom</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-109420.png" alt="NATSHIPS block 109420" />
+      <div class="card-head">
+        <h3>Block 109,420</h3>
+        <p>46A9E04FBAF8B273</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Falcon-class · AUR-9420</b></div><div class="t"><span>Fleet</span><b>AUREA</b></div><div class="t"><span>Origin</span><b>MARS</b></div><div class="t"><span>World sign</span><b>♂ ARIES</b></div><div class="t"><span>Status</span><b>DOCKED</b></div><div class="t"><span>Orbit</span><b>TMI</b></div><div class="t"><span>Propulsion</span><b>CRYOGENIC · CH4 + LOX</b></div><div class="t"><span>Sigil</span><b>STAR SIGIL</b></div><div class="t"><span>Phase</span><b>DOCK</b></div><div class="t"><span>Destination</span><b>BEACON SHORE</b></div><div class="t"><span>Nebula</span><b>sable drift</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+<article class="card">
+      <img src="./natships-112420.png" alt="NATSHIPS block 112420" />
+      <div class="card-head">
+        <h3>Block 112,420</h3>
+        <p>89EE48FA5F1A1DF9</p>
+      </div>
+      <div class="traits">
+        <div class="t"><span>Vessel</span><b>Nimbus-class · MID-2420</b></div><div class="t"><span>Fleet</span><b>MIDAS</b></div><div class="t"><span>Origin</span><b>MARS</b></div><div class="t"><span>World sign</span><b>♂ ARIES</b></div><div class="t"><span>Status</span><b>DOCKED</b></div><div class="t"><span>Orbit</span><b>GEO</b></div><div class="t"><span>Propulsion</span><b>ION · LH2 + LOX</b></div><div class="t"><span>Sigil</span><b>CARVED SIGIL</b></div><div class="t"><span>Phase</span><b>LAUNCH</b></div><div class="t"><span>Destination</span><b>BEACON SHORE</b></div><div class="t"><span>Nebula</span><b>nova lace</b></div><div class="t"><span>Hi rarity</span><b>STANDARD</b></div>
+      </div>
+    </article>
+      </div>
+    </section>
+
+    <div class="footer">NATSHIPS · Vessels of the Substrate · Trait Guide PDF</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NATSHIPS Color Grid Audit</title>
+  <style>
+    :root {
+      --bg: #060916;
+      --panel: #10172b;
+      --line: #24314f;
+      --ink: #e3ecff;
+      --muted: #9cb1d7;
+      --accent: #8ce7ff;
+      --ok: #93ff9d;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--ink);
+      background: radial-gradient(circle at 20% -10%, #1f2e55 0%, transparent 30%),
+                  radial-gradient(circle at 90% -15%, #3a2a43 0%, transparent 28%),
+                  var(--bg);
+    }
+
+    .wrap {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .top {
+      background: linear-gradient(180deg, rgba(18, 26, 48, 0.95), rgba(12, 18, 34, 0.9));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 18px;
+      position: sticky;
+      top: 10px;
+      z-index: 10;
+      backdrop-filter: blur(5px);
+    }
+
+    .title {
+      font-size: 20px;
+      margin: 0 0 6px;
+      color: var(--accent);
+    }
+
+    .desc {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .stats {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat {
+      background: rgba(6, 12, 24, 0.75);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      font-size: 11px;
+    }
+
+    .stat b {
+      color: var(--ok);
+      font-size: 14px;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .hues {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .hue {
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 6px 4px;
+      text-align: center;
+      font-size: 10px;
+      color: #f7fbff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, #111a31, #0a1123);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+
+    .thumb {
+      width: 100%;
+      aspect-ratio: 1/1;
+      object-fit: cover;
+      display: block;
+      background: #080d1b;
+    }
+
+    .meta {
+      padding: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .name {
+      font-size: 11px;
+      color: var(--muted);
+      word-break: break-all;
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+    }
+
+    .sw {
+      height: 12px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+
+    @media (max-width: 900px) {
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hues { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1 class="title">NATSHIPS Grid Audit (nat.fun style)</h1>
+      <p class="desc">Use this to inspect palette spread before upload. Each card shows 6 dominant swatches. Top bars show global hue node coverage.</p>
+      <div class="stats">
+        <div class="stat">Cards loaded<b id="cardsLoaded">0</b></div>
+        <div class="stat">Unique hue nodes<b id="nodeCount">0 / 12</b></div>
+        <div class="stat">Most common node<b id="topNode">-</b></div>
+        <div class="stat">Color spread score<b id="spread">-</b></div>
+      </div>
+      <div class="hues" id="hues"></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <script>
+    const files = [
+      'natships-102816.png',
+      'natships-104500.png',
+      'natships-107200.png',
+      'natships-109000.png',
+      'natships-110500.png',
+      'natships-111337.png',
+      'natships-111774.png',
+      'natships-112009.png',
+      'natships-112016.png',
+      'natships-102884.png',
+      'natships-103481.png',
+      'natships-112895.png',
+      'natships-105678.png',
+      'natships-108345.png',
+      'natships-110999.png'
+    ];
+
+    const grid = document.getElementById('grid');
+    const huesEl = document.getElementById('hues');
+
+    const hueBuckets = Array.from({ length: 12 }, () => 0);
+    const hueLabels = ['R','RO','O','YO','Y','YG','G','CG','C','BC','B','RB'];
+
+    function rgbToHsl(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h = 0, s = 0, l = (max + min) / 2;
+      if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return { h: h * 360, s, l };
+    }
+
+    function quantize(imageData) {
+      const counts = new Map();
+      const d = imageData.data;
+      for (let i = 0; i < d.length; i += 4 * 4) {
+        const a = d[i + 3];
+        if (a < 200) continue;
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        const hsl = rgbToHsl(r, g, b);
+        // Ignore near-grayscale and extreme luma so swatches represent usable palette variety.
+        if (hsl.s < 0.14 || hsl.l < 0.08 || hsl.l > 0.93) continue;
+        const key = `${Math.round(r / 32) * 32},${Math.round(g / 32) * 32},${Math.round(b / 32) * 32}`;
+        counts.set(key, (counts.get(key) || 0) + 1);
+      }
+      return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k]) => k);
+    }
+
+    function addHueBuckets(swatches) {
+      for (const s of swatches) {
+        const [r, g, b] = s.split(',').map(Number);
+        const hsl = rgbToHsl(r, g, b);
+        if (hsl.s < 0.12 || hsl.l < 0.08 || hsl.l > 0.92) continue;
+        const idx = Math.floor(((hsl.h % 360) / 360) * 12) % 12;
+        hueBuckets[idx] += 1;
+      }
+    }
+
+    function renderHueSummary() {
+      huesEl.innerHTML = '';
+      const active = hueBuckets.filter(v => v > 0).length;
+      const total = hueBuckets.reduce((a, b) => a + b, 0);
+      const maxIdx = hueBuckets.indexOf(Math.max(...hueBuckets));
+      const spread = total ? (active / 12 * 100).toFixed(0) + '%' : '0%';
+
+      document.getElementById('nodeCount').textContent = `${active} / 12`;
+      document.getElementById('topNode').textContent = maxIdx >= 0 ? hueLabels[maxIdx] : '-';
+      document.getElementById('spread').textContent = spread;
+      document.getElementById('cardsLoaded').textContent = String(files.length);
+
+      for (let i = 0; i < 12; i++) {
+        const v = hueBuckets[i];
+        const hue = i * 30;
+        const div = document.createElement('div');
+        div.className = 'hue';
+        div.style.background = `hsl(${hue} 72% 42%)`;
+        div.textContent = `${hueLabels[i]} ${v}`;
+        huesEl.appendChild(div);
+      }
+    }
+
+    function buildCard(file) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = 120;
+          c.height = 120;
+          const cx = c.getContext('2d', { willReadFrequently: true });
+          cx.drawImage(img, 0, 0, c.width, c.height);
+          const fullSwatches = quantize(cx.getImageData(0, 0, c.width, c.height));
+          const px = Math.floor(c.width * 0.12);
+          const py = Math.floor(c.height * 0.48);
+          const pw = Math.floor(c.width * 0.76);
+          const ph = Math.floor(c.height * 0.48);
+          const planetSwatches = quantize(cx.getImageData(px, py, pw, ph));
+          const swatches = [...new Set([...planetSwatches, ...fullSwatches])].slice(0, 6);
+          addHueBuckets(swatches);
+
+          const card = document.createElement('article');
+          card.className = 'card';
+
+          const thumb = document.createElement('img');
+          thumb.className = 'thumb';
+          thumb.src = './' + file;
+          thumb.alt = file;
+
+          const meta = document.createElement('div');
+          meta.className = 'meta';
+
+          const name = document.createElement('div');
+          name.className = 'name';
+          name.textContent = file.replace('.png', '');
+
+          const row = document.createElement('div');
+          row.className = 'swatches';
+          swatches.forEach((s) => {
+            const sw = document.createElement('div');
+            sw.className = 'sw';
+            sw.style.background = `rgb(${s})`;
+            sw.title = s;
+            row.appendChild(sw);
+          });
+
+          meta.appendChild(name);
+          meta.appendChild(row);
+          card.appendChild(thumb);
+          card.appendChild(meta);
+          resolve(card);
+        };
+        img.onerror = () => resolve(null);
+        img.src = './' + file;
+      });
+    }
+
+    (async () => {
+      const cards = await Promise.all(files.map(buildCard));
+      cards.filter(Boolean).forEach(c => grid.appendChild(c));
+      renderHueSummary();
+    })();
+  </script>
+</body>
+</html>
