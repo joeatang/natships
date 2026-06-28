@@ -61,8 +61,14 @@
     .mask-toggle:hover{color:#fff;border-color:rgba(124,231,255,.55)}
     .mask-toggle.on{color:var(--cyan);border-color:rgba(124,231,255,.45)}
     .stage-foot{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
-    .seal{font:11px "JetBrains Mono",monospace;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;flex:1;min-width:240px}
+    .stage-foot .breakthrough{flex:0 0 auto;font-size:11px;letter-spacing:.28em}
+    .stage-foot .actions{margin-left:auto}
+    .seal{margin-top:10px;font:11px "JetBrains Mono",monospace;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;text-align:center}
     .seal b{color:var(--cyan)}
+    .lens-hint{margin-top:6px;text-align:center;font:9px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:rgba(124,231,255,.55);transition:opacity 600ms ease;pointer-events:none}
+    .lens-hint.faded{opacity:0}
+    .canvas-wrap{cursor:grab}
+    .canvas-wrap.dragging{cursor:grabbing}
     .actions{display:flex;gap:10px;flex-wrap:wrap}
     .btn{appearance:none;cursor:pointer;border:1px solid rgba(124,231,255,.22);border-radius:999px;padding:14px 18px;color:#f7fbff;text-decoration:none;font:11px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;background:linear-gradient(180deg,rgba(20,27,48,.98),rgba(8,10,18,.98));transition:transform 180ms ease,border-color 180ms ease,box-shadow 180ms ease;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;min-width:46px}
     .btn:hover{transform:translateY(-1px);border-color:rgba(124,231,255,.55);box-shadow:0 0 0 1px rgba(124,231,255,.12) inset,0 16px 28px rgba(0,0,0,.28)}
@@ -128,9 +134,9 @@
     @media (max-width:520px){
       h1{letter-spacing:.1em}
       .stage-foot{flex-direction:column;align-items:stretch}
-      .actions{width:100%}
-      .actions .btn{flex:1}
-      .seal{text-align:center}
+      .stage-foot .actions{margin-left:0;display:flex;gap:8px;width:100%}
+      .stage-foot .actions .btn{flex:1}
+      .stage-foot .breakthrough{width:100%}
     }
   </style>
 </head>
@@ -152,12 +158,14 @@
           <button class="mask-toggle" id="maskToggle" type="button" title="Preview circle crop (like X/Discord)">circle preview</button>
         </div>
         <div class="stage-foot">
-          <div class="seal" id="sealText">tuning&hellip;</div>
+          <button class="btn breakthrough" id="breakthroughBtn" type="button" title="Scans all six frequencies in two seconds">↯ breakthrough ↯</button>
           <div class="actions">
             <button class="btn" id="copySeal" type="button">copy seal</button>
             <button class="btn primary" id="download" type="button">land it</button>
           </div>
         </div>
+        <div class="seal" id="sealText">tuning&hellip;</div>
+        <div class="lens-hint" id="lensHint">drag the image to recenter • double-tap to auto</div>
       </section>
 
       <aside class="panel">
@@ -210,8 +218,7 @@
         </div>
 
         <div class="field">
-          <button class="btn breakthrough" id="breakthroughBtn" type="button" style="width:100%;justify-content:center;font-size:11px;letter-spacing:.32em">↯ breakthrough ↯</button>
-          <div class="hint">Scans all six frequencies in two seconds. Borrowed from the molecule, borrowed from the boostback. You'll land on a new aura.</div>
+          <div class="hint">• <b>breakthrough</b> button lives right under the image. Scans all six frequencies in two seconds. Borrowed from the molecule, borrowed from the boostback. You'll land on a new aura.</div>
         </div>
 
         <p class="footer-note">1024&times;1024 PNG. Block, frequency, etching, and cargo all engrave into the seal &mdash; every re-entry is a one-off.</p>
@@ -431,6 +438,63 @@
       canvasWrap.style.borderRadius = state.maskOn ? '50%' : '18px';
     });
 
+    // ============ DRAG-TO-PAN LENS ============
+    // Lets a captain nudge the framing if the auto-centroid doesn't sit the way
+    // they want. Operates on state.shipFocus (the same value the renderer uses),
+    // so dragging the on-screen canvas perfectly maps to the 1024×1024 output.
+    const lensHint = document.getElementById('lensHint');
+    let drag = null;
+    function fadeHint() {
+      if (lensHint && !lensHint.classList.contains('faded')) {
+        lensHint.classList.add('faded');
+      }
+    }
+    canvasWrap.addEventListener('pointerdown', (e) => {
+      if (!state.sourceImg || state.breakthroughActive) return;
+      const rect = canvas.getBoundingClientRect();
+      drag = {
+        id: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        startFx: (state.shipFocus && state.shipFocus.x) || 0.5,
+        startFy: (state.shipFocus && state.shipFocus.y) || 0.5,
+        // px-per-focus-unit conversion (focus is 0..1 of source; drag in screen px)
+        pxPerFx: rect.width,
+        pxPerFy: rect.height,
+        moved: false,
+      };
+      try { canvasWrap.setPointerCapture(e.pointerId); } catch (_) {}
+      canvasWrap.classList.add('dragging');
+    });
+    canvasWrap.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.startX;
+      const dy = e.clientY - drag.startY;
+      if (!drag.moved && Math.hypot(dx, dy) < 3) return;
+      drag.moved = true;
+      // dragging the IMAGE right means the focus point shifts LEFT in source coords
+      const f = state.shipFocus || { x: 0.5, y: 0.5, w: 1, h: 1 };
+      const nx = Math.max(0.05, Math.min(0.95, drag.startFx - dx / drag.pxPerFx / 1.2));
+      const ny = Math.max(0.05, Math.min(0.95, drag.startFy - dy / drag.pxPerFy / 1.2));
+      state.shipFocus = { ...f, x: nx, y: ny };
+      render();
+    });
+    function endDrag(e) {
+      if (!drag) return;
+      if (drag.moved) fadeHint();
+      try { canvasWrap.releasePointerCapture(drag.id); } catch (_) {}
+      canvasWrap.classList.remove('dragging');
+      drag = null;
+    }
+    canvasWrap.addEventListener('pointerup', endDrag);
+    canvasWrap.addEventListener('pointercancel', endDrag);
+    canvasWrap.addEventListener('dblclick', () => {
+      // double-click / double-tap restores the auto-detected centroid
+      if (!state.sourceImg) return;
+      state.shipFocus = detectShipFocus(state.sourceImg);
+      render();
+    });
+
     downloadBtn.addEventListener('click', () => {
       state.exporting = true;
       render();
@@ -555,7 +619,9 @@
       // rockets sitting near a source edge get tighter zoom so they still land
       // close to the canvas center after framing without exposing empty edges.
       const offCenter = Math.max(Math.abs(focus.x - 0.5), Math.abs(focus.y - 0.5));
-      const zoom = 1.2 + Math.min(0.35, offCenter * 1.0);
+      // Gentler crop — the source art has intentional negative space we want to
+      // keep. Only zoom in more when the rocket is genuinely off-center.
+      const zoom = 1.06 + Math.min(0.28, offCenter * 0.7);
       const drawW = w * zoom;
       const drawH = h * zoom;
       const idealDx = (w * 0.50) - (focus.x * drawW);
@@ -609,19 +675,17 @@
       for (let y = 0; y < h; y += 3) ctx.fillRect(0, y, w, 1);
       ctx.globalAlpha = 1;
 
-      // 8. seal ring + microtext
+      // 8. seal ring + microtext (decorative; sits at the inscribed-circle edge)
       drawSealRing(w, h, aura);
 
-      // 9. mission patch (always shows block; arc-text shows handle if set)
+      // 9. mission patch — fully inside the inscribed circle so the handle + block
+      // remain visible when this PFP is shown circle-cropped on X / Discord.
       drawMissionPatch(w, h, aura);
 
-      // 10. vertical hull stencil along right edge
-      drawHullStencil(w, h, aura);
-
-      // 11. brand stamp top-right
+      // 10. brand + DMT credit — bottom-center, also inside the circle
       drawBrandStamp(w, h, aura);
 
-      // 12. breakthrough flare overlay
+      // 11. breakthrough flare overlay
       if (state.breakthroughActive) drawBreakthroughFlare(w, h, aura);
 
       // text seal under canvas
@@ -634,11 +698,14 @@
     // ============ DECALS / OVERLAYS ============
 
     function drawMissionPatch(w, h, aura) {
-      // upper-left mission patch: arc-set @handle, block number stamped inside
-      const cx = w * 0.135;
-      const cy = h * 0.135;
-      const rOuter = w * 0.085;
-      const rInner = w * 0.062;
+      // Mission patch — positioned inside the inscribed circle with breathing
+      // room from the seal ring. Outer-edge distance from canvas center:
+      // sqrt(2)*(0.5-0.225)w + 0.062w ≈ 0.451w, comfortably below the seal-ring
+      // inner radius (~0.475w).
+      const cx = w * 0.225;
+      const cy = h * 0.225;
+      const rOuter = w * 0.062;
+      const rInner = w * 0.044;
 
       ctx.save();
       // patch shadow
@@ -678,19 +745,16 @@
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = '700 14px "JetBrains Mono", monospace';
-      ctx.fillText('MISSION', cx, cy - 16);
-      ctx.font = '900 22px "JetBrains Mono", monospace';
+      ctx.font = '700 10px "JetBrains Mono", monospace';
+      ctx.fillText('MISSION', cx, cy - 12);
+      ctx.font = '900 15px "JetBrains Mono", monospace';
       ctx.shadowColor = hexA(aura.mid, 0.7);
       ctx.shadowBlur = 8;
-      ctx.fillText(`DM-${state.block}`, cx, cy + 10);
+      ctx.fillText(`DM-${state.block}`, cx, cy + 7);
       ctx.shadowBlur = 0;
 
-      // arc text: top half = @handle (or NATSHIPS), bottom half = MISSION
-      const topText = state.handle ? `• @${state.handle} •` : '• NATSHIPS •';
-      const botText = '• NON-ARBITRARY •';
-      drawArcText(topText, cx, cy, (rOuter + rInner)/2, hexA(aura.hi, 0.95), '700 12px "JetBrains Mono", monospace', Math.PI, true);
-      drawArcText(botText, cx, cy, (rOuter + rInner)/2, 'rgba(237,244,255,0.55)', '600 10px "JetBrains Mono", monospace', 0, false);
+      // arc text removed — at this patch size it just renders as smudges.
+      // The seal ring around the canvas already carries NATSHIPS + NON-ARBITRARY.
 
       ctx.restore();
     }
@@ -753,31 +817,31 @@
     }
 
     function drawBrandStamp(w, h, aura) {
-      // top-right small NATSHIPS tag
+      // Handle pill at bottom-center, sized + positioned to stay inside the
+      // inscribed circle (the area that survives a circular profile-pic crop).
+      // If no handle is set we skip entirely — the seal ring already brands.
+      if (!state.handle) return;
       ctx.save();
-      ctx.font = '700 14px "JetBrains Mono", monospace';
-      const tag = 'NATSHIPS';
-      const tw = ctx.measureText(tag).width + 24;
-      const th = 28;
-      const tx = w - tw - 38, ty = 38;
-      roundRect(tx, ty, tw, th, 10);
-      ctx.fillStyle = 'rgba(4,6,12,0.6)';
+      const tag = `@${state.handle}`;
+      ctx.font = '700 16px "JetBrains Mono", monospace';
+      const padX = 18;
+      const tw = ctx.measureText(tag).width + padX * 2;
+      const th = 30;
+      const tx = (w - tw) / 2;
+      const ty = h * 0.82;
+      roundRect(tx, ty, tw, th, 15);
+      ctx.fillStyle = 'rgba(4,6,12,0.78)';
       ctx.fill();
-      ctx.strokeStyle = hexA(aura.hi, 0.55);
-      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = hexA(aura.hi, 0.7);
+      ctx.lineWidth = 1.4;
+      ctx.shadowColor = hexA(aura.mid, 0.6);
+      ctx.shadowBlur = 10;
       ctx.stroke();
-      ctx.fillStyle = hexA(aura.hi, 0.95);
-      ctx.textAlign = 'left';
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = hexA(aura.hi, 0.96);
+      ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(tag, tx + 12, ty + th/2 + 1);
-      ctx.restore();
-
-      // bottom-right micro: DMT thesis credit
-      ctx.save();
-      ctx.font = '600 11px "JetBrains Mono", monospace';
-      ctx.fillStyle = 'rgba(237,244,255,0.5)';
-      ctx.textAlign = 'right';
-      ctx.fillText('DIGITAL MATTER · NON-ARBITRARY', w - 38, h - 30);
+      ctx.fillText(tag, w / 2, ty + th / 2 + 0.5);
       ctx.restore();
     }
 
@@ -948,9 +1012,13 @@
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // engraved microtext: substrate + frequency + invitation
+      // engraved microtext: substrate + frequency + invitation. Repeats end
+      // with a separator so the seam is always between fields, never mid-word.
       const label = `NATSHIPS · BLOCK ${state.block} · ${aura.name.toUpperCase()} · DIGITAL MATTER · NON-ARBITRARY · ↯ JOIN THE FLEET ↯ · `;
-      const ring = (label + label + label + label).slice(0, 240);
+      // Repeat enough times to wrap the circle, then trim to a whole number of
+      // labels so the loop point lands on the " · " separator.
+      const reps = Math.max(2, Math.ceil(240 / label.length));
+      const ring = label.repeat(reps);
       drawTextOnCircle(ring, cx, cy, (rOuter + rInner)/2, 'rgba(237,244,255,0.55)', '600 13px "JetBrains Mono", monospace', -Math.PI/2);
     }
 
