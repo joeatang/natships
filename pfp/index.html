@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NATSHIPS · Transmission Studio</title>
-  <meta name="description" content="Tune a NATSHIPS transmission and make it your PFP. Pick a block, set your aura, stamp your handle, drop in a captain crest. Browser-only, your image never leaves your phone.">
-  <meta property="og:title" content="NATSHIPS · Transmission Studio">
-  <meta property="og:description" content="Pick a block. Set your aura. Stamp your handle. Export your NATSHIPS PFP.">
+  <title>NATSHIPS · Re-Entry</title>
+  <meta name="description" content="Re-Entry is the NATSHIPS PFP studio. Tune into a Bitcoin block, etch your hull, lock your signal, and bring your vessel home. Every ship is digital matter — non-arbitrary, conserved, sealed to a block.">
+  <meta property="og:title" content="NATSHIPS · Re-Entry">
+  <meta property="og:description" content="Bring a vessel home from the substrate. Pick a block, etch your hull, choose a signal, breakthrough.">
+  <meta property="og:type" content="website">
   <style>
     :root {
       --bg: #02040a;
@@ -38,20 +39,21 @@
       transform-origin:center bottom;
       mask-image:radial-gradient(circle at center, rgba(0,0,0,.65) 0%, transparent 74%);
     }
-    .shell{max-width:1240px;margin:0 auto;padding:28px 22px 60px}
+    .shell{max-width:1260px;margin:0 auto;padding:28px 22px 60px}
     .top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
     .eyebrow{font:10px "JetBrains Mono",monospace;letter-spacing:.42em;text-transform:uppercase;color:rgba(237,244,255,.56);margin-bottom:8px}
     h1{margin:0;font-size:clamp(34px,5vw,62px);line-height:.95;letter-spacing:.14em;text-transform:uppercase;
        background:linear-gradient(90deg,#fff 0%, var(--cyan) 35%, var(--amber) 72%, #fff 100%);
        -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .sub{margin:8px 0 0;font-size:14px;line-height:1.55;color:var(--muted);max-width:680px}
-    .home{font:10px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:10px 14px;border-radius:999px}
+    .sub{margin:8px 0 0;font-size:14px;line-height:1.55;color:var(--muted);max-width:700px}
+    .sub b{color:#fff;font-weight:600}
+    .home{font:10px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:10px 14px;border-radius:999px;white-space:nowrap}
     .home:hover{color:#fff;border-color:rgba(124,231,255,.55)}
-    .grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:22px;align-items:start}
+    .grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:22px;align-items:start}
     .stage{position:relative;border-radius:24px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(8,12,22,.92),rgba(4,6,12,.78));padding:18px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset,0 28px 90px rgba(0,0,0,.42)}
-    .canvas-wrap{position:relative;width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#000;display:grid;place-items:center}
+    .canvas-wrap{position:relative;width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#000;display:grid;place-items:center;transition:border-radius 240ms ease}
     .canvas-wrap canvas{width:100%;height:100%;display:block}
-    .mask-toggle{position:absolute;top:12px;right:12px;font:10px "JetBrains Mono",monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);background:rgba(4,6,12,.72);border:1px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;backdrop-filter:blur(8px)}
+    .mask-toggle{position:absolute;top:12px;right:12px;font:10px "JetBrains Mono",monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);background:rgba(4,6,12,.72);border:1px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;backdrop-filter:blur(8px);z-index:3}
     .mask-toggle:hover{color:#fff;border-color:rgba(124,231,255,.55)}
     .mask-toggle.on{color:var(--cyan);border-color:rgba(124,231,255,.45)}
     .stage-foot{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
@@ -61,10 +63,13 @@
     .btn{appearance:none;cursor:pointer;border:1px solid rgba(124,231,255,.22);border-radius:999px;padding:12px 16px;color:#f7fbff;text-decoration:none;font:10px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;background:linear-gradient(180deg,rgba(20,27,48,.98),rgba(8,10,18,.98));transition:transform 180ms ease,border-color 180ms ease,box-shadow 180ms ease;display:inline-flex;align-items:center;gap:6px;min-height:42px}
     .btn:hover{transform:translateY(-1px);border-color:rgba(124,231,255,.55);box-shadow:0 0 0 1px rgba(124,231,255,.12) inset,0 16px 28px rgba(0,0,0,.28)}
     .btn.primary{background:linear-gradient(180deg,rgba(29,40,74,.98),rgba(10,14,28,.98));border-color:rgba(124,231,255,.34)}
+    .btn.breakthrough{background:linear-gradient(180deg,rgba(181,157,255,.32),rgba(124,231,255,.2));border-color:rgba(181,157,255,.6);color:#fff;text-shadow:0 0 12px rgba(181,157,255,.6);animation:breath 4.2s ease-in-out infinite}
+    @keyframes breath{0%,100%{box-shadow:0 0 0 1px rgba(181,157,255,.18) inset,0 0 18px rgba(181,157,255,.18)}50%{box-shadow:0 0 0 1px rgba(124,231,255,.32) inset,0 0 26px rgba(124,231,255,.32)}}
     .panel{border-radius:22px;border:1px solid rgba(124,231,255,.14);background:var(--panel);padding:18px;display:grid;gap:16px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset}
     .panel h2{margin:0;font:11px "JetBrains Mono",monospace;letter-spacing:.3em;text-transform:uppercase;color:rgba(237,244,255,.66)}
     .field{display:grid;gap:8px}
     .field label{font:10px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:rgba(237,244,255,.5)}
+    .field label .alias{color:rgba(124,231,255,.7);margin-left:6px}
     .field .hint{font-size:11px;color:rgba(237,244,255,.46);line-height:1.5}
     .ship-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     select,input[type="text"]{appearance:none;width:100%;background:rgba(4,6,12,.7);border:1px solid rgba(124,231,255,.18);color:#fff;border-radius:12px;padding:11px 12px;font:13px "Space Grotesk",sans-serif;letter-spacing:.04em;outline:none}
@@ -76,19 +81,37 @@
     .aura{cursor:pointer;border:1px solid rgba(124,231,255,.16);border-radius:14px;padding:10px;background:rgba(6,9,18,.7);display:grid;gap:6px;text-align:center;transition:border-color 180ms ease,transform 180ms ease}
     .aura:hover{transform:translateY(-1px)}
     .aura.active{border-color:rgba(124,231,255,.7);box-shadow:0 0 0 1px rgba(124,231,255,.18) inset}
-    .swatch{width:100%;height:24px;border-radius:8px;border:1px solid rgba(255,255,255,.06)}
+    .swatch{width:100%;height:22px;border-radius:8px;border:1px solid rgba(255,255,255,.06)}
     .aura span{font:9px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
     .crest{display:grid;gap:10px}
-    .crest .drop{border:1px dashed rgba(124,231,255,.3);border-radius:14px;padding:14px;text-align:center;color:var(--muted);font-size:12px;cursor:pointer;background:rgba(4,6,12,.5);transition:border-color 180ms ease,color 180ms ease}
+    .crest .mode-row{display:flex;gap:6px}
+    .crest .mode-row button{flex:1;background:rgba(8,12,22,.78);border:1px solid rgba(124,231,255,.16);color:var(--muted);border-radius:10px;padding:9px;font:9px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:all 180ms ease}
+    .crest .mode-row button.active{color:#fff;border-color:rgba(124,231,255,.55);background:rgba(20,27,48,.95)}
+    .crest .drop{border:1px dashed rgba(124,231,255,.3);border-radius:14px;padding:14px;text-align:center;color:var(--muted);font-size:12px;cursor:pointer;background:rgba(4,6,12,.5);transition:border-color 180ms ease,color 180ms ease;line-height:1.5}
     .crest .drop:hover{border-color:rgba(124,231,255,.6);color:#fff}
     .crest .drop b{display:block;font:10px "JetBrains Mono",monospace;letter-spacing:.2em;text-transform:uppercase;color:#fff;margin-bottom:4px}
     .crest .drop input{display:none}
     .crest .crest-status{display:flex;justify-content:space-between;gap:8px;font:10px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
     .crest .crest-status button{appearance:none;background:none;border:0;color:var(--cyan);cursor:pointer;font:inherit;text-transform:uppercase;letter-spacing:inherit}
     .footer-note{margin-top:8px;font-size:11px;line-height:1.55;color:rgba(237,244,255,.46)}
+    /* DMT decoder */
+    .decoder{border:1px solid rgba(181,157,255,.22);border-radius:22px;background:linear-gradient(180deg,rgba(18,14,32,.84),rgba(8,6,18,.72));padding:18px;margin-top:22px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset}
+    .decoder summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font:11px "JetBrains Mono",monospace;letter-spacing:.28em;text-transform:uppercase;color:rgba(181,157,255,.88)}
+    .decoder summary::-webkit-details-marker{display:none}
+    .decoder summary::after{content:"▾";font-family:inherit;transition:transform 200ms ease;color:var(--violet)}
+    .decoder[open] summary::after{transform:rotate(180deg)}
+    .decoder-body{margin-top:14px;display:grid;gap:14px}
+    .decoder-row{display:grid;grid-template-columns:140px 1fr;gap:14px;padding:12px 0;border-top:1px solid rgba(181,157,255,.12)}
+    .decoder-row:first-of-type{border-top:0;padding-top:0}
+    .decoder-row dt{font:10px "JetBrains Mono",monospace;letter-spacing:.24em;text-transform:uppercase;color:rgba(181,157,255,.7)}
+    .decoder-row dt b{display:block;color:#fff;letter-spacing:.18em;margin-top:4px}
+    .decoder-row dd{margin:0;font-size:13px;line-height:1.6;color:rgba(237,244,255,.78)}
+    .decoder-foot{margin-top:10px;font-size:12px;line-height:1.55;color:rgba(237,244,255,.6)}
+    .decoder-foot a{color:var(--cyan);text-decoration:none;border-bottom:1px dashed rgba(124,231,255,.4)}
+    .decoder-foot a:hover{color:#fff}
     @media (max-width:980px){
       .grid{grid-template-columns:1fr}
-      .auras{grid-template-columns:repeat(3,1fr)}
+      .decoder-row{grid-template-columns:1fr}
     }
     @media (max-width:520px){
       .auras{grid-template-columns:repeat(2,1fr)}
@@ -100,69 +123,90 @@
   <main class="shell">
     <div class="top">
       <div>
-        <div class="eyebrow">transmission studio</div>
-        <h1>Make it yours</h1>
-        <p class="sub">Tune into a NATSHIPS block, set your aura, stamp your handle, and (if you like) ghost yourself into the porthole. Everything happens in your browser &mdash; your image never leaves your device. Export a 1024&times;1024 PFP when it feels right.</p>
+        <div class="eyebrow">re-entry studio</div>
+        <h1>Bring it home</h1>
+        <p class="sub">Every NATSHIP is <b>digital matter</b> &mdash; a vessel that <em>emerged</em> from a Bitcoin block, not one a designer drew. Tune in, etch your hull, lock your signal, then bring it back through re-entry. The result is a 1024&times;1024 PFP only you could have made &mdash; sealed to a block, conserved forever.</p>
       </div>
       <a class="home" href="../">&larr; back to signal</a>
     </div>
 
     <div class="grid">
       <section class="stage">
-        <div class="canvas-wrap">
-          <canvas id="canvas" width="1024" height="1024" aria-label="PFP preview"></canvas>
-          <button class="mask-toggle" id="maskToggle" type="button" title="Preview circle crop (like Twitter/Discord)">circle preview</button>
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="canvas" width="1024" height="1024" aria-label="Re-entry preview"></canvas>
+          <button class="mask-toggle" id="maskToggle" type="button" title="Preview circle crop (like X/Discord)">circle preview</button>
         </div>
         <div class="stage-foot">
           <div class="seal" id="sealText">tuning&hellip;</div>
           <div class="actions">
             <button class="btn" id="copySeal" type="button">copy seal</button>
-            <button class="btn primary" id="download" type="button">download pfp</button>
+            <button class="btn primary" id="download" type="button">land it</button>
           </div>
         </div>
       </section>
 
       <aside class="panel">
-        <h2>your transmission</h2>
+        <h2>flight plan</h2>
 
         <div class="field">
-          <label for="blockSelect">block</label>
+          <label for="blockSelect">substrate <span class="alias">// block</span></label>
           <div class="ship-row">
             <select id="blockSelect"></select>
-            <button class="micro-btn" id="randomBtn" type="button">random</button>
+            <button class="micro-btn" id="randomBtn" type="button">scan</button>
           </div>
-          <div class="hint">Each NATSHIP is sealed to a Bitcoin block height. Pick one that feels like yours.</div>
+          <div class="hint">Each ship is forced into existence by a Bitcoin block. Pick the one that found you.</div>
         </div>
 
         <div class="field">
-          <label for="handleInput">handle</label>
+          <label for="handleInput">hull etching <span class="alias">// your handle</span></label>
           <input id="handleInput" type="text" placeholder="yourname" maxlength="18" autocomplete="off" spellcheck="false">
-          <div class="hint">Stamped on the hull. Auto-prefixed with @. Up to 18 characters.</div>
+          <div class="hint">Stenciled onto the hull. Auto-prefixed with @. Up to 18 characters.</div>
         </div>
 
         <div class="field">
-          <label>aura</label>
+          <label>signal frequency <span class="alias">// aura</span></label>
           <div class="auras" id="auras"></div>
         </div>
 
         <div class="field">
-          <label>captain crest <span style="color:rgba(255,255,255,.34);text-transform:none;letter-spacing:0">(optional)</span></label>
+          <label>cargo <span class="alias">// captain crest, optional</span></label>
           <div class="crest">
+            <div class="mode-row" id="crestModeRow">
+              <button type="button" data-mode="sticker" class="active">as sticker</button>
+              <button type="button" data-mode="planet">as planet</button>
+            </div>
             <label class="drop" for="crestFile">
               <b>drop or tap to upload</b>
-              An image of you (or anything) gets ghosted into a porthole on the hull. Stays on your device.
+              Sticker = peeling decal on the hull. Planet = a small world in orbit.<br>Stays on your device.
               <input id="crestFile" type="file" accept="image/*">
             </label>
             <div class="crest-status">
-              <span id="crestStatus">no crest</span>
+              <span id="crestStatus">no cargo</span>
               <button type="button" id="clearCrest" hidden>clear</button>
             </div>
           </div>
         </div>
 
-        <p class="footer-note">Output is 1024&times;1024 PNG. Handle, aura, and crest all engrave into the seal so two PFPs are never the same.</p>
+        <div class="field">
+          <button class="btn breakthrough" id="breakthroughBtn" type="button" style="width:100%;justify-content:center;font-size:11px;letter-spacing:.32em">↯ breakthrough ↯</button>
+          <div class="hint">Scans all six frequencies in two seconds. Borrowed from the molecule, borrowed from the boostback. You'll land on a new aura.</div>
+        </div>
+
+        <p class="footer-note">1024&times;1024 PNG. Block, frequency, etching, and cargo all engrave into the seal &mdash; every re-entry is a one-off.</p>
       </aside>
     </div>
+
+    <details class="decoder" id="decoder">
+      <summary>Read this as Digital Matter Theory ▾</summary>
+      <div class="decoder-body">
+        <dl class="decoder-row"><dt>substrate <b>// block</b></dt><dd>The vessel did not begin as a drawing. It <em>emerged</em> from the data of a specific Bitcoin block &mdash; a slice of digital matter that already existed, sealed by proof-of-work. You don't design it. You discover it.</dd></dl>
+        <dl class="decoder-row"><dt>signal frequency <b>// aura</b></dt><dd>Same substrate, different broadcast. The colors are not chosen for taste &mdash; they are the phase you tuned the transmission to. Every frequency is non-arbitrary.</dd></dl>
+        <dl class="decoder-row"><dt>hull etching <b>// handle</b></dt><dd>Your name pressed into the metal. The ship was already real; the etching is your claim on it, conserved in the metadata of every screenshot.</dd></dl>
+        <dl class="decoder-row"><dt>cargo <b>// crest</b></dt><dd>Mass is conserved. Your image rides along the vessel that the substrate forced into existence. As sticker: surface decal, you on the outside. As planet: a body in orbit, you with your own gravity.</dd></dl>
+        <dl class="decoder-row"><dt>breakthrough <b>// the button</b></dt><dd>Two seconds, six frequencies. The pun is intentional: in the molecule it's the moment the room dissolves. In Digital Matter Theory it's the moment the substrate finishes resolving and the vessel comes back through re-entry as itself.</dd></dl>
+        <p class="decoder-foot">NATSHIPS rides on the <b>Digital Matter Theory</b> thesis &mdash; that real digital artifacts must emerge from on-chain data rather than be assigned by hand. Read the long version on the <a href="https://digital-matter-theory.gitbook.io/digital-matter-theory" target="_blank" rel="noopener">DMT gitbook</a> or the <a href="https://takedmt.com" target="_blank" rel="noopener">takedmt.com</a> movement site.</p>
+      </div>
+    </details>
   </main>
 
   <script>
@@ -185,12 +229,18 @@
       handle: '',
       aura: AURAS[0],
       crestImg: null,
+      crestMode: 'sticker', // sticker | planet
       maskOn: false,
       sourceImg: null,
+      breakthroughActive: false,
+      breakthroughPhase: 0,
+      exporting: false,
+      animTick: 0,
     };
 
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const canvasWrap = document.getElementById('canvasWrap');
     const blockSelect = document.getElementById('blockSelect');
     const handleInput = document.getElementById('handleInput');
     const aurasEl = document.getElementById('auras');
@@ -202,9 +252,9 @@
     const crestFile = document.getElementById('crestFile');
     const crestStatus = document.getElementById('crestStatus');
     const clearCrest = document.getElementById('clearCrest');
-    const canvasWrap = canvas.parentElement;
+    const crestModeRow = document.getElementById('crestModeRow');
+    const breakthroughBtn = document.getElementById('breakthroughBtn');
 
-    // populate block selector
     SHIPS.forEach(h => {
       const opt = document.createElement('option');
       opt.value = String(h);
@@ -213,20 +263,21 @@
       blockSelect.appendChild(opt);
     });
 
-    // populate aura swatches
     AURAS.forEach((a, i) => {
       const el = document.createElement('button');
       el.type = 'button';
       el.className = 'aura' + (i === 0 ? ' active' : '');
       el.dataset.key = a.key;
       el.innerHTML = `<div class="swatch" style="background:linear-gradient(135deg,${a.hi},${a.mid} 55%,${a.lo})"></div><span>${a.name}</span>`;
-      el.addEventListener('click', () => {
-        state.aura = a;
-        [...aurasEl.children].forEach(c => c.classList.toggle('active', c === el));
-        render();
-      });
+      el.addEventListener('click', () => setAura(a, el));
       aurasEl.appendChild(el);
     });
+
+    function setAura(a, el) {
+      state.aura = a;
+      [...aurasEl.children].forEach(c => c.classList.toggle('active', c === el));
+      render();
+    }
 
     function loadShip(h) {
       const img = new Image();
@@ -263,7 +314,7 @@
       const img = new Image();
       img.onload = () => {
         state.crestImg = img;
-        crestStatus.textContent = `crest: ${file.name.slice(0, 18)}${file.name.length > 18 ? '…' : ''}`;
+        crestStatus.textContent = `cargo: ${file.name.slice(0,18)}${file.name.length>18?'…':''}`;
         clearCrest.hidden = false;
         render();
       };
@@ -272,8 +323,16 @@
     clearCrest.addEventListener('click', () => {
       state.crestImg = null;
       crestFile.value = '';
-      crestStatus.textContent = 'no crest';
+      crestStatus.textContent = 'no cargo';
       clearCrest.hidden = true;
+      render();
+    });
+
+    crestModeRow.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      state.crestMode = btn.dataset.mode;
+      [...crestModeRow.children].forEach(c => c.classList.toggle('active', c === btn));
       render();
     });
 
@@ -285,11 +344,15 @@
     });
 
     downloadBtn.addEventListener('click', () => {
+      state.exporting = true;
+      render();
       const link = document.createElement('a');
       const handlePart = state.handle ? `_${state.handle}` : '';
       link.download = `natships_${state.block}_${state.aura.key}${handlePart}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
+      state.exporting = false;
+      render();
     });
 
     copySealBtn.addEventListener('click', async () => {
@@ -314,9 +377,57 @@
       setTimeout(() => { copySealBtn.textContent = 'copy seal'; }, 1400);
     });
 
+    // ============ DMT BREAKTHROUGH MECHANIC ============
+    breakthroughBtn.addEventListener('click', () => {
+      if (state.breakthroughActive) return;
+      state.breakthroughActive = true;
+      const start = performance.now();
+      const duration = 1800;
+      const finalIdx = (function(){
+        let n = AURAS.indexOf(state.aura);
+        let next = n;
+        while (next === n) next = Math.floor(Math.random()*AURAS.length);
+        return next;
+      })();
+      const tick = (now) => {
+        const t = Math.min(1, (now - start) / duration);
+        // cycle through auras at decreasing rate, ease-out
+        const eased = 1 - Math.pow(1 - t, 3);
+        const total = AURAS.length * 4 + finalIdx;
+        const idx = Math.floor(eased * total) % AURAS.length;
+        state.aura = AURAS[idx];
+        [...aurasEl.children].forEach((c, i) => c.classList.toggle('active', i === idx));
+        render();
+        if (t < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          state.aura = AURAS[finalIdx];
+          [...aurasEl.children].forEach((c, i) => c.classList.toggle('active', i === finalIdx));
+          state.breakthroughActive = false;
+          render();
+        }
+      };
+      requestAnimationFrame(tick);
+    });
+
+    // subtle preview breath (skipped during export and breakthrough)
+    function loop(now) {
+      state.animTick = now;
+      if (!state.exporting && !state.breakthroughActive && state.sourceImg) render();
+      requestAnimationFrame(loop);
+    }
+    // breath is a tiny perturbation only — start the loop once first art loads
+    let breathStarted = false;
+    function startBreath() {
+      if (breathStarted) return;
+      breathStarted = true;
+      requestAnimationFrame(loop);
+    }
+
     function makeSealString() {
       const h = state.handle ? `@${state.handle}` : 'unsealed';
-      return `NATSHIPS · BLOCK ${state.block} · ${state.aura.name.toUpperCase()} · ${h}`;
+      const cargo = state.crestImg ? (state.crestMode === 'planet' ? 'PLANET' : 'STICKER') : 'NONE';
+      return `NATSHIPS · BLOCK ${state.block} · ${state.aura.name.toUpperCase()} · ${h} · CARGO ${cargo}`;
     }
 
     // ============ RENDER ============
@@ -324,7 +435,7 @@
       const w = canvas.width, h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
-      // 1. cosmic base wash so transparency edges never look bare
+      // 1. cosmic base wash
       const baseGrad = ctx.createRadialGradient(w/2, h*0.42, 40, w/2, h/2, w*0.7);
       baseGrad.addColorStop(0, '#0a1226');
       baseGrad.addColorStop(1, '#02040a');
@@ -339,11 +450,15 @@
         sealText.innerHTML = `tuning <b>block ${state.block}</b>&hellip;`;
         return;
       }
+      startBreath();
 
-      // 2. aura halo BEHIND the ship art so the vessel pops
+      // breath multiplier: ±5% halo intensity, only when not exporting
+      const breath = state.exporting ? 1 : (1 + Math.sin(state.animTick * 0.0014) * 0.05);
       const aura = state.aura;
-      const halo = ctx.createRadialGradient(w/2, h*0.46, 30, w/2, h*0.46, w*0.55);
-      halo.addColorStop(0, hexA(aura.hi, 0.55));
+
+      // 2. aura halo
+      const halo = ctx.createRadialGradient(w/2, h*0.46, 30, w/2, h*0.46, w*0.55 * breath);
+      halo.addColorStop(0, hexA(aura.hi, 0.55 * breath));
       halo.addColorStop(0.35, hexA(aura.mid, 0.32));
       halo.addColorStop(0.75, hexA(aura.lo, 0.1));
       halo.addColorStop(1, 'rgba(0,0,0,0)');
@@ -352,16 +467,16 @@
       ctx.fillRect(0, 0, w, h);
       ctx.globalCompositeOperation = 'source-over';
 
-      // 3. source art, zoomed ~1.18× into the vessel area
+      // 3. source art, zoomed into the vessel
       const src = state.sourceImg;
       const zoom = 1.18;
       const drawW = w * zoom;
       const drawH = h * zoom;
       const dx = (w - drawW) / 2;
-      const dy = (h - drawH) / 2 - h * 0.015; // nudge up slightly
+      const dy = (h - drawH) / 2 - h * 0.015;
       ctx.drawImage(src, dx, dy, drawW, drawH);
 
-      // 4. additive aura color wash to bias the scene
+      // 4. aura overlay wash
       ctx.globalCompositeOperation = 'overlay';
       const tint = ctx.createRadialGradient(w/2, h*0.5, 60, w/2, h*0.5, w*0.65);
       tint.addColorStop(0, hexA(aura.mid, 0.22));
@@ -370,10 +485,13 @@
       ctx.fillRect(0, 0, w, h);
       ctx.globalCompositeOperation = 'source-over';
 
-      // 5. captain crest in a porthole (top-right, fits inside circle crop)
-      if (state.crestImg) drawCrest(w, h, aura);
+      // 5. cargo: sticker on hull OR planet in orbit
+      if (state.crestImg) {
+        if (state.crestMode === 'planet') drawCrestAsPlanet(w, h, aura);
+        else drawCrestAsSticker(w, h, aura);
+      }
 
-      // 6. vignette so circle avatar crop reads clean
+      // 6. vignette for circle-crop friendliness
       const vg = ctx.createRadialGradient(w/2, h/2, w*0.34, w/2, h/2, w*0.6);
       vg.addColorStop(0, 'rgba(0,0,0,0)');
       vg.addColorStop(0.7, 'rgba(0,0,0,0.28)');
@@ -381,38 +499,184 @@
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, w, h);
 
-      // 7. fine scan lines for the DMT broadcast feel
+      // 7. scan lines (DMT broadcast tactile)
       ctx.globalAlpha = 0.06;
       ctx.fillStyle = '#000';
       for (let y = 0; y < h; y += 3) ctx.fillRect(0, y, w, 1);
       ctx.globalAlpha = 1;
 
-      // 8. seal ring with engraved block height
+      // 8. seal ring + microtext
       drawSealRing(w, h, aura);
 
-      // 9. hull handle stamp
-      if (state.handle) drawHandleStamp(w, h, aura);
+      // 9. handle as hull decal
+      if (state.handle) drawHandleDecal(w, h, aura);
 
-      // 10. block badge (top-left), brand mark (top-right)
+      // 10. badges
       drawBadges(w, h, aura);
 
-      // update text seal under canvas
+      // 11. breakthrough flare overlay
+      if (state.breakthroughActive) drawBreakthroughFlare(w, h, aura);
+
+      // text seal under canvas
       const auraName = `<b>${aura.name}</b>`;
       const handle = state.handle ? ` &middot; <b>@${state.handle}</b>` : '';
-      sealText.innerHTML = `block <b>${state.block.toLocaleString()}</b> &middot; ${auraName}${handle}`;
+      const cargo = state.crestImg ? ` &middot; cargo <b>${state.crestMode}</b>` : '';
+      sealText.innerHTML = `block <b>${state.block.toLocaleString()}</b> &middot; ${auraName}${handle}${cargo}`;
     }
 
-    function drawCrest(w, h, aura) {
-      const cx = w * 0.78;
-      const cy = h * 0.28;
-      const r = w * 0.105;
+    // ============ DECALS / OVERLAYS ============
+
+    function drawHandleDecal(w, h, aura) {
+      const text = `@${state.handle}`;
       ctx.save();
-      // porthole shadow
-      ctx.beginPath();
-      ctx.arc(cx, cy, r + 6, 0, Math.PI*2);
+      // anchor on lower hull, slight tilt for a pressed-on feel
+      const cx = w * 0.5;
+      const cy = h * 0.74;
+      ctx.translate(cx, cy);
+      ctx.rotate(-0.06);
+
+      ctx.font = '900 64px "Space Grotesk", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const metrics = ctx.measureText(text);
+      const padX = 30, padY = 16;
+      const decalW = metrics.width + padX*2;
+      const decalH = 64 + padY*2;
+
+      // pressed-in shadow underneath
       ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.shadowColor = 'rgba(0,0,0,0.4)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 3;
+      ctx.fillText(text, 1, 4);
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // highlight rim (top)
+      ctx.fillStyle = hexA(aura.hi, 0.9);
+      ctx.fillText(text, 0, -1);
+
+      // main fill
+      ctx.fillStyle = '#fff';
+      ctx.fillText(text, 0, 0);
+
+      // aura emboss (bottom)
+      ctx.globalCompositeOperation = 'overlay';
+      ctx.fillStyle = hexA(aura.mid, 0.65);
+      ctx.fillText(text, 0, 2);
+      ctx.globalCompositeOperation = 'source-over';
+
+      // subtle stencil grit
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = '#000';
+      const gx = -decalW/2, gy = -decalH/2;
+      for (let i = 0; i < 40; i++) {
+        const px = gx + Math.random() * decalW;
+        const py = gy + Math.random() * decalH;
+        ctx.fillRect(px, py, 1.4, 1.4);
+      }
+      ctx.globalAlpha = 1;
+
+      ctx.restore();
+    }
+
+    function drawCrestAsSticker(w, h, aura) {
+      // peeling decal in lower-right hull
+      const cx = w * 0.74;
+      const cy = h * 0.62;
+      const size = w * 0.18;
+      const rotate = 0.12;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rotate);
+
+      // drop shadow for peel feel
+      ctx.shadowColor = 'rgba(0,0,0,0.55)';
+      ctx.shadowBlur = 16;
+      ctx.shadowOffsetX = 4;
+      ctx.shadowOffsetY = 8;
+
+      // base white "paper" of the sticker
+      roundRect(-size/2 - 8, -size/2 - 8, size + 16, size + 16, 18);
+      ctx.fillStyle = '#fff';
       ctx.fill();
-      // clip + draw image, cover-fit
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      // clip and draw image
+      ctx.save();
+      roundRect(-size/2, -size/2, size, size, 14);
+      ctx.clip();
+      const im = state.crestImg;
+      const ratio = im.width / im.height;
+      let cw, ch;
+      if (ratio > 1) { ch = size; cw = ch * ratio; }
+      else { cw = size; ch = cw / ratio; }
+      ctx.drawImage(im, -cw/2, -ch/2, cw, ch);
+      // light aura wash on image
+      ctx.globalCompositeOperation = 'soft-light';
+      ctx.fillStyle = hexA(aura.mid, 0.35);
+      ctx.fillRect(-size/2, -size/2, size, size);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.restore();
+
+      // sticker border
+      roundRect(-size/2 - 4, -size/2 - 4, size + 8, size + 8, 16);
+      ctx.strokeStyle = hexA(aura.hi, 0.8);
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // corner curl (top-right) — small triangle suggesting a peel
+      ctx.beginPath();
+      ctx.moveTo(size/2 - 4, -size/2 - 8);
+      ctx.lineTo(size/2 + 18, -size/2 - 4);
+      ctx.lineTo(size/2 - 4, -size/2 + 14);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fill();
+      ctx.strokeStyle = hexA(aura.hi, 0.5);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // tiny NATSHIPS micro-tag on sticker
+      ctx.font = '700 10px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(8,12,22,0.7)';
+      ctx.textAlign = 'center';
+      ctx.fillText('NATSHIPS', 0, size/2 + 2);
+
+      ctx.restore();
+    }
+
+    function drawCrestAsPlanet(w, h, aura) {
+      // a ringed sphere parked in upper-left orbit
+      const cx = w * 0.22;
+      const cy = h * 0.24;
+      const r = w * 0.11;
+
+      ctx.save();
+      // outer glow
+      const glow = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 2.2);
+      glow.addColorStop(0, hexA(aura.mid, 0.4));
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(cx - r*2.4, cy - r*2.4, r*4.8, r*4.8);
+
+      // orbit ring (drawn under planet)
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + r*0.08, r * 1.55, r * 0.35, -0.35, 0, Math.PI*2);
+      ctx.strokeStyle = hexA(aura.hi, 0.55);
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + r*0.08, r * 1.65, r * 0.40, -0.35, 0, Math.PI*2);
+      ctx.strokeStyle = hexA(aura.lo, 0.4);
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // planet body — clip image into circle, then shade
+      ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI*2);
       ctx.clip();
@@ -422,23 +686,44 @@
       if (ratio > 1) { ch = r*2; cw = ch * ratio; }
       else { cw = r*2; ch = cw / ratio; }
       ctx.drawImage(im, cx - cw/2, cy - ch/2, cw, ch);
-      // aura tint over crest
+
+      // atmospheric tint
       ctx.globalCompositeOperation = 'soft-light';
-      ctx.fillStyle = hexA(aura.mid, 0.4);
+      ctx.fillStyle = hexA(aura.mid, 0.55);
       ctx.fillRect(cx - r, cy - r, r*2, r*2);
       ctx.globalCompositeOperation = 'source-over';
+
+      // terminator shadow on the dark side
+      const shade = ctx.createRadialGradient(cx - r*0.4, cy - r*0.4, r*0.2, cx, cy, r);
+      shade.addColorStop(0, 'rgba(0,0,0,0)');
+      shade.addColorStop(1, 'rgba(0,0,0,0.55)');
+      ctx.fillStyle = shade;
+      ctx.fillRect(cx - r, cy - r, r*2, r*2);
       ctx.restore();
-      // porthole rim
+
+      // limb rim
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI*2);
-      ctx.strokeStyle = hexA(aura.hi, 0.9);
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = hexA(aura.hi, 0.85);
+      ctx.lineWidth = 2;
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(cx, cy, r + 4, 0, Math.PI*2);
-      ctx.strokeStyle = hexA(aura.mid, 0.4);
-      ctx.lineWidth = 1.5;
+      ctx.arc(cx, cy, r + 3, 0, Math.PI*2);
+      ctx.strokeStyle = hexA(aura.mid, 0.35);
+      ctx.lineWidth = 1.2;
       ctx.stroke();
+
+      // tiny moon to sell the orbit
+      ctx.beginPath();
+      const mx = cx + r * 1.45;
+      const my = cy + r * 0.22;
+      ctx.arc(mx, my, r * 0.1, 0, Math.PI*2);
+      ctx.fillStyle = hexA(aura.hi, 0.9);
+      ctx.shadowColor = hexA(aura.mid, 0.6);
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.restore();
     }
 
     function drawSealRing(w, h, aura) {
@@ -446,7 +731,6 @@
       const rOuter = w * 0.495;
       const rInner = w * 0.475;
 
-      // outer thin ring
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, rOuter, 0, Math.PI*2);
@@ -457,17 +741,16 @@
       ctx.stroke();
       ctx.restore();
 
-      // inner faint ring
       ctx.beginPath();
       ctx.arc(cx, cy, rInner, 0, Math.PI*2);
       ctx.strokeStyle = hexA(aura.hi, 0.18);
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // engraved microtext circling the seal
-      const label = `NATSHIPS · BLOCK ${state.block} · ${aura.name.toUpperCase()} · TRANSMISSION SEALED · `;
-      const repeated = (label + label + label + label).slice(0, 220);
-      drawTextOnCircle(repeated, cx, cy, (rOuter + rInner)/2, 'rgba(237,244,255,0.55)', '600 13px "JetBrains Mono", monospace', -Math.PI/2);
+      // engraved microtext: substrate + frequency + DMT thesis line
+      const label = `NATSHIPS · BLOCK ${state.block} · ${aura.name.toUpperCase()} · DIGITAL MATTER · NON-ARBITRARY · CONSERVED · `;
+      const ring = (label + label + label + label).slice(0, 240);
+      drawTextOnCircle(ring, cx, cy, (rOuter + rInner)/2, 'rgba(237,244,255,0.55)', '600 13px "JetBrains Mono", monospace', -Math.PI/2);
     }
 
     function drawTextOnCircle(text, cx, cy, radius, color, font, startAngle) {
@@ -478,57 +761,16 @@
       ctx.fillStyle = color;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const totalChars = text.length;
-      const anglePer = (Math.PI * 2) / totalChars;
-      for (let i = 0; i < totalChars; i++) {
-        const ch = text[i];
+      const total = text.length;
+      const anglePer = (Math.PI * 2) / total;
+      for (let i = 0; i < total; i++) {
         ctx.save();
         ctx.rotate(i * anglePer);
         ctx.translate(0, -radius);
-        ctx.fillText(ch, 0, 0);
+        ctx.fillText(text[i], 0, 0);
         ctx.restore();
       }
       ctx.restore();
-    }
-
-    function drawHandleStamp(w, h, aura) {
-      const text = `@${state.handle}`;
-      const cx = w/2;
-      const cy = h * 0.86;
-
-      // plaque
-      ctx.font = '700 38px "Space Grotesk", system-ui, sans-serif';
-      const metrics = ctx.measureText(text);
-      const padX = 26, padY = 14;
-      const plaqueW = metrics.width + padX*2;
-      const plaqueH = 38 + padY*2;
-      const plaqueX = cx - plaqueW/2;
-      const plaqueY = cy - plaqueH/2;
-
-      ctx.save();
-      ctx.shadowColor = 'rgba(0,0,0,0.55)';
-      ctx.shadowBlur = 18;
-      ctx.shadowOffsetY = 6;
-      roundRect(plaqueX, plaqueY, plaqueW, plaqueH, 16);
-      ctx.fillStyle = 'rgba(4,6,12,0.72)';
-      ctx.fill();
-      ctx.restore();
-
-      // plaque border
-      roundRect(plaqueX, plaqueY, plaqueW, plaqueH, 16);
-      ctx.strokeStyle = hexA(aura.hi, 0.7);
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      // text
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = '700 38px "Space Grotesk", system-ui, sans-serif';
-      ctx.shadowColor = hexA(aura.mid, 0.8);
-      ctx.shadowBlur = 12;
-      ctx.fillText(text, cx, cy + 2);
-      ctx.shadowBlur = 0;
     }
 
     function drawBadges(w, h, aura) {
@@ -569,6 +811,36 @@
       ctx.textBaseline = 'middle';
       ctx.fillText(tag, tx + 12, ty + th/2 + 1);
       ctx.restore();
+
+      // bottom-center micro: DMT thesis credit
+      ctx.save();
+      ctx.font = '600 11px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(237,244,255,0.5)';
+      ctx.textAlign = 'center';
+      ctx.fillText('DIGITAL MATTER · NON-ARBITRARY · SEALED TO BLOCK', w/2, h - 30);
+      ctx.restore();
+    }
+
+    function drawBreakthroughFlare(w, h, aura) {
+      // bright radial pulse during breakthrough cycle
+      const pulse = (Math.sin(state.animTick * 0.012) + 1) / 2;
+      const flare = ctx.createRadialGradient(w/2, h/2, 20, w/2, h/2, w * 0.6);
+      flare.addColorStop(0, hexA(aura.hi, 0.32 + pulse * 0.18));
+      flare.addColorStop(0.4, hexA(aura.mid, 0.18 * pulse));
+      flare.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = flare;
+      ctx.fillRect(0, 0, w, h);
+      // chromatic rings
+      for (let i = 0; i < 3; i++) {
+        const r = w * (0.25 + i * 0.12) + pulse * 22;
+        ctx.beginPath();
+        ctx.arc(w/2, h/2, r, 0, Math.PI*2);
+        ctx.strokeStyle = hexA(aura.hi, 0.22);
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      ctx.globalCompositeOperation = 'source-over';
     }
 
     function roundRect(x, y, w, h, r) {
