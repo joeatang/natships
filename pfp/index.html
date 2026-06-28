@@ -254,8 +254,8 @@
       crestMode: 'sticker', // sticker | planet
       maskOn: false,
       sourceImg: null,
+      shipFocus: null,        // { x, y, w, h } in 0..1, set after each ship loads
       breakthroughActive: false,
-      breakthroughPhase: 0,
       exporting: false,
       animTick: 0,
     };
@@ -301,10 +301,66 @@
       render();
     }
 
+    function detectShipFocus(img) {
+      // Find the rocket's center by sampling a downscaled copy and computing a
+      // luminance^4 weighted centroid. The rocket has bright metallic specular
+      // highlights (~220-255) that dominate over diffuse chart elements (~80-160),
+      // so the high power pulls the centroid onto the rocket even when other
+      // bright elements (orbital charts, beacons) are also present.
+      try {
+        const S = 128;
+        const off = document.createElement('canvas');
+        off.width = S; off.height = S;
+        const octx = off.getContext('2d', { willReadFrequently: true });
+        octx.drawImage(img, 0, 0, S, S);
+        const data = octx.getImageData(0, 0, S, S).data;
+
+        let sumX = 0, sumY = 0, sumW = 0;
+        let minX = S, maxX = 0, minY = S, maxY = 0, hits = 0;
+        const FOCUS_MIN = 140; // ignore mid-tone diffuse for centroid weighting
+        const BBOX_MIN = 50;   // looser threshold just for bbox scale
+        for (let y = 0; y < S; y++) {
+          for (let x = 0; x < S; x++) {
+            const i = (y * S + x) * 4;
+            const r = data[i], g = data[i+1], b = data[i+2];
+            const lum = (r + g + b) / 3;
+            if (lum > BBOX_MIN) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+              hits++;
+            }
+            if (lum > FOCUS_MIN) {
+              // weight by (lum-FOCUS_MIN)^4 normalized to 0..1 — heavy bias to brights
+              const n = (lum - FOCUS_MIN) / (255 - FOCUS_MIN);
+              const w = n * n * n * n;
+              sumX += x * w;
+              sumY += y * w;
+              sumW += w;
+            }
+          }
+        }
+        if (sumW < 0.5 || hits < 10) return { x: 0.5, y: 0.5, w: 1, h: 1 };
+        return {
+          x: (sumX / sumW) / S,
+          y: (sumY / sumW) / S,
+          w: (maxX - minX + 1) / S,
+          h: (maxY - minY + 1) / S,
+        };
+      } catch (_) {
+        return { x: 0.5, y: 0.5, w: 1, h: 1 };
+      }
+    }
+
     function loadShip(h) {
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.onload = () => { state.sourceImg = img; render(); };
+      img.onload = () => {
+        state.sourceImg = img;
+        state.shipFocus = detectShipFocus(img);
+        render();
+      };
       img.onerror = () => { sealText.textContent = `block ${h} not available`; };
       img.src = `../gallery/natships-${h}.png`;
     }
@@ -415,15 +471,16 @@
       state.breakthroughActive = true;
       const start = performance.now();
       const duration = 1800;
+      const startIdx = AURAS.indexOf(state.aura);
       const finalIdx = (function(){
-        let n = AURAS.indexOf(state.aura);
-        let next = n;
-        while (next === n) next = Math.floor(Math.random()*AURAS.length);
+        let next = startIdx;
+        while (next === startIdx) next = Math.floor(Math.random() * AURAS.length);
         return next;
       })();
       const tick = (now) => {
+        // drive every animated element off this single clock so they stay in phase
+        state.animTick = now;
         const t = Math.min(1, (now - start) / duration);
-        // cycle through auras at decreasing rate, ease-out
         const eased = 1 - Math.pow(1 - t, 3);
         const total = AURAS.length * 4 + finalIdx;
         const idx = Math.floor(eased * total) % AURAS.length;
@@ -484,12 +541,33 @@
       }
       startBreath();
 
-      // breath multiplier: ±5% halo intensity, only when not exporting
-      const breath = state.exporting ? 1 : (1 + Math.sin(state.animTick * 0.0014) * 0.05);
+      // breath multiplier: ±5% halo intensity at rest. Locked to 1 during export and
+      // during breakthrough so the flare is the only thing moving.
+      const breath = (state.exporting || state.breakthroughActive)
+        ? 1
+        : (1 + Math.sin(state.animTick * 0.0014) * 0.05);
       const aura = state.aura;
 
-      // 2. aura halo
-      const halo = ctx.createRadialGradient(w/2, h*0.46, 30, w/2, h*0.46, w*0.55 * breath);
+      // Compute where the ship actually lands on the canvas (after framing + clamping)
+      // so the halo, tint, and any future ship-anchored overlays follow the rocket.
+      const focus = state.shipFocus || { x: 0.5, y: 0.5, w: 1, h: 1 };
+      // Adaptive zoom: rockets near the source center get a roomy 1.2x crop;
+      // rockets sitting near a source edge get tighter zoom so they still land
+      // close to the canvas center after framing without exposing empty edges.
+      const offCenter = Math.max(Math.abs(focus.x - 0.5), Math.abs(focus.y - 0.5));
+      const zoom = 1.2 + Math.min(0.35, offCenter * 1.0);
+      const drawW = w * zoom;
+      const drawH = h * zoom;
+      const idealDx = (w * 0.50) - (focus.x * drawW);
+      const idealDy = (h * 0.50) - (focus.y * drawH);
+      const minDx = w - drawW, minDy = h - drawH;
+      const dx = Math.min(0, Math.max(minDx, idealDx));
+      const dy = Math.min(0, Math.max(minDy, idealDy));
+      const shipCx = dx + focus.x * drawW;
+      const shipCy = dy + focus.y * drawH;
+
+      // 2. aura halo — anchored to the rocket's true canvas position
+      const halo = ctx.createRadialGradient(shipCx, shipCy, 30, shipCx, shipCy, w * 0.55 * breath);
       halo.addColorStop(0, hexA(aura.hi, 0.55 * breath));
       halo.addColorStop(0.35, hexA(aura.mid, 0.32));
       halo.addColorStop(0.75, hexA(aura.lo, 0.1));
@@ -499,18 +577,12 @@
       ctx.fillRect(0, 0, w, h);
       ctx.globalCompositeOperation = 'source-over';
 
-      // 3. source art, zoomed into the vessel
-      const src = state.sourceImg;
-      const zoom = 1.18;
-      const drawW = w * zoom;
-      const drawH = h * zoom;
-      const dx = (w - drawW) / 2;
-      const dy = (h - drawH) / 2 - h * 0.015;
-      ctx.drawImage(src, dx, dy, drawW, drawH);
+      // 3. source art — already positioned above
+      ctx.drawImage(state.sourceImg, dx, dy, drawW, drawH);
 
-      // 4. aura overlay wash
+      // 4. aura overlay wash — also follows the ship
       ctx.globalCompositeOperation = 'overlay';
-      const tint = ctx.createRadialGradient(w/2, h*0.5, 60, w/2, h*0.5, w*0.65);
+      const tint = ctx.createRadialGradient(shipCx, shipCy, 60, shipCx, shipCy, w * 0.65);
       tint.addColorStop(0, hexA(aura.mid, 0.22));
       tint.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = tint;
