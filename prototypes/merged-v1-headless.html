@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NATSHIPS Engine · headless</title>
+<style>
+  /* System font fallbacks — no network calls, keeps the parent page's
+     "browser-only · nothing is uploaded" guarantee intact. */
+  html, body { margin: 0; padding: 0; background: #04050a; }
+  body { font-family: ui-monospace, "JetBrains Mono", "Menlo", monospace; }
+  #meta { display: none; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+  <canvas id="still" width="1500" height="1500"></canvas>
+  <div id="meta"></div>
+  <script src="./merged-v1.js"></script>
+  <script>
+    // Signal completion back to the parent so it doesn't have to guess timing.
+    function signal() {
+      try { window.parent.postMessage({ source: 'natships-engine', ready: true }, '*'); } catch (_) {}
+    }
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(signal).catch(signal);
+    } else {
+      requestAnimationFrame(() => requestAnimationFrame(signal));
+    }
+  </script>
+</body>
+</html>

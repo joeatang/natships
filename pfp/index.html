@@ -172,12 +172,12 @@
         <h2>flight plan</h2>
 
         <div class="field">
-          <label for="blockSelect">substrate <span class="alias">// block</span></label>
+          <label for="blockInput">substrate <span class="alias">// block</span></label>
           <div class="ship-row">
-            <select id="blockSelect"></select>
+            <input id="blockInput" type="number" inputmode="numeric" min="102816" max="112895" step="1" />
             <button class="micro-btn" id="randomBtn" type="button">scan</button>
           </div>
-          <div class="hint">Each ship is forced into existence by a Bitcoin block. Pick the one that found you.</div>
+          <div class="hint">Any block in the NATSHIPS window: <b>102816&nbsp;→&nbsp;112895</b> (10,080 vessels). Each one is forced into existence by its Bitcoin block — pick yours, or scan a random one.</div>
         </div>
 
         <div class="field">
@@ -239,7 +239,18 @@
   </main>
 
   <script>
-    const SHIPS = [102816,102884,103210,103481,104500,105678,106060,107200,108345,109000,109420,110500,110999,111337,111774,112009,112016,112420,112895];
+    // NATSHIPS series window (matches prototypes/merged-v1.js SERIES_START + SERIES_SUPPLY).
+    // Any block in this range can be rendered on demand via the engine iframe — no
+    // pre-baked PNGs needed. 10,080 vessels total, fully deterministic per block.
+    const BLOCK_MIN = 102816;
+    const BLOCK_MAX = 112895;
+    const TOTAL_SHIPS = BLOCK_MAX - BLOCK_MIN + 1; // 10080
+    const clampBlock = (n) => {
+      const v = Math.floor(Number(n));
+      if (!Number.isFinite(v)) return BLOCK_MIN;
+      return Math.max(BLOCK_MIN, Math.min(BLOCK_MAX, v));
+    };
+    const randomBlock = () => BLOCK_MIN + Math.floor(Math.random() * TOTAL_SHIPS);
 
     const AURAS = [
       { key:'amber',  name:'amber drift',   hi:'#ffd089', mid:'#ff8a3c', lo:'#a8501a' },
@@ -251,10 +262,10 @@
     ];
 
     const params = new URLSearchParams(location.search);
-    const initialBlock = Number(params.get('h') || params.get('block')) || SHIPS[Math.floor(Math.random()*SHIPS.length)];
+    const initialBlock = clampBlock(params.get('h') || params.get('block') || randomBlock());
 
     const state = {
-      block: SHIPS.includes(initialBlock) ? initialBlock : SHIPS[0],
+      block: initialBlock,
       handle: '',
       aura: AURAS[0],
       crestImg: null,
@@ -270,7 +281,7 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const canvasWrap = document.getElementById('canvasWrap');
-    const blockSelect = document.getElementById('blockSelect');
+    const blockInput = document.getElementById('blockInput');
     const handleInput = document.getElementById('handleInput');
     const aurasEl = document.getElementById('auras');
     const sealText = document.getElementById('sealText');
@@ -284,13 +295,7 @@
     const crestModeRow = document.getElementById('crestModeRow');
     const breakthroughBtn = document.getElementById('breakthroughBtn');
 
-    SHIPS.forEach(h => {
-      const opt = document.createElement('option');
-      opt.value = String(h);
-      opt.textContent = `block ${h.toLocaleString()}`;
-      if (h === state.block) opt.selected = true;
-      blockSelect.appendChild(opt);
-    });
+    blockInput.value = String(state.block);
 
     AURAS.forEach((a, i) => {
       const el = document.createElement('button');
@@ -360,29 +365,111 @@
       }
     }
 
-    function loadShip(h) {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        state.sourceImg = img;
-        state.shipFocus = detectShipFocus(img);
-        render();
-      };
-      img.onerror = () => { sealText.textContent = `block ${h} not available`; };
-      img.src = `../gallery/natships-${h}.png`;
+    // ============ NATSHIPS ENGINE BRIDGE ============
+    // Loads the deterministic renderer (prototypes/merged-v1.js) in a hidden
+    // same-origin iframe and snapshots its 1500×1500 canvas. This unlocks any
+    // block in 102816..112895 (10,080 vessels) without pre-rendering PNGs.
+    // The iframe is same-origin so reading its canvas is allowed and untainted.
+    const shipCache = new Map(); // blockHeight → HTMLCanvasElement (1100×1100 snapshot)
+    const SHIP_CACHE_MAX = 16;
+    let activeShipLoad = null;
+
+    function cacheShip(h, c) {
+      if (shipCache.has(h)) shipCache.delete(h);
+      shipCache.set(h, c);
+      while (shipCache.size > SHIP_CACHE_MAX) {
+        const oldestKey = shipCache.keys().next().value;
+        shipCache.delete(oldestKey);
+      }
     }
+
+    function renderShipViaEngine(h) {
+      return new Promise((resolve, reject) => {
+        if (shipCache.has(h)) return resolve(shipCache.get(h));
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('aria-hidden', 'true');
+        iframe.style.cssText = 'position:absolute;left:-99999px;top:0;width:1500px;height:1500px;border:0;visibility:hidden;pointer-events:none';
+        iframe.src = `../prototypes/merged-v1-headless.html?h=${h}&compact=1`;
+
+        let done = false;
+        const cleanup = () => {
+          window.removeEventListener('message', onMsg);
+          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        };
+        const finish = (err, result) => {
+          if (done) return;
+          done = true;
+          cleanup();
+          err ? reject(err) : resolve(result);
+        };
+
+        function snapshot() {
+          try {
+            const doc = iframe.contentDocument;
+            const srcCanvas = doc && doc.getElementById('still');
+            if (!srcCanvas) return finish(new Error('engine canvas missing'));
+            // Snapshot to a 1100×1100 offscreen canvas (matches prior PNG dims so
+            // the centroid detector and adaptive zoom behave identically).
+            const off = document.createElement('canvas');
+            off.width = 1100;
+            off.height = 1100;
+            const octx = off.getContext('2d');
+            octx.imageSmoothingQuality = 'high';
+            octx.drawImage(srcCanvas, 0, 0, 1100, 1100);
+            cacheShip(h, off);
+            finish(null, off);
+          } catch (err) {
+            finish(err);
+          }
+        }
+
+        function onMsg(ev) {
+          if (ev.source !== iframe.contentWindow) return;
+          const d = ev.data;
+          if (d && d.source === 'natships-engine' && d.ready) snapshot();
+        }
+        window.addEventListener('message', onMsg);
+        // Safety: if the postMessage never arrives (e.g. blocked), snapshot
+        // after a generous timeout based on iframe load.
+        iframe.addEventListener('load', () => {
+          setTimeout(() => { if (!done) snapshot(); }, 1600);
+        });
+        setTimeout(() => { if (!done) finish(new Error('engine timeout')); }, 8000);
+
+        document.body.appendChild(iframe);
+      });
+    }
+
+    function loadShip(h) {
+      const loadId = ++loadShip.counter;
+      activeShipLoad = loadId;
+      renderShipViaEngine(h).then((shipCanvas) => {
+        if (activeShipLoad !== loadId) return; // user moved on; discard
+        state.sourceImg = shipCanvas;
+        state.shipFocus = detectShipFocus(shipCanvas);
+        render();
+      }).catch((err) => {
+        if (activeShipLoad !== loadId) return;
+        sealText.textContent = `block ${h}: ${err.message || 'render failed'}`;
+      });
+    }
+    loadShip.counter = 0;
 
     function setBlock(h) {
-      state.block = h;
-      blockSelect.value = String(h);
-      sealText.textContent = 'tuning…';
-      loadShip(h);
+      const clamped = clampBlock(h);
+      state.block = clamped;
+      if (Number(blockInput.value) !== clamped) blockInput.value = String(clamped);
+      sealText.textContent = `tuning block ${clamped.toLocaleString()}…`;
+      loadShip(clamped);
     }
 
-    blockSelect.addEventListener('change', () => setBlock(Number(blockSelect.value)));
+    blockInput.addEventListener('change', () => setBlock(blockInput.value));
+    blockInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); setBlock(blockInput.value); }
+    });
     randomBtn.addEventListener('click', () => {
       let next = state.block;
-      while (next === state.block && SHIPS.length > 1) next = SHIPS[Math.floor(Math.random()*SHIPS.length)];
+      while (next === state.block) next = randomBlock();
       setBlock(next);
     });
 
