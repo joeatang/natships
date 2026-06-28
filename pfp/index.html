@@ -1002,8 +1002,8 @@
     }
 
     function drawCrestAsPlanet(w, h, aura) {
-      // a ringed sphere parked in upper-left orbit
-      const cx = w * 0.22;
+      // ringed sphere in the upper-RIGHT quadrant — mission patch owns upper-left.
+      const cx = w * 0.78;
       const cy = h * 0.24;
       const r = w * 0.11;
 
@@ -1065,9 +1065,10 @@
       ctx.lineWidth = 1.2;
       ctx.stroke();
 
-      // tiny moon to sell the orbit
+      // tiny moon to sell the orbit (sits to the planet's inner side so it
+      // stays comfortably inside the inscribed circle on a circular crop)
       ctx.beginPath();
-      const mx = cx + r * 1.45;
+      const mx = cx - r * 1.45;
       const my = cy + r * 0.22;
       ctx.arc(mx, my, r * 0.1, 0, Math.PI*2);
       ctx.fillStyle = hexA(aura.hi, 0.9);
