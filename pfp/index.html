@@ -40,7 +40,8 @@
       transform-origin:center bottom;
       mask-image:radial-gradient(circle at center, rgba(0,0,0,.65) 0%, transparent 74%);
     }
-    .shell{max-width:1260px;margin:0 auto;padding:28px 22px 60px}
+    .shell{max-width:1260px;margin:0 auto;padding:20px 14px 56px}
+    @media (min-width:720px){.shell{padding:28px 22px 60px}}
     .top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
     .eyebrow{font:10px "JetBrains Mono",monospace;letter-spacing:.42em;text-transform:uppercase;color:rgba(237,244,255,.56);margin-bottom:8px}
     h1{margin:0;font-size:clamp(34px,5vw,62px);line-height:.95;letter-spacing:.14em;text-transform:uppercase;
@@ -50,8 +51,10 @@
     .sub b{color:#fff;font-weight:600}
     .home{font:10px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:10px 14px;border-radius:999px;white-space:nowrap}
     .home:hover{color:#fff;border-color:rgba(124,231,255,.55)}
-    .grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:22px;align-items:start}
-    .stage{position:relative;border-radius:24px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(8,12,22,.92),rgba(4,6,12,.78));padding:18px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset,0 28px 90px rgba(0,0,0,.42)}
+    .grid{display:grid;grid-template-columns:1fr;gap:18px;align-items:start}
+    @media (min-width:980px){.grid{grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:22px}}
+    .stage{position:relative;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(8,12,22,.92),rgba(4,6,12,.78));padding:12px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset,0 28px 90px rgba(0,0,0,.42)}
+    @media (min-width:720px){.stage{border-radius:24px;padding:18px}}
     .canvas-wrap{position:relative;width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#000;display:grid;place-items:center;transition:border-radius 240ms ease}
     .canvas-wrap canvas{width:100%;height:100%;display:block}
     .mask-toggle{position:absolute;top:12px;right:12px;font:10px "JetBrains Mono",monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);background:rgba(4,6,12,.72);border:1px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;backdrop-filter:blur(8px);z-index:3}
@@ -61,25 +64,27 @@
     .seal{font:11px "JetBrains Mono",monospace;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;flex:1;min-width:240px}
     .seal b{color:var(--cyan)}
     .actions{display:flex;gap:10px;flex-wrap:wrap}
-    .btn{appearance:none;cursor:pointer;border:1px solid rgba(124,231,255,.22);border-radius:999px;padding:12px 16px;color:#f7fbff;text-decoration:none;font:10px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;background:linear-gradient(180deg,rgba(20,27,48,.98),rgba(8,10,18,.98));transition:transform 180ms ease,border-color 180ms ease,box-shadow 180ms ease;display:inline-flex;align-items:center;gap:6px;min-height:42px}
+    .btn{appearance:none;cursor:pointer;border:1px solid rgba(124,231,255,.22);border-radius:999px;padding:14px 18px;color:#f7fbff;text-decoration:none;font:11px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;background:linear-gradient(180deg,rgba(20,27,48,.98),rgba(8,10,18,.98));transition:transform 180ms ease,border-color 180ms ease,box-shadow 180ms ease;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;min-width:46px}
     .btn:hover{transform:translateY(-1px);border-color:rgba(124,231,255,.55);box-shadow:0 0 0 1px rgba(124,231,255,.12) inset,0 16px 28px rgba(0,0,0,.28)}
     .btn.primary{background:linear-gradient(180deg,rgba(29,40,74,.98),rgba(10,14,28,.98));border-color:rgba(124,231,255,.34)}
     .btn.breakthrough{background:linear-gradient(180deg,rgba(181,157,255,.32),rgba(124,231,255,.2));border-color:rgba(181,157,255,.6);color:#fff;text-shadow:0 0 12px rgba(181,157,255,.6);animation:breath 4.2s ease-in-out infinite}
     @keyframes breath{0%,100%{box-shadow:0 0 0 1px rgba(181,157,255,.18) inset,0 0 18px rgba(181,157,255,.18)}50%{box-shadow:0 0 0 1px rgba(124,231,255,.32) inset,0 0 26px rgba(124,231,255,.32)}}
-    .panel{border-radius:22px;border:1px solid rgba(124,231,255,.14);background:var(--panel);padding:18px;display:grid;gap:16px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset}
+    .panel{border-radius:18px;border:1px solid rgba(124,231,255,.14);background:var(--panel);padding:14px;display:grid;gap:14px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset}
+    @media (min-width:720px){.panel{border-radius:22px;padding:18px;gap:16px}}
     .panel h2{margin:0;font:11px "JetBrains Mono",monospace;letter-spacing:.3em;text-transform:uppercase;color:rgba(237,244,255,.66)}
     .field{display:grid;gap:8px}
     .field label{font:10px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:rgba(237,244,255,.5)}
     .field label .alias{color:rgba(124,231,255,.7);margin-left:6px}
     .field .hint{font-size:11px;color:rgba(237,244,255,.46);line-height:1.5}
     .ship-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    select,input[type="text"]{appearance:none;width:100%;background:rgba(4,6,12,.7);border:1px solid rgba(124,231,255,.18);color:#fff;border-radius:12px;padding:11px 12px;font:13px "Space Grotesk",sans-serif;letter-spacing:.04em;outline:none}
+    select,input[type="text"]{appearance:none;width:100%;background:rgba(4,6,12,.7);border:1px solid rgba(124,231,255,.18);color:#fff;border-radius:12px;padding:13px 14px;font:16px "Space Grotesk",sans-serif;letter-spacing:.04em;outline:none;min-height:46px}
     select:focus,input[type="text"]:focus{border-color:rgba(124,231,255,.55)}
     select option{background:#070b16;color:#fff}
-    .micro-btn{flex:0 0 auto;font:10px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:#fff;background:rgba(20,27,48,.98);border:1px solid rgba(124,231,255,.22);border-radius:999px;padding:10px 12px;cursor:pointer}
+    .micro-btn{flex:0 0 auto;font:11px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:#fff;background:rgba(20,27,48,.98);border:1px solid rgba(124,231,255,.22);border-radius:999px;padding:13px 16px;cursor:pointer;min-height:46px;min-width:64px}
     .micro-btn:hover{border-color:rgba(124,231,255,.55)}
     .auras{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-    .aura{cursor:pointer;border:1px solid rgba(124,231,255,.16);border-radius:14px;padding:10px;background:rgba(6,9,18,.7);display:grid;gap:6px;text-align:center;transition:border-color 180ms ease,transform 180ms ease}
+    @media (max-width:520px){.auras{grid-template-columns:repeat(2,1fr);gap:10px}}
+    .aura{cursor:pointer;border:1px solid rgba(124,231,255,.16);border-radius:14px;padding:12px 10px;background:rgba(6,9,18,.7);display:grid;gap:8px;text-align:center;transition:border-color 180ms ease,transform 180ms ease;min-height:64px}
     .aura:hover{transform:translateY(-1px)}
     .aura.active{border-color:rgba(124,231,255,.7);box-shadow:0 0 0 1px rgba(124,231,255,.18) inset}
     .swatch{width:100%;height:22px;border-radius:8px;border:1px solid rgba(255,255,255,.06)}
@@ -88,16 +93,17 @@
     .crest .mode-row{display:flex;gap:6px}
     .crest .mode-row button{flex:1;background:rgba(8,12,22,.78);border:1px solid rgba(124,231,255,.16);color:var(--muted);border-radius:10px;padding:9px;font:9px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:all 180ms ease}
     .crest .mode-row button.active{color:#fff;border-color:rgba(124,231,255,.55);background:rgba(20,27,48,.95)}
-    .crest .drop{border:1px dashed rgba(124,231,255,.3);border-radius:14px;padding:14px;text-align:center;color:var(--muted);font-size:12px;cursor:pointer;background:rgba(4,6,12,.5);transition:border-color 180ms ease,color 180ms ease;line-height:1.5}
+    .crest .drop{border:1px dashed rgba(124,231,255,.3);border-radius:14px;padding:18px 14px;text-align:center;color:var(--muted);font-size:13px;cursor:pointer;background:rgba(4,6,12,.5);transition:border-color 180ms ease,color 180ms ease;line-height:1.55;min-height:96px;display:flex;flex-direction:column;justify-content:center;gap:4px}
     .crest .drop:hover{border-color:rgba(124,231,255,.6);color:#fff}
     .crest .drop b{display:block;font:10px "JetBrains Mono",monospace;letter-spacing:.2em;text-transform:uppercase;color:#fff;margin-bottom:4px}
     .crest .drop input{display:none}
     .crest .crest-status{display:flex;justify-content:space-between;gap:8px;font:10px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
     .crest .crest-status button{appearance:none;background:none;border:0;color:var(--cyan);cursor:pointer;font:inherit;text-transform:uppercase;letter-spacing:inherit}
-    .lock{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid rgba(124,231,255,.25);border-radius:10px;background:linear-gradient(180deg,rgba(8,20,28,.85),rgba(4,10,18,.7));font:9px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:rgba(180,240,255,.85);cursor:pointer;transition:border-color 180ms ease}
-    .lock:hover{border-color:rgba(124,231,255,.65);color:#fff}
-    .lock .dot{width:8px;height:8px;border-radius:50%;background:#5ed8ff;box-shadow:0 0 8px rgba(124,231,255,.7);flex:0 0 auto}
-    .lock-detail{margin-top:6px;font:10px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:rgba(180,240,255,.6);line-height:1.7;display:none}
+    .lock{display:flex;align-items:center;gap:10px;padding:14px 14px;border:1px solid rgba(94,216,255,.45);border-radius:12px;background:linear-gradient(180deg,rgba(8,32,42,.92),rgba(4,14,22,.85));font:10px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:#cdf3ff;cursor:pointer;transition:border-color 180ms ease;min-height:50px;text-align:left;width:100%}
+    .lock:hover{border-color:rgba(124,231,255,.85);color:#fff}
+    .lock .dot{width:10px;height:10px;border-radius:50%;background:#5ed8ff;box-shadow:0 0 10px rgba(124,231,255,.9);flex:0 0 auto;animation:lockpulse 2.4s ease-in-out infinite}
+    @keyframes lockpulse{0%,100%{box-shadow:0 0 8px rgba(124,231,255,.6)}50%{box-shadow:0 0 14px rgba(124,231,255,1)}}
+    .lock-detail{margin-top:6px;font:10px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:rgba(180,240,255,.7);line-height:1.7;display:none}
     .lock-detail.open{display:block}
     .lock-detail b{color:#fff;letter-spacing:.14em}
     .footer-note{margin-top:8px;font-size:11px;line-height:1.55;color:rgba(237,244,255,.46)}
@@ -117,12 +123,14 @@
     .decoder-foot a{color:var(--cyan);text-decoration:none;border-bottom:1px dashed rgba(124,231,255,.4)}
     .decoder-foot a:hover{color:#fff}
     @media (max-width:980px){
-      .grid{grid-template-columns:1fr}
-      .decoder-row{grid-template-columns:1fr}
+      .decoder-row{grid-template-columns:1fr;gap:6px}
     }
     @media (max-width:520px){
-      .auras{grid-template-columns:repeat(2,1fr)}
       h1{letter-spacing:.1em}
+      .stage-foot{flex-direction:column;align-items:stretch}
+      .actions{width:100%}
+      .actions .btn{flex:1}
+      .seal{text-align:center}
     }
   </style>
 </head>
@@ -180,10 +188,10 @@
           <div class="crest">
             <button class="lock" type="button" id="lockBtn" title="View what this page is locked to">
               <span class="dot"></span>
-              <span>browser-only · no uploads</span>
+              <span>browser-only · nothing is uploaded · tap for proof</span>
             </button>
             <div class="lock-detail" id="lockDetail">
-              This page is locked by <b>Content Security Policy</b>. The browser physically refuses any outgoing network request, form submission, or third-party script. Your image is processed as a <b>blob</b> inside this tab and never sent anywhere. <a href="view-source:" onclick="event.preventDefault();window.open('view-source:'+location.href,'_blank')" style="color:var(--cyan);text-decoration:underline">view source</a> to verify.
+              No server. No database. No backend. The page itself is locked down by a <b>Content Security Policy</b> that blocks the browser from making <em>any</em> outgoing network connection — your image is opened as a <b>blob</b> in this tab and never leaves your device. Close the tab and it's gone. <a href="#" id="viewSourceLink" style="color:var(--cyan);text-decoration:underline">view source</a> to verify.
             </div>
             <div class="mode-row" id="crestModeRow">
               <button type="button" data-mode="sticker" class="active">as sticker</button>
@@ -223,13 +231,7 @@
     </details>
   </main>
 
-  <script src="./qrcode.min.js"></script>
   <script>
-    // Re-Entry URL: the QR on every PFP scans to this address with the captain's
-    // handle attached as a referral. Swap this single constant when we move the
-    // public domain off github.io. Everything else updates automatically.
-    const BILLBOARD_URL = 'https://joeatang.github.io/natships/pfp/';
-
     const SHIPS = [102816,102884,103210,103481,104500,105678,106060,107200,108345,109000,109420,110500,110999,111337,111774,112009,112016,112420,112895];
 
     const AURAS = [
@@ -243,7 +245,6 @@
 
     const params = new URLSearchParams(location.search);
     const initialBlock = Number(params.get('h') || params.get('block')) || SHIPS[Math.floor(Math.random()*SHIPS.length)];
-    const referredBy = (params.get('from') || '').replace(/^@/, '').replace(/[^a-zA-Z0-9_\.\-]/g,'').slice(0,18);
 
     const state = {
       block: SHIPS.includes(initialBlock) ? initialBlock : SHIPS[0],
@@ -361,6 +362,11 @@
     const lockBtn = document.getElementById('lockBtn');
     const lockDetail = document.getElementById('lockDetail');
     lockBtn.addEventListener('click', () => lockDetail.classList.toggle('open'));
+    const viewSourceLink = document.getElementById('viewSourceLink');
+    if (viewSourceLink) viewSourceLink.addEventListener('click', e => {
+      e.preventDefault();
+      window.open('view-source:' + location.href, '_blank');
+    });
 
     maskToggle.addEventListener('click', () => {
       state.maskOn = !state.maskOn;
@@ -543,10 +549,7 @@
       // 11. brand stamp top-right
       drawBrandStamp(w, h, aura);
 
-      // 12. re-entry QR (walking billboard — scans to studio with referral)
-      drawReEntryQR(w, h, aura);
-
-      // 13. breakthrough flare overlay
+      // 12. breakthrough flare overlay
       if (state.breakthroughActive) drawBreakthroughFlare(w, h, aura);
 
       // text seal under canvas
@@ -879,78 +882,6 @@
       drawTextOnCircle(ring, cx, cy, (rOuter + rInner)/2, 'rgba(237,244,255,0.55)', '600 13px "JetBrains Mono", monospace', -Math.PI/2);
     }
 
-    // ============ RE-ENTRY QR (walking billboard) ============
-    // Memoize the QR matrix so we don't recompute on every breath/breakthrough frame.
-    let _qrCache = { url: null, modules: null, count: 0 };
-    function getQRMatrix(url) {
-      if (_qrCache.url === url && _qrCache.modules) return _qrCache;
-      if (typeof qrcode !== 'function') return null;
-      try {
-        const qr = qrcode(0, 'M'); // auto type, ECC level M
-        qr.addData(url);
-        qr.make();
-        const count = qr.getModuleCount();
-        const modules = new Uint8Array(count * count);
-        for (let r = 0; r < count; r++) for (let c = 0; c < count; c++) modules[r*count + c] = qr.isDark(r, c) ? 1 : 0;
-        _qrCache = { url, modules, count };
-        return _qrCache;
-      } catch (_) { return null; }
-    }
-
-    function reentryUrl() {
-      const u = new URL(BILLBOARD_URL);
-      u.searchParams.set('block', String(state.block));
-      if (state.handle) u.searchParams.set('from', state.handle);
-      return u.toString();
-    }
-
-    function drawReEntryQR(w, h, aura) {
-      const qr = getQRMatrix(reentryUrl());
-      if (!qr) return;
-      const size = w * 0.108;            // ~110px on a 1024 canvas
-      const pad  = size * 0.10;
-      const total = size + pad*2;
-      const x = w - total - w*0.052;
-      const y = h - total - h*0.052;
-
-      ctx.save();
-      // shadow plate
-      roundRect(x, y, total, total, 14);
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      ctx.shadowColor = 'rgba(0,0,0,0.6)';
-      ctx.shadowBlur = 14;
-      ctx.shadowOffsetY = 4;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetY = 0;
-      // white sticker background (scannable)
-      roundRect(x + 2, y + 2, total - 4, total - 4, 12);
-      ctx.fillStyle = '#fff';
-      ctx.fill();
-      // aura rim
-      roundRect(x, y, total, total, 14);
-      ctx.strokeStyle = hexA(aura.hi, 0.7);
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      // QR modules
-      const cell = size / qr.count;
-      ctx.fillStyle = '#0a1226';
-      for (let r = 0; r < qr.count; r++) {
-        for (let c = 0; c < qr.count; c++) {
-          if (qr.modules[r*qr.count + c]) {
-            ctx.fillRect(x + pad + c*cell, y + pad + r*cell, cell + 0.6, cell + 0.6);
-          }
-        }
-      }
-      // tiny instruction microtext under the QR (inside the plate, low contrast)
-      ctx.font = '700 9px "JetBrains Mono", monospace';
-      ctx.fillStyle = 'rgba(8,12,22,0.7)';
-      ctx.textAlign = 'center';
-      ctx.fillText('SCAN TO RE-ENTER', x + total/2, y + total - 7);
-      ctx.restore();
-    }
-
     function drawTextOnCircle(text, cx, cy, radius, color, font, startAngle) {
       ctx.save();
       ctx.translate(cx, cy);
@@ -1016,23 +947,6 @@
     }
 
     setBlock(state.block);
-
-    // ============ REFERRED VISITOR ONBOARDING ============
-    // If someone clicks/scans a PFP's QR, they arrive with ?from=@captain.
-    // Show a one-time welcome ribbon and auto-open the DMT decoder so the
-    // first thing they see is the thesis, not a tutorial.
-    if (referredBy) {
-      const decoder = document.getElementById('decoder');
-      if (decoder) decoder.open = true;
-      const ribbon = document.createElement('div');
-      ribbon.style.cssText = 'position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:50;padding:12px 18px;border-radius:999px;border:1px solid rgba(181,157,255,.55);background:linear-gradient(180deg,rgba(18,14,32,.95),rgba(8,6,18,.95));backdrop-filter:blur(14px);color:#fff;font:11px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;box-shadow:0 12px 32px rgba(0,0,0,.4),0 0 24px rgba(181,157,255,.25);display:flex;gap:14px;align-items:center';
-      ribbon.innerHTML = `<span>↯ you re-entered via <b style="color:#b9f4ff">@${referredBy}</b>'s ship</span><button type="button" style="appearance:none;background:none;border:0;color:rgba(255,255,255,.6);cursor:pointer;font:inherit;letter-spacing:inherit">close</button>`;
-      ribbon.querySelector('button').addEventListener('click', () => ribbon.remove());
-      document.body.appendChild(ribbon);
-      setTimeout(() => { if (ribbon.parentNode) ribbon.style.opacity = '0'; }, 9000);
-      setTimeout(() => { if (ribbon.parentNode) ribbon.remove(); }, 10500);
-      ribbon.style.transition = 'opacity 1.4s ease';
-    }
   </script>
 </body>
 </html>
