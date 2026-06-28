@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'self'; frame-ancestors 'none'">
   <title>NATSHIPS · Re-Entry</title>
   <meta name="description" content="Re-Entry is the NATSHIPS PFP studio. Tune into a Bitcoin block, etch your hull, lock your signal, and bring your vessel home. Every ship is digital matter — non-arbitrary, conserved, sealed to a block.">
   <meta property="og:title" content="NATSHIPS · Re-Entry">
@@ -93,6 +94,12 @@
     .crest .drop input{display:none}
     .crest .crest-status{display:flex;justify-content:space-between;gap:8px;font:10px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
     .crest .crest-status button{appearance:none;background:none;border:0;color:var(--cyan);cursor:pointer;font:inherit;text-transform:uppercase;letter-spacing:inherit}
+    .lock{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid rgba(124,231,255,.25);border-radius:10px;background:linear-gradient(180deg,rgba(8,20,28,.85),rgba(4,10,18,.7));font:9px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:rgba(180,240,255,.85);cursor:pointer;transition:border-color 180ms ease}
+    .lock:hover{border-color:rgba(124,231,255,.65);color:#fff}
+    .lock .dot{width:8px;height:8px;border-radius:50%;background:#5ed8ff;box-shadow:0 0 8px rgba(124,231,255,.7);flex:0 0 auto}
+    .lock-detail{margin-top:6px;font:10px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:rgba(180,240,255,.6);line-height:1.7;display:none}
+    .lock-detail.open{display:block}
+    .lock-detail b{color:#fff;letter-spacing:.14em}
     .footer-note{margin-top:8px;font-size:11px;line-height:1.55;color:rgba(237,244,255,.46)}
     /* DMT decoder */
     .decoder{border:1px solid rgba(181,157,255,.22);border-radius:22px;background:linear-gradient(180deg,rgba(18,14,32,.84),rgba(8,6,18,.72));padding:18px;margin-top:22px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset}
@@ -171,6 +178,13 @@
         <div class="field">
           <label>cargo <span class="alias">// captain crest, optional</span></label>
           <div class="crest">
+            <button class="lock" type="button" id="lockBtn" title="View what this page is locked to">
+              <span class="dot"></span>
+              <span>browser-only · no uploads</span>
+            </button>
+            <div class="lock-detail" id="lockDetail">
+              This page is locked by <b>Content Security Policy</b>. The browser physically refuses any outgoing network request, form submission, or third-party script. Your image is processed as a <b>blob</b> inside this tab and never sent anywhere. <a href="view-source:" onclick="event.preventDefault();window.open('view-source:'+location.href,'_blank')" style="color:var(--cyan);text-decoration:underline">view source</a> to verify.
+            </div>
             <div class="mode-row" id="crestModeRow">
               <button type="button" data-mode="sticker" class="active">as sticker</button>
               <button type="button" data-mode="planet">as planet</button>
@@ -209,7 +223,13 @@
     </details>
   </main>
 
+  <script src="./qrcode.min.js"></script>
   <script>
+    // Re-Entry URL: the QR on every PFP scans to this address with the captain's
+    // handle attached as a referral. Swap this single constant when we move the
+    // public domain off github.io. Everything else updates automatically.
+    const BILLBOARD_URL = 'https://joeatang.github.io/natships/pfp/';
+
     const SHIPS = [102816,102884,103210,103481,104500,105678,106060,107200,108345,109000,109420,110500,110999,111337,111774,112009,112016,112420,112895];
 
     const AURAS = [
@@ -222,7 +242,8 @@
     ];
 
     const params = new URLSearchParams(location.search);
-    const initialBlock = Number(params.get('h')) || SHIPS[Math.floor(Math.random()*SHIPS.length)];
+    const initialBlock = Number(params.get('h') || params.get('block')) || SHIPS[Math.floor(Math.random()*SHIPS.length)];
+    const referredBy = (params.get('from') || '').replace(/^@/, '').replace(/[^a-zA-Z0-9_\.\-]/g,'').slice(0,18);
 
     const state = {
       block: SHIPS.includes(initialBlock) ? initialBlock : SHIPS[0],
@@ -335,6 +356,11 @@
       [...crestModeRow.children].forEach(c => c.classList.toggle('active', c === btn));
       render();
     });
+
+    // Lock badge expandable
+    const lockBtn = document.getElementById('lockBtn');
+    const lockDetail = document.getElementById('lockDetail');
+    lockBtn.addEventListener('click', () => lockDetail.classList.toggle('open'));
 
     maskToggle.addEventListener('click', () => {
       state.maskOn = !state.maskOn;
@@ -508,13 +534,19 @@
       // 8. seal ring + microtext
       drawSealRing(w, h, aura);
 
-      // 9. handle as hull decal
-      if (state.handle) drawHandleDecal(w, h, aura);
+      // 9. mission patch (always shows block; arc-text shows handle if set)
+      drawMissionPatch(w, h, aura);
 
-      // 10. badges
-      drawBadges(w, h, aura);
+      // 10. vertical hull stencil along right edge
+      drawHullStencil(w, h, aura);
 
-      // 11. breakthrough flare overlay
+      // 11. brand stamp top-right
+      drawBrandStamp(w, h, aura);
+
+      // 12. re-entry QR (walking billboard — scans to studio with referral)
+      drawReEntryQR(w, h, aura);
+
+      // 13. breakthrough flare overlay
       if (state.breakthroughActive) drawBreakthroughFlare(w, h, aura);
 
       // text seal under canvas
@@ -526,57 +558,151 @@
 
     // ============ DECALS / OVERLAYS ============
 
-    function drawHandleDecal(w, h, aura) {
-      const text = `@${state.handle}`;
-      ctx.save();
-      // anchor on lower hull, slight tilt for a pressed-on feel
-      const cx = w * 0.5;
-      const cy = h * 0.74;
-      ctx.translate(cx, cy);
-      ctx.rotate(-0.06);
+    function drawMissionPatch(w, h, aura) {
+      // upper-left mission patch: arc-set @handle, block number stamped inside
+      const cx = w * 0.135;
+      const cy = h * 0.135;
+      const rOuter = w * 0.085;
+      const rInner = w * 0.062;
 
-      ctx.font = '900 64px "Space Grotesk", system-ui, sans-serif';
+      ctx.save();
+      // patch shadow
+      ctx.beginPath();
+      ctx.arc(cx + 3, cy + 5, rOuter, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.filter = 'blur(6px)';
+      ctx.fill();
+      ctx.filter = 'none';
+
+      // outer ring (the patch band)
+      ctx.beginPath();
+      ctx.arc(cx, cy, rOuter, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(8,12,22,0.92)';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = hexA(aura.hi, 0.85);
+      ctx.shadowColor = hexA(aura.mid, 0.6);
+      ctx.shadowBlur = 10;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // inner disk
+      const inner = ctx.createRadialGradient(cx - rInner*0.3, cy - rInner*0.3, rInner*0.2, cx, cy, rInner);
+      inner.addColorStop(0, hexA(aura.hi, 0.32));
+      inner.addColorStop(0.6, hexA(aura.mid, 0.18));
+      inner.addColorStop(1, 'rgba(4,6,12,0.95)');
+      ctx.beginPath();
+      ctx.arc(cx, cy, rInner, 0, Math.PI*2);
+      ctx.fillStyle = inner;
+      ctx.fill();
+      ctx.strokeStyle = hexA(aura.hi, 0.4);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // block number stamped center
+      ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const metrics = ctx.measureText(text);
-      const padX = 30, padY = 16;
-      const decalW = metrics.width + padX*2;
-      const decalH = 64 + padY*2;
-
-      // pressed-in shadow underneath
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      ctx.shadowColor = 'rgba(0,0,0,0.4)';
-      ctx.shadowBlur = 6;
-      ctx.shadowOffsetY = 3;
-      ctx.fillText(text, 1, 4);
+      ctx.font = '700 14px "JetBrains Mono", monospace';
+      ctx.fillText('MISSION', cx, cy - 16);
+      ctx.font = '900 22px "JetBrains Mono", monospace';
+      ctx.shadowColor = hexA(aura.mid, 0.7);
+      ctx.shadowBlur = 8;
+      ctx.fillText(`DM-${state.block}`, cx, cy + 10);
       ctx.shadowBlur = 0;
-      ctx.shadowOffsetY = 0;
 
-      // highlight rim (top)
-      ctx.fillStyle = hexA(aura.hi, 0.9);
-      ctx.fillText(text, 0, -1);
+      // arc text: top half = @handle (or NATSHIPS), bottom half = MISSION
+      const topText = state.handle ? `• @${state.handle} •` : '• NATSHIPS •';
+      const botText = '• NON-ARBITRARY •';
+      drawArcText(topText, cx, cy, (rOuter + rInner)/2, hexA(aura.hi, 0.95), '700 12px "JetBrains Mono", monospace', Math.PI, true);
+      drawArcText(botText, cx, cy, (rOuter + rInner)/2, 'rgba(237,244,255,0.55)', '600 10px "JetBrains Mono", monospace', 0, false);
 
-      // main fill
-      ctx.fillStyle = '#fff';
-      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    }
 
-      // aura emboss (bottom)
-      ctx.globalCompositeOperation = 'overlay';
-      ctx.fillStyle = hexA(aura.mid, 0.65);
-      ctx.fillText(text, 0, 2);
-      ctx.globalCompositeOperation = 'source-over';
-
-      // subtle stencil grit
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = '#000';
-      const gx = -decalW/2, gy = -decalH/2;
-      for (let i = 0; i < 40; i++) {
-        const px = gx + Math.random() * decalW;
-        const py = gy + Math.random() * decalH;
-        ctx.fillRect(px, py, 1.4, 1.4);
+    function drawArcText(text, cx, cy, radius, color, font, midAngle, topOriented) {
+      // Draw text along a circular arc, with the middle character at midAngle.
+      // topOriented=true keeps the text upright across the top of the circle.
+      ctx.save();
+      ctx.font = font;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const widths = [...text].map(ch => ctx.measureText(ch).width);
+      const total = widths.reduce((a,b)=>a+b, 0);
+      const arc = total / radius; // total angular span
+      let cursor = midAngle - arc/2;
+      for (let i = 0; i < text.length; i++) {
+        const charArc = widths[i] / radius;
+        const a = cursor + charArc/2;
+        ctx.save();
+        // position the character
+        const ang = topOriented ? a + Math.PI : a;
+        ctx.translate(cx + Math.cos(ang) * radius, cy + Math.sin(ang) * radius);
+        ctx.rotate(ang + (topOriented ? -Math.PI/2 : Math.PI/2));
+        ctx.fillText(text[i], 0, 0);
+        ctx.restore();
+        cursor += charArc;
       }
-      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
 
+    function drawHullStencil(w, h, aura) {
+      // Vertical "NATSHIPS · BLOCK xxxxx" running up the right edge.
+      // Stenciled, low alpha, aura-tinted. Reads as side-of-rocket hull marking.
+      const handle = state.handle ? ` · @${state.handle}` : '';
+      const text = `NATSHIPS · BLOCK ${state.block}${handle}`;
+      ctx.save();
+      ctx.translate(w - 38, h * 0.72);
+      ctx.rotate(-Math.PI/2);
+      ctx.font = '900 22px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      // dark shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillText(text, 1, 2);
+      // aura tint fill
+      ctx.fillStyle = hexA(aura.hi, 0.78);
+      ctx.fillText(text, 0, 0);
+      // stencil notches (break the letters with thin black bars)
+      const metrics = ctx.measureText(text);
+      const tw = metrics.width;
+      ctx.globalCompositeOperation = 'destination-out';
+      const bars = 4;
+      for (let i = 0; i < bars; i++) {
+        const bx = (tw / (bars + 1)) * (i + 1);
+        ctx.fillRect(bx - 1, -16, 2, 32);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.restore();
+    }
+
+    function drawBrandStamp(w, h, aura) {
+      // top-right small NATSHIPS tag
+      ctx.save();
+      ctx.font = '700 14px "JetBrains Mono", monospace';
+      const tag = 'NATSHIPS';
+      const tw = ctx.measureText(tag).width + 24;
+      const th = 28;
+      const tx = w - tw - 38, ty = 38;
+      roundRect(tx, ty, tw, th, 10);
+      ctx.fillStyle = 'rgba(4,6,12,0.6)';
+      ctx.fill();
+      ctx.strokeStyle = hexA(aura.hi, 0.55);
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.fillStyle = hexA(aura.hi, 0.95);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(tag, tx + 12, ty + th/2 + 1);
+      ctx.restore();
+
+      // bottom-right micro: DMT thesis credit
+      ctx.save();
+      ctx.font = '600 11px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(237,244,255,0.5)';
+      ctx.textAlign = 'right';
+      ctx.fillText('DIGITAL MATTER · NON-ARBITRARY', w - 38, h - 30);
       ctx.restore();
     }
 
@@ -747,10 +873,82 @@
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // engraved microtext: substrate + frequency + DMT thesis line
-      const label = `NATSHIPS · BLOCK ${state.block} · ${aura.name.toUpperCase()} · DIGITAL MATTER · NON-ARBITRARY · CONSERVED · `;
+      // engraved microtext: substrate + frequency + invitation
+      const label = `NATSHIPS · BLOCK ${state.block} · ${aura.name.toUpperCase()} · DIGITAL MATTER · NON-ARBITRARY · ↯ JOIN THE FLEET ↯ · `;
       const ring = (label + label + label + label).slice(0, 240);
       drawTextOnCircle(ring, cx, cy, (rOuter + rInner)/2, 'rgba(237,244,255,0.55)', '600 13px "JetBrains Mono", monospace', -Math.PI/2);
+    }
+
+    // ============ RE-ENTRY QR (walking billboard) ============
+    // Memoize the QR matrix so we don't recompute on every breath/breakthrough frame.
+    let _qrCache = { url: null, modules: null, count: 0 };
+    function getQRMatrix(url) {
+      if (_qrCache.url === url && _qrCache.modules) return _qrCache;
+      if (typeof qrcode !== 'function') return null;
+      try {
+        const qr = qrcode(0, 'M'); // auto type, ECC level M
+        qr.addData(url);
+        qr.make();
+        const count = qr.getModuleCount();
+        const modules = new Uint8Array(count * count);
+        for (let r = 0; r < count; r++) for (let c = 0; c < count; c++) modules[r*count + c] = qr.isDark(r, c) ? 1 : 0;
+        _qrCache = { url, modules, count };
+        return _qrCache;
+      } catch (_) { return null; }
+    }
+
+    function reentryUrl() {
+      const u = new URL(BILLBOARD_URL);
+      u.searchParams.set('block', String(state.block));
+      if (state.handle) u.searchParams.set('from', state.handle);
+      return u.toString();
+    }
+
+    function drawReEntryQR(w, h, aura) {
+      const qr = getQRMatrix(reentryUrl());
+      if (!qr) return;
+      const size = w * 0.108;            // ~110px on a 1024 canvas
+      const pad  = size * 0.10;
+      const total = size + pad*2;
+      const x = w - total - w*0.052;
+      const y = h - total - h*0.052;
+
+      ctx.save();
+      // shadow plate
+      roundRect(x, y, total, total, 14);
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.shadowBlur = 14;
+      ctx.shadowOffsetY = 4;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      // white sticker background (scannable)
+      roundRect(x + 2, y + 2, total - 4, total - 4, 12);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      // aura rim
+      roundRect(x, y, total, total, 14);
+      ctx.strokeStyle = hexA(aura.hi, 0.7);
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // QR modules
+      const cell = size / qr.count;
+      ctx.fillStyle = '#0a1226';
+      for (let r = 0; r < qr.count; r++) {
+        for (let c = 0; c < qr.count; c++) {
+          if (qr.modules[r*qr.count + c]) {
+            ctx.fillRect(x + pad + c*cell, y + pad + r*cell, cell + 0.6, cell + 0.6);
+          }
+        }
+      }
+      // tiny instruction microtext under the QR (inside the plate, low contrast)
+      ctx.font = '700 9px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(8,12,22,0.7)';
+      ctx.textAlign = 'center';
+      ctx.fillText('SCAN TO RE-ENTER', x + total/2, y + total - 7);
+      ctx.restore();
     }
 
     function drawTextOnCircle(text, cx, cy, radius, color, font, startAngle) {
@@ -770,54 +968,6 @@
         ctx.fillText(text[i], 0, 0);
         ctx.restore();
       }
-      ctx.restore();
-    }
-
-    function drawBadges(w, h, aura) {
-      // top-left: block badge
-      ctx.save();
-      ctx.font = '600 22px "JetBrains Mono", monospace';
-      const blockTxt = `#${state.block}`;
-      const bw = ctx.measureText(blockTxt).width + 28;
-      const bh = 38;
-      const bx = 38, by = 38;
-      roundRect(bx, by, bw, bh, 12);
-      ctx.fillStyle = 'rgba(4,6,12,0.6)';
-      ctx.fill();
-      ctx.strokeStyle = hexA(aura.hi, 0.55);
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(blockTxt, bx + 14, by + bh/2 + 1);
-      ctx.restore();
-
-      // top-right: brand stamp
-      ctx.save();
-      ctx.font = '700 14px "JetBrains Mono", monospace';
-      const tag = 'NATSHIPS';
-      const tw = ctx.measureText(tag).width + 24;
-      const th = 28;
-      const tx = w - tw - 38, ty = 38;
-      roundRect(tx, ty, tw, th, 10);
-      ctx.fillStyle = 'rgba(4,6,12,0.6)';
-      ctx.fill();
-      ctx.strokeStyle = hexA(aura.hi, 0.55);
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-      ctx.fillStyle = hexA(aura.hi, 0.95);
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(tag, tx + 12, ty + th/2 + 1);
-      ctx.restore();
-
-      // bottom-center micro: DMT thesis credit
-      ctx.save();
-      ctx.font = '600 11px "JetBrains Mono", monospace';
-      ctx.fillStyle = 'rgba(237,244,255,0.5)';
-      ctx.textAlign = 'center';
-      ctx.fillText('DIGITAL MATTER · NON-ARBITRARY · SEALED TO BLOCK', w/2, h - 30);
       ctx.restore();
     }
 
@@ -866,6 +1016,23 @@
     }
 
     setBlock(state.block);
+
+    // ============ REFERRED VISITOR ONBOARDING ============
+    // If someone clicks/scans a PFP's QR, they arrive with ?from=@captain.
+    // Show a one-time welcome ribbon and auto-open the DMT decoder so the
+    // first thing they see is the thesis, not a tutorial.
+    if (referredBy) {
+      const decoder = document.getElementById('decoder');
+      if (decoder) decoder.open = true;
+      const ribbon = document.createElement('div');
+      ribbon.style.cssText = 'position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:50;padding:12px 18px;border-radius:999px;border:1px solid rgba(181,157,255,.55);background:linear-gradient(180deg,rgba(18,14,32,.95),rgba(8,6,18,.95));backdrop-filter:blur(14px);color:#fff;font:11px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;box-shadow:0 12px 32px rgba(0,0,0,.4),0 0 24px rgba(181,157,255,.25);display:flex;gap:14px;align-items:center';
+      ribbon.innerHTML = `<span>↯ you re-entered via <b style="color:#b9f4ff">@${referredBy}</b>'s ship</span><button type="button" style="appearance:none;background:none;border:0;color:rgba(255,255,255,.6);cursor:pointer;font:inherit;letter-spacing:inherit">close</button>`;
+      ribbon.querySelector('button').addEventListener('click', () => ribbon.remove());
+      document.body.appendChild(ribbon);
+      setTimeout(() => { if (ribbon.parentNode) ribbon.style.opacity = '0'; }, 9000);
+      setTimeout(() => { if (ribbon.parentNode) ribbon.remove(); }, 10500);
+      ribbon.style.transition = 'opacity 1.4s ease';
+    }
   </script>
 </body>
 </html>
