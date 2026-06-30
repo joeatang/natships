@@ -1,1180 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'self'; frame-ancestors 'none'">
-  <title>NATSHIPS · Re-Entry</title>
-  <meta name="description" content="Re-Entry is the NATSHIPS PFP studio. Tune into a Bitcoin block, etch your hull, lock your signal, and bring your vessel home. Every ship is digital matter — non-arbitrary, conserved, sealed to a block.">
-  <meta property="og:title" content="NATSHIPS · Re-Entry">
-  <meta property="og:description" content="Bring a vessel home from the substrate. Pick a block, etch your hull, choose a signal, breakthrough.">
-  <meta property="og:type" content="website">
-  <style>
-    :root {
-      --bg: #02040a;
-      --panel: rgba(10, 14, 24, 0.82);
-      --line: rgba(124, 231, 255, 0.18);
-      --text: #edf4ff;
-      --muted: rgba(237, 244, 255, 0.66);
-      --cyan: #7ce7ff;
-      --amber: #ffb266;
-      --violet: #b59dff;
-    }
-    *{box-sizing:border-box}
-    html,body{min-height:100%}
-    body{
-      margin:0;color:var(--text);
-      font-family:"Space Grotesk","Inter",system-ui,sans-serif;
-      background:
-        radial-gradient(circle at 50% 18%, rgba(124,231,255,.14) 0%, transparent 28%),
-        radial-gradient(circle at 18% 78%, rgba(181,157,255,.12) 0%, transparent 24%),
-        radial-gradient(circle at 84% 14%, rgba(255,178,102,.1) 0%, transparent 22%),
-        linear-gradient(180deg,#02040a 0%,#050816 52%,#02040a 100%);
-      min-height:100vh;
-    }
-    body::before{content:"";position:fixed;inset:0;pointer-events:none;
-      background:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),
-                 linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
-      background-size:100% 100%,64px 64px;opacity:.14;
-      transform:perspective(1200px) rotateX(70deg) translateY(28vh) scale(1.1);
-      transform-origin:center bottom;
-      mask-image:radial-gradient(circle at center, rgba(0,0,0,.65) 0%, transparent 74%);
-    }
-    .shell{max-width:1260px;margin:0 auto;padding:20px 14px 56px}
-    @media (min-width:720px){.shell{padding:28px 22px 60px}}
-    .top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
-    .eyebrow{font:10px "JetBrains Mono",monospace;letter-spacing:.42em;text-transform:uppercase;color:rgba(237,244,255,.56);margin-bottom:8px}
-    h1{margin:0;font-size:clamp(34px,5vw,62px);line-height:.95;letter-spacing:.14em;text-transform:uppercase;
-       background:linear-gradient(90deg,#fff 0%, var(--cyan) 35%, var(--amber) 72%, #fff 100%);
-       -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .sub{margin:8px 0 0;font-size:14px;line-height:1.55;color:var(--muted);max-width:700px}
-    .sub b{color:#fff;font-weight:600}
-    .home{font:10px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:10px 14px;border-radius:999px;white-space:nowrap}
-    .home:hover{color:#fff;border-color:rgba(124,231,255,.55)}
-    .grid{display:grid;grid-template-columns:1fr;gap:18px;align-items:start}
-    @media (min-width:980px){.grid{grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:22px}}
-    .stage{position:relative;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(8,12,22,.92),rgba(4,6,12,.78));padding:12px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset,0 28px 90px rgba(0,0,0,.42)}
-    @media (min-width:720px){.stage{border-radius:24px;padding:18px}}
-    .canvas-wrap{position:relative;width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#000;display:grid;place-items:center;transition:border-radius 240ms ease}
-    .canvas-wrap canvas{width:100%;height:100%;display:block}
-    .mask-toggle{position:absolute;top:12px;right:12px;font:10px "JetBrains Mono",monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);background:rgba(4,6,12,.72);border:1px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;backdrop-filter:blur(8px);z-index:3}
-    .mask-toggle:hover{color:#fff;border-color:rgba(124,231,255,.55)}
-    .mask-toggle.on{color:var(--cyan);border-color:rgba(124,231,255,.45)}
-    .stage-foot{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
-    .stage-foot .breakthrough{flex:0 0 auto;font-size:11px;letter-spacing:.28em}
-    .stage-foot .actions{margin-left:auto}
-    .seal{margin-top:10px;font:11px "JetBrains Mono",monospace;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;text-align:center}
-    .seal b{color:var(--cyan)}
-    .lens-hint{margin-top:6px;text-align:center;font:9px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:rgba(124,231,255,.55);transition:opacity 600ms ease;pointer-events:none}
-    .lens-hint.faded{opacity:0}
-    .canvas-wrap{cursor:grab}
-    .canvas-wrap.dragging{cursor:grabbing}
-    .actions{display:flex;gap:10px;flex-wrap:wrap}
-    .btn{appearance:none;cursor:pointer;border:1px solid rgba(124,231,255,.22);border-radius:999px;padding:14px 18px;color:#f7fbff;text-decoration:none;font:11px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;background:linear-gradient(180deg,rgba(20,27,48,.98),rgba(8,10,18,.98));transition:transform 180ms ease,border-color 180ms ease,box-shadow 180ms ease;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;min-width:46px}
-    .btn:hover{transform:translateY(-1px);border-color:rgba(124,231,255,.55);box-shadow:0 0 0 1px rgba(124,231,255,.12) inset,0 16px 28px rgba(0,0,0,.28)}
-    .btn.primary{background:linear-gradient(180deg,rgba(29,40,74,.98),rgba(10,14,28,.98));border-color:rgba(124,231,255,.34)}
-    .btn.breakthrough{background:linear-gradient(180deg,rgba(181,157,255,.32),rgba(124,231,255,.2));border-color:rgba(181,157,255,.6);color:#fff;text-shadow:0 0 12px rgba(181,157,255,.6);animation:breath 4.2s ease-in-out infinite}
-    @keyframes breath{0%,100%{box-shadow:0 0 0 1px rgba(181,157,255,.18) inset,0 0 18px rgba(181,157,255,.18)}50%{box-shadow:0 0 0 1px rgba(124,231,255,.32) inset,0 0 26px rgba(124,231,255,.32)}}
-    .panel{border-radius:18px;border:1px solid rgba(124,231,255,.14);background:var(--panel);padding:14px;display:grid;gap:14px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset}
-    @media (min-width:720px){.panel{border-radius:22px;padding:18px;gap:16px}}
-    .panel h2{margin:0;font:11px "JetBrains Mono",monospace;letter-spacing:.3em;text-transform:uppercase;color:rgba(237,244,255,.66)}
-    .field{display:grid;gap:8px}
-    .field label{font:10px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:rgba(237,244,255,.5)}
-    .field label .alias{color:rgba(124,231,255,.7);margin-left:6px}
-    .field .hint{font-size:11px;color:rgba(237,244,255,.46);line-height:1.5}
-    .ship-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    select,input[type="text"]{appearance:none;width:100%;background:rgba(4,6,12,.7);border:1px solid rgba(124,231,255,.18);color:#fff;border-radius:12px;padding:13px 14px;font:16px "Space Grotesk",sans-serif;letter-spacing:.04em;outline:none;min-height:46px}
-    select:focus,input[type="text"]:focus{border-color:rgba(124,231,255,.55)}
-    select option{background:#070b16;color:#fff}
-    .micro-btn{flex:0 0 auto;font:11px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:#fff;background:rgba(20,27,48,.98);border:1px solid rgba(124,231,255,.22);border-radius:999px;padding:13px 16px;cursor:pointer;min-height:46px;min-width:64px}
-    .micro-btn:hover{border-color:rgba(124,231,255,.55)}
-    .auras{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-    @media (max-width:520px){.auras{grid-template-columns:repeat(2,1fr);gap:10px}}
-    .aura{cursor:pointer;border:1px solid rgba(124,231,255,.16);border-radius:14px;padding:12px 10px;background:rgba(6,9,18,.7);display:grid;gap:8px;text-align:center;transition:border-color 180ms ease,transform 180ms ease;min-height:64px}
-    .aura:hover{transform:translateY(-1px)}
-    .aura.active{border-color:rgba(124,231,255,.7);box-shadow:0 0 0 1px rgba(124,231,255,.18) inset}
-    .swatch{width:100%;height:22px;border-radius:8px;border:1px solid rgba(255,255,255,.06)}
-    .aura span{font:9px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
-    .crest{display:grid;gap:10px}
-    .crest .mode-row{display:flex;gap:6px}
-    .crest .mode-row button{flex:1;background:rgba(8,12,22,.78);border:1px solid rgba(124,231,255,.16);color:var(--muted);border-radius:10px;padding:9px;font:9px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:all 180ms ease}
-    .crest .mode-row button.active{color:#fff;border-color:rgba(124,231,255,.55);background:rgba(20,27,48,.95)}
-    .crest .drop{border:1px dashed rgba(124,231,255,.3);border-radius:14px;padding:18px 14px;text-align:center;color:var(--muted);font-size:13px;cursor:pointer;background:rgba(4,6,12,.5);transition:border-color 180ms ease,color 180ms ease;line-height:1.55;min-height:96px;display:flex;flex-direction:column;justify-content:center;gap:4px}
-    .crest .drop:hover{border-color:rgba(124,231,255,.6);color:#fff}
-    .crest .drop b{display:block;font:10px "JetBrains Mono",monospace;letter-spacing:.2em;text-transform:uppercase;color:#fff;margin-bottom:4px}
-    .crest .drop input{display:none}
-    .crest .crest-status{display:flex;justify-content:space-between;gap:8px;font:10px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
-    .crest .crest-status button{appearance:none;background:none;border:0;color:var(--cyan);cursor:pointer;font:inherit;text-transform:uppercase;letter-spacing:inherit}
-    .lock{display:flex;align-items:center;gap:10px;padding:14px 14px;border:1px solid rgba(94,216,255,.45);border-radius:12px;background:linear-gradient(180deg,rgba(8,32,42,.92),rgba(4,14,22,.85));font:10px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:#cdf3ff;cursor:pointer;transition:border-color 180ms ease;min-height:50px;text-align:left;width:100%}
-    .lock:hover{border-color:rgba(124,231,255,.85);color:#fff}
-    .lock .dot{width:10px;height:10px;border-radius:50%;background:#5ed8ff;box-shadow:0 0 10px rgba(124,231,255,.9);flex:0 0 auto;animation:lockpulse 2.4s ease-in-out infinite}
-    @keyframes lockpulse{0%,100%{box-shadow:0 0 8px rgba(124,231,255,.6)}50%{box-shadow:0 0 14px rgba(124,231,255,1)}}
-    .lock-detail{margin-top:6px;font:10px "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:rgba(180,240,255,.7);line-height:1.7;display:none}
-    .lock-detail.open{display:block}
-    .lock-detail b{color:#fff;letter-spacing:.14em}
-    .footer-note{margin-top:8px;font-size:11px;line-height:1.55;color:rgba(237,244,255,.46)}
-    /* DMT decoder */
-    .decoder{border:1px solid rgba(181,157,255,.22);border-radius:22px;background:linear-gradient(180deg,rgba(18,14,32,.84),rgba(8,6,18,.72));padding:18px;margin-top:22px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset}
-    .decoder summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font:11px "JetBrains Mono",monospace;letter-spacing:.28em;text-transform:uppercase;color:rgba(181,157,255,.88)}
-    .decoder summary::-webkit-details-marker{display:none}
-    .decoder summary::after{content:"▾";font-family:inherit;transition:transform 200ms ease;color:var(--violet)}
-    .decoder[open] summary::after{transform:rotate(180deg)}
-    .decoder-body{margin-top:14px;display:grid;gap:14px}
-    .decoder-row{display:grid;grid-template-columns:140px 1fr;gap:14px;padding:12px 0;border-top:1px solid rgba(181,157,255,.12)}
-    .decoder-row:first-of-type{border-top:0;padding-top:0}
-    .decoder-row dt{font:10px "JetBrains Mono",monospace;letter-spacing:.24em;text-transform:uppercase;color:rgba(181,157,255,.7)}
-    .decoder-row dt b{display:block;color:#fff;letter-spacing:.18em;margin-top:4px}
-    .decoder-row dd{margin:0;font-size:13px;line-height:1.6;color:rgba(237,244,255,.78)}
-    .decoder-foot{margin-top:10px;font-size:12px;line-height:1.55;color:rgba(237,244,255,.6)}
-    .decoder-foot a{color:var(--cyan);text-decoration:none;border-bottom:1px dashed rgba(124,231,255,.4)}
-    .decoder-foot a:hover{color:#fff}
-    @media (max-width:980px){
-      .decoder-row{grid-template-columns:1fr;gap:6px}
-    }
-    @media (max-width:520px){
-      h1{letter-spacing:.1em}
-      .stage-foot{flex-direction:column;align-items:stretch}
-      .stage-foot .actions{margin-left:0;display:flex;gap:8px;width:100%}
-      .stage-foot .actions .btn{flex:1}
-      .stage-foot .breakthrough{width:100%}
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0c">
+<title>UNATOM · PFP</title>
+<meta name="description" content="One unatom from the BLAST-OFF series. Save it. Post it. Feed the chain.">
+<meta property="og:title" content="UNATOMS · my pfp">
+<meta property="og:description" content="adopt a unatom. feed the chain.">
+<meta property="og:url" content="https://unatoms.fun/pfp/">
+<style>
+  :root{
+    --bg:#0a0a0c; --ink:#f3eee3; --orange:#f0962d; --green:#7dcf5b;
+    --pink:#f17d8e; --warm:#f9bc4f; --muted:rgba(243,238,227,0.5);
+    --line:rgba(243,238,227,0.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg);color:var(--ink);font-family:ui-serif,"Iowan Old Style",Georgia,serif;min-height:100%;}
+  body{padding:24px 16px 60px;max-width:760px;margin:0 auto;}
+  header{text-align:center;padding:8px 0 22px}
+  .eyebrow{font:600 11px/1 "SF Mono",ui-monospace,Menlo,monospace;letter-spacing:.24em;color:var(--orange);text-transform:uppercase;margin-bottom:10px}
+  h1{font:900 clamp(26px,5vw,44px)/1 "Arial Black","SF Pro Display",system-ui,sans-serif;letter-spacing:-.02em}
+  h1 .blk{color:var(--warm)}
+  .frame{aspect-ratio:1/1;background:#13141b;border:1px solid var(--line);border-radius:18px;padding:8px;margin:22px 0;overflow:hidden}
+  .frame svg{width:100%;height:100%;display:block}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;padding:18px;border:1px solid var(--line);border-radius:14px;background:#13141b;margin-bottom:20px}
+  .stat{display:flex;justify-content:space-between;font:500 12px/1.5 "SF Mono",ui-monospace,Menlo,monospace;border-bottom:1px solid var(--line);padding-bottom:6px}
+  .stat:last-child,.stat:nth-last-child(2){border-bottom:0;padding-bottom:0}
+  .stat .l{color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-size:10px}
+  .stat .v{color:var(--ink);font-weight:600;text-align:right}
+  .actions{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+  button,.actions a{font:700 14px/1 "SF Mono",ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--bg);background:var(--ink);border:0;border-radius:999px;padding:18px 24px;cursor:pointer;text-decoration:none;text-align:center;transition:transform .1s,background .2s}
+  button.primary{background:var(--orange);color:#0a0a0c}
+  button:active{transform:scale(.98)}
+  .actions a.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .actions a.ghost:hover{border-color:var(--orange)}
+  nav{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:36px;padding-top:24px;border-top:1px solid var(--line)}
+  nav a{font:600 10px/1 "SF Mono",ui-monospace,Menlo,monospace;letter-spacing:.16em;color:var(--muted);text-decoration:none;padding:6px 10px;text-transform:uppercase}
+  nav a:hover{color:var(--orange)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);font:700 12px/1 "SF Mono",ui-monospace,Menlo,monospace;letter-spacing:.12em;padding:14px 22px;border-radius:999px;text-transform:uppercase;opacity:0;transition:opacity .3s;pointer-events:none;z-index:10}
+  .toast.show{opacity:1}
+</style>
 </head>
 <body>
-  <main class="shell">
-    <div class="top">
-      <div>
-        <div class="eyebrow">re-entry studio</div>
-        <h1>Bring it home</h1>
-        <p class="sub">Every NATSHIP is <b>digital matter</b> &mdash; a vessel that <em>emerged</em> from a Bitcoin block, not one a designer drew. Tune in, etch your hull, lock your signal, then bring it back through re-entry. The result is a 1024&times;1024 PFP only you could have made &mdash; sealed to a block, conserved forever.</p>
-      </div>
-      <a class="home" href="../">&larr; back to signal</a>
-    </div>
 
-    <div class="grid">
-      <section class="stage">
-        <div class="canvas-wrap" id="canvasWrap">
-          <canvas id="canvas" width="1024" height="1024" aria-label="Re-entry preview"></canvas>
-          <button class="mask-toggle" id="maskToggle" type="button" title="Preview circle crop (like X/Discord)">circle preview</button>
-        </div>
-        <div class="stage-foot">
-          <button class="btn breakthrough" id="breakthroughBtn" type="button" title="Scans all six frequencies in two seconds">↯ breakthrough ↯</button>
-          <div class="actions">
-            <button class="btn" id="copySeal" type="button">copy seal</button>
-            <button class="btn primary" id="download" type="button">land it</button>
-          </div>
-        </div>
-        <div class="seal" id="sealText">tuning&hellip;</div>
-        <div class="lens-hint" id="lensHint">drag the image to recenter • double-tap to auto</div>
-      </section>
+<header>
+  <div class="eyebrow">UNATOMS · BLAST-OFF SERIES</div>
+  <h1>UNATOM <span class="blk" id="blkLabel">—</span></h1>
+</header>
 
-      <aside class="panel">
-        <h2>flight plan</h2>
+<div class="frame" id="frame"></div>
 
-        <div class="field">
-          <label for="blockInput">substrate <span class="alias">// block</span></label>
-          <div class="ship-row">
-            <input id="blockInput" type="number" inputmode="numeric" min="102816" max="112895" step="1" />
-            <button class="micro-btn" id="randomBtn" type="button">scan</button>
-          </div>
-          <div class="hint">Any block in the NATSHIPS window: <b>102816&nbsp;→&nbsp;112895</b> (10,080 vessels). Each one is forced into existence by its Bitcoin block — pick yours, or scan a random one.</div>
-        </div>
+<div class="stats" id="stats"></div>
 
-        <div class="field">
-          <label for="handleInput">hull etching <span class="alias">// your handle</span></label>
-          <input id="handleInput" type="text" placeholder="yourname" maxlength="18" autocomplete="off" spellcheck="false">
-          <div class="hint">Stenciled onto the hull. Auto-prefixed with @. Up to 18 characters.</div>
-        </div>
+<div class="actions">
+  <button class="primary" id="savePng">save as png</button>
+  <button id="copyLink">copy share link</button>
+  <a class="ghost" href="../">▸ play NAT READY?</a>
+  <a class="ghost" href="../showcase/">← back to the 19</a>
+</div>
 
-        <div class="field">
-          <label>signal frequency <span class="alias">// aura</span></label>
-          <div class="auras" id="auras"></div>
-        </div>
+<nav>
+  <a href="../">lab</a>
+  <a href="../showcase/">showcase</a>
+  <a href="../catalog/">catalog</a>
+  <a href="https://x.com/takedmt" target="_blank" rel="noopener">@takedmt</a>
+  <a href="https://unatoms.fun">unatoms.fun</a>
+</nav>
 
-        <div class="field">
-          <label>cargo <span class="alias">// captain crest, optional</span></label>
-          <div class="crest">
-            <button class="lock" type="button" id="lockBtn" title="View what this page is locked to">
-              <span class="dot"></span>
-              <span>browser-only · nothing is uploaded · tap for proof</span>
-            </button>
-            <div class="lock-detail" id="lockDetail">
-              No server. No database. No backend. The page itself is locked down by a <b>Content Security Policy</b> that blocks the browser from making <em>any</em> outgoing network connection — your image is opened as a <b>blob</b> in this tab and never leaves your device. Close the tab and it's gone. <a href="#" id="viewSourceLink" style="color:var(--cyan);text-decoration:underline">view source</a> to verify.
-            </div>
-            <div class="mode-row" id="crestModeRow">
-              <button type="button" data-mode="sticker" class="active">as sticker</button>
-              <button type="button" data-mode="planet">as planet</button>
-            </div>
-            <label class="drop" for="crestFile">
-              <b>drop or tap to upload</b>
-              Sticker = peeling decal on the hull. Planet = a small world in orbit.<br>Stays on your device.
-              <input id="crestFile" type="file" accept="image/*">
-            </label>
-            <div class="crest-status">
-              <span id="crestStatus">no cargo</span>
-              <button type="button" id="clearCrest" hidden>clear</button>
-            </div>
-          </div>
-        </div>
+<div class="toast" id="toast">copied</div>
 
-        <div class="field">
-          <div class="hint">• <b>breakthrough</b> button lives right under the image. Scans all six frequencies in two seconds. Borrowed from the molecule, borrowed from the boostback. You'll land on a new aura.</div>
-        </div>
+<script src="../unatom-render.js"></script>
+<script>
+  const params = new URLSearchParams(location.search);
+  const block = Math.max(1, Math.min(10080, parseInt(params.get('block'), 10) || 10080));
 
-        <p class="footer-note">1024&times;1024 PNG. Block, frequency, etching, and cargo all engrave into the seal &mdash; every re-entry is a one-off.</p>
-      </aside>
-    </div>
+  const t = UNATOM.fromBlock(block);
 
-    <details class="decoder" id="decoder">
-      <summary>Read this as Digital Matter Theory ▾</summary>
-      <div class="decoder-body">
-        <dl class="decoder-row"><dt>substrate <b>// block</b></dt><dd>The vessel did not begin as a drawing. It <em>emerged</em> from the data of a specific Bitcoin block &mdash; a slice of digital matter that already existed, sealed by proof-of-work. You don't design it. You discover it.</dd></dl>
-        <dl class="decoder-row"><dt>signal frequency <b>// aura</b></dt><dd>Same substrate, different broadcast. The colors are not chosen for taste &mdash; they are the phase you tuned the transmission to. Every frequency is non-arbitrary.</dd></dl>
-        <dl class="decoder-row"><dt>hull etching <b>// handle</b></dt><dd>Your name pressed into the metal. The ship was already real; the etching is your claim on it, conserved in the metadata of every screenshot.</dd></dl>
-        <dl class="decoder-row"><dt>cargo <b>// crest</b></dt><dd>Mass is conserved. Your image rides along the vessel that the substrate forced into existence. As sticker: surface decal, you on the outside. As planet: a body in orbit, you with your own gravity.</dd></dl>
-        <dl class="decoder-row"><dt>breakthrough <b>// the button</b></dt><dd>Two seconds, six frequencies. The pun is intentional: in the molecule it's the moment the room dissolves. In Digital Matter Theory it's the moment the substrate finishes resolving and the vessel comes back through re-entry as itself.</dd></dl>
-        <p class="decoder-foot">NATSHIPS rides on the <b>Digital Matter Theory</b> thesis &mdash; that real digital artifacts must emerge from on-chain data rather than be assigned by hand. Read the long version on the <a href="https://digital-matter-theory.gitbook.io/digital-matter-theory" target="_blank" rel="noopener">DMT gitbook</a> or the <a href="https://takedmt.com" target="_blank" rel="noopener">takedmt.com</a> movement site.</p>
-      </div>
-    </details>
-  </main>
+  // Figure out element category
+  let catLabel = '';
+  for (const cat of UNATOM.CATEGORIES) if (cat.els.includes(t.sym)) catLabel = cat.label;
 
-  <script>
-    // NATSHIPS series window (matches prototypes/merged-v1.js SERIES_START + SERIES_SUPPLY).
-    // Any block in this range can be rendered on demand via the engine iframe — no
-    // pre-baked PNGs needed. 10,080 vessels total, fully deterministic per block.
-    const BLOCK_MIN = 102816;
-    const BLOCK_MAX = 112895;
-    const TOTAL_SHIPS = BLOCK_MAX - BLOCK_MIN + 1; // 10080
-    const clampBlock = (n) => {
-      const v = Math.floor(Number(n));
-      if (!Number.isFinite(v)) return BLOCK_MIN;
-      return Math.max(BLOCK_MIN, Math.min(BLOCK_MAX, v));
-    };
-    const randomBlock = () => BLOCK_MIN + Math.floor(Math.random() * TOTAL_SHIPS);
+  document.getElementById('blkLabel').textContent = '#' + block.toLocaleString();
+  document.title = 'UNATOM #' + block + ' · ' + t.sym;
+  document.getElementById('frame').innerHTML = UNATOM.svg(t);
 
-    const AURAS = [
-      { key:'amber',  name:'amber drift',   hi:'#ffd089', mid:'#ff8a3c', lo:'#a8501a' },
-      { key:'violet', name:'violet lock',   hi:'#cdb6ff', mid:'#8b6cff', lo:'#3c2685' },
-      { key:'cyan',   name:'cyan noise',    hi:'#b9f4ff', mid:'#5ed8ff', lo:'#15506d' },
-      { key:'lime',   name:'lime echo',     hi:'#dcffb1', mid:'#9bf06a', lo:'#3c6612' },
-      { key:'rose',   name:'rose myth',     hi:'#ffc7d6', mid:'#ff6f97', lo:'#742036' },
-      { key:'silver', name:'silver origin', hi:'#ffffff', mid:'#cbd6e8', lo:'#5b6577' },
-    ];
+  const statsEl = document.getElementById('stats');
+  const rows = [
+    ['element',  t.sym + ' · ' + (catLabel || '—').toLowerCase()],
+    ['shell',    t.scheme],
+    ['eye',      t.thirdEye],
+    ['swag',     t.swagKind === 'none' ? '—' : t.swagKind],
+    ['nature',   t.nature === 'none' ? '—' : t.nature],
+    ['mood',     t.mood],
+    ['mouth',    t.mouthKind === 'noMouth' ? 'sealed' : t.mouthKind],
+    ['drip',     t.drip === 'noDrip' ? '—' : t.drip],
+    ['glasses',  t.glasses === 'none' ? '—' : t.glasses],
+    ['border',   t.border],
+    ['eco',      t.eco],
+    ['block',    '#' + block.toLocaleString() + ' / 10,080'],
+  ];
+  statsEl.innerHTML = rows.map(([l, v]) =>
+    '<div class="stat"><span class="l">' + l + '</span><span class="v">' + v + '</span></div>'
+  ).join('');
 
-    const params = new URLSearchParams(location.search);
-    const initialBlock = clampBlock(params.get('h') || params.get('block') || randomBlock());
+  // Toast helper
+  const toast = document.getElementById('toast');
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('show'), 1600);
+  }
 
-    const state = {
-      block: initialBlock,
-      handle: '',
-      aura: AURAS[0],
-      crestImg: null,
-      crestMode: 'sticker', // sticker | planet
-      maskOn: false,
-      sourceImg: null,
-      shipFocus: null,        // { x, y, w, h } in 0..1, set after each ship loads
-      breakthroughActive: false,
-      exporting: false,
-      animTick: 0,
-    };
+  // Copy share link
+  document.getElementById('copyLink').onclick = async () => {
+    const url = 'https://unatoms.fun/pfp/?block=' + block;
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast('link copied');
+    } catch {
+      showToast('copy failed');
+    }
+  };
 
-    const canvas = document.getElementById('canvas');
+  // Save as PNG (2048×2048 from SVG)
+  document.getElementById('savePng').onclick = async () => {
+    const svgStr = UNATOM.svg(t);
+    const SIZE = 2048;
+    const canvas = document.createElement('canvas');
+    canvas.width = SIZE; canvas.height = SIZE;
     const ctx = canvas.getContext('2d');
-    const canvasWrap = document.getElementById('canvasWrap');
-    const blockInput = document.getElementById('blockInput');
-    const handleInput = document.getElementById('handleInput');
-    const aurasEl = document.getElementById('auras');
-    const sealText = document.getElementById('sealText');
-    const randomBtn = document.getElementById('randomBtn');
-    const downloadBtn = document.getElementById('download');
-    const copySealBtn = document.getElementById('copySeal');
-    const maskToggle = document.getElementById('maskToggle');
-    const crestFile = document.getElementById('crestFile');
-    const crestStatus = document.getElementById('crestStatus');
-    const clearCrest = document.getElementById('clearCrest');
-    const crestModeRow = document.getElementById('crestModeRow');
-    const breakthroughBtn = document.getElementById('breakthroughBtn');
-
-    blockInput.value = String(state.block);
-
-    AURAS.forEach((a, i) => {
-      const el = document.createElement('button');
-      el.type = 'button';
-      el.className = 'aura' + (i === 0 ? ' active' : '');
-      el.dataset.key = a.key;
-      el.innerHTML = `<div class="swatch" style="background:linear-gradient(135deg,${a.hi},${a.mid} 55%,${a.lo})"></div><span>${a.name}</span>`;
-      el.addEventListener('click', () => setAura(a, el));
-      aurasEl.appendChild(el);
-    });
-
-    function setAura(a, el) {
-      state.aura = a;
-      [...aurasEl.children].forEach(c => c.classList.toggle('active', c === el));
-      render();
-    }
-
-    function detectShipFocus(img) {
-      // Find the rocket's center by sampling a downscaled copy and computing a
-      // luminance^4 weighted centroid. The rocket has bright metallic specular
-      // highlights (~220-255) that dominate over diffuse chart elements (~80-160),
-      // so the high power pulls the centroid onto the rocket even when other
-      // bright elements (orbital charts, beacons) are also present.
-      try {
-        const S = 128;
-        const off = document.createElement('canvas');
-        off.width = S; off.height = S;
-        const octx = off.getContext('2d', { willReadFrequently: true });
-        octx.drawImage(img, 0, 0, S, S);
-        const data = octx.getImageData(0, 0, S, S).data;
-
-        let sumX = 0, sumY = 0, sumW = 0;
-        let minX = S, maxX = 0, minY = S, maxY = 0, hits = 0;
-        const FOCUS_MIN = 140; // ignore mid-tone diffuse for centroid weighting
-        const BBOX_MIN = 50;   // looser threshold just for bbox scale
-        for (let y = 0; y < S; y++) {
-          for (let x = 0; x < S; x++) {
-            const i = (y * S + x) * 4;
-            const r = data[i], g = data[i+1], b = data[i+2];
-            const lum = (r + g + b) / 3;
-            if (lum > BBOX_MIN) {
-              if (x < minX) minX = x;
-              if (x > maxX) maxX = x;
-              if (y < minY) minY = y;
-              if (y > maxY) maxY = y;
-              hits++;
-            }
-            if (lum > FOCUS_MIN) {
-              // weight by (lum-FOCUS_MIN)^4 normalized to 0..1 — heavy bias to brights
-              const n = (lum - FOCUS_MIN) / (255 - FOCUS_MIN);
-              const w = n * n * n * n;
-              sumX += x * w;
-              sumY += y * w;
-              sumW += w;
-            }
-          }
-        }
-        if (sumW < 0.5 || hits < 10) return { x: 0.5, y: 0.5, w: 1, h: 1 };
-        return {
-          x: (sumX / sumW) / S,
-          y: (sumY / sumW) / S,
-          w: (maxX - minX + 1) / S,
-          h: (maxY - minY + 1) / S,
-        };
-      } catch (_) {
-        return { x: 0.5, y: 0.5, w: 1, h: 1 };
-      }
-    }
-
-    // ============ NATSHIPS ENGINE BRIDGE ============
-    // Loads the deterministic renderer (prototypes/merged-v1.js) in a hidden
-    // same-origin iframe and snapshots its 1500×1500 canvas. This unlocks any
-    // block in 102816..112895 (10,080 vessels) without pre-rendering PNGs.
-    // The iframe is same-origin so reading its canvas is allowed and untainted.
-    const shipCache = new Map(); // blockHeight → HTMLCanvasElement (1100×1100 snapshot)
-    const SHIP_CACHE_MAX = 16;
-    let activeShipLoad = null;
-
-    function cacheShip(h, c) {
-      if (shipCache.has(h)) shipCache.delete(h);
-      shipCache.set(h, c);
-      while (shipCache.size > SHIP_CACHE_MAX) {
-        const oldestKey = shipCache.keys().next().value;
-        shipCache.delete(oldestKey);
-      }
-    }
-
-    function renderShipViaEngine(h) {
-      return new Promise((resolve, reject) => {
-        if (shipCache.has(h)) return resolve(shipCache.get(h));
-        const iframe = document.createElement('iframe');
-        iframe.setAttribute('aria-hidden', 'true');
-        iframe.style.cssText = 'position:absolute;left:-99999px;top:0;width:1500px;height:1500px;border:0;visibility:hidden;pointer-events:none';
-        iframe.src = `../prototypes/merged-v1-headless.html?h=${h}&compact=1`;
-
-        let done = false;
-        const cleanup = () => {
-          window.removeEventListener('message', onMsg);
-          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-        };
-        const finish = (err, result) => {
-          if (done) return;
-          done = true;
-          cleanup();
-          err ? reject(err) : resolve(result);
-        };
-
-        function snapshot() {
-          try {
-            const doc = iframe.contentDocument;
-            const srcCanvas = doc && doc.getElementById('still');
-            if (!srcCanvas) return finish(new Error('engine canvas missing'));
-            // Snapshot to a 1100×1100 offscreen canvas (matches prior PNG dims so
-            // the centroid detector and adaptive zoom behave identically).
-            const off = document.createElement('canvas');
-            off.width = 1100;
-            off.height = 1100;
-            const octx = off.getContext('2d');
-            octx.imageSmoothingQuality = 'high';
-            octx.drawImage(srcCanvas, 0, 0, 1100, 1100);
-            cacheShip(h, off);
-            finish(null, off);
-          } catch (err) {
-            finish(err);
-          }
-        }
-
-        function onMsg(ev) {
-          if (ev.source !== iframe.contentWindow) return;
-          const d = ev.data;
-          if (d && d.source === 'natships-engine' && d.ready) snapshot();
-        }
-        window.addEventListener('message', onMsg);
-        // Safety: if the postMessage never arrives (e.g. blocked), snapshot
-        // after a generous timeout based on iframe load.
-        iframe.addEventListener('load', () => {
-          setTimeout(() => { if (!done) snapshot(); }, 1600);
-        });
-        setTimeout(() => { if (!done) finish(new Error('engine timeout')); }, 8000);
-
-        document.body.appendChild(iframe);
-      });
-    }
-
-    function loadShip(h) {
-      const loadId = ++loadShip.counter;
-      activeShipLoad = loadId;
-      renderShipViaEngine(h).then((shipCanvas) => {
-        if (activeShipLoad !== loadId) return; // user moved on; discard
-        state.sourceImg = shipCanvas;
-        state.shipFocus = detectShipFocus(shipCanvas);
-        render();
-      }).catch((err) => {
-        if (activeShipLoad !== loadId) return;
-        sealText.textContent = `block ${h}: ${err.message || 'render failed'}`;
-      });
-    }
-    loadShip.counter = 0;
-
-    function setBlock(h) {
-      const clamped = clampBlock(h);
-      state.block = clamped;
-      if (Number(blockInput.value) !== clamped) blockInput.value = String(clamped);
-      sealText.textContent = `tuning block ${clamped.toLocaleString()}…`;
-      loadShip(clamped);
-    }
-
-    blockInput.addEventListener('change', () => setBlock(blockInput.value));
-    blockInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); setBlock(blockInput.value); }
-    });
-    randomBtn.addEventListener('click', () => {
-      let next = state.block;
-      while (next === state.block) next = randomBlock();
-      setBlock(next);
-    });
-
-    handleInput.addEventListener('input', e => {
-      const cleaned = e.target.value.replace(/[^a-zA-Z0-9_\.\-]/g, '').slice(0, 18);
-      if (cleaned !== e.target.value) e.target.value = cleaned;
-      state.handle = cleaned;
-      render();
-    });
-
-    crestFile.addEventListener('change', e => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      const img = new Image();
-      img.onload = () => {
-        state.crestImg = img;
-        crestStatus.textContent = `cargo: ${file.name.slice(0,18)}${file.name.length>18?'…':''}`;
-        clearCrest.hidden = false;
-        render();
-      };
-      img.src = URL.createObjectURL(file);
-    });
-    clearCrest.addEventListener('click', () => {
-      state.crestImg = null;
-      crestFile.value = '';
-      crestStatus.textContent = 'no cargo';
-      clearCrest.hidden = true;
-      render();
-    });
-
-    crestModeRow.addEventListener('click', e => {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-      state.crestMode = btn.dataset.mode;
-      [...crestModeRow.children].forEach(c => c.classList.toggle('active', c === btn));
-      render();
-    });
-
-    // Lock badge expandable
-    const lockBtn = document.getElementById('lockBtn');
-    const lockDetail = document.getElementById('lockDetail');
-    lockBtn.addEventListener('click', () => lockDetail.classList.toggle('open'));
-    const viewSourceLink = document.getElementById('viewSourceLink');
-    if (viewSourceLink) viewSourceLink.addEventListener('click', e => {
-      e.preventDefault();
-      window.open('view-source:' + location.href, '_blank');
-    });
-
-    maskToggle.addEventListener('click', () => {
-      state.maskOn = !state.maskOn;
-      maskToggle.classList.toggle('on', state.maskOn);
-      maskToggle.textContent = state.maskOn ? 'square view' : 'circle preview';
-      canvasWrap.style.borderRadius = state.maskOn ? '50%' : '18px';
-    });
-
-    // ============ DRAG-TO-PAN LENS ============
-    // Lets a captain nudge the framing if the auto-centroid doesn't sit the way
-    // they want. Operates on state.shipFocus (the same value the renderer uses),
-    // so dragging the on-screen canvas perfectly maps to the 1024×1024 output.
-    const lensHint = document.getElementById('lensHint');
-    let drag = null;
-    function fadeHint() {
-      if (lensHint && !lensHint.classList.contains('faded')) {
-        lensHint.classList.add('faded');
-      }
-    }
-    canvasWrap.addEventListener('pointerdown', (e) => {
-      if (!state.sourceImg || state.breakthroughActive) return;
-      const rect = canvas.getBoundingClientRect();
-      drag = {
-        id: e.pointerId,
-        startX: e.clientX,
-        startY: e.clientY,
-        startFx: (state.shipFocus && state.shipFocus.x) || 0.5,
-        startFy: (state.shipFocus && state.shipFocus.y) || 0.5,
-        // px-per-focus-unit conversion (focus is 0..1 of source; drag in screen px)
-        pxPerFx: rect.width,
-        pxPerFy: rect.height,
-        moved: false,
-      };
-      try { canvasWrap.setPointerCapture(e.pointerId); } catch (_) {}
-      canvasWrap.classList.add('dragging');
-    });
-    canvasWrap.addEventListener('pointermove', (e) => {
-      if (!drag || e.pointerId !== drag.id) return;
-      const dx = e.clientX - drag.startX;
-      const dy = e.clientY - drag.startY;
-      if (!drag.moved && Math.hypot(dx, dy) < 3) return;
-      drag.moved = true;
-      // dragging the IMAGE right means the focus point shifts LEFT in source coords
-      const f = state.shipFocus || { x: 0.5, y: 0.5, w: 1, h: 1 };
-      const nx = Math.max(0.05, Math.min(0.95, drag.startFx - dx / drag.pxPerFx / 1.2));
-      const ny = Math.max(0.05, Math.min(0.95, drag.startFy - dy / drag.pxPerFy / 1.2));
-      state.shipFocus = { ...f, x: nx, y: ny };
-      render();
-    });
-    function endDrag(e) {
-      if (!drag) return;
-      if (drag.moved) fadeHint();
-      try { canvasWrap.releasePointerCapture(drag.id); } catch (_) {}
-      canvasWrap.classList.remove('dragging');
-      drag = null;
-    }
-    canvasWrap.addEventListener('pointerup', endDrag);
-    canvasWrap.addEventListener('pointercancel', endDrag);
-    canvasWrap.addEventListener('dblclick', () => {
-      // double-click / double-tap restores the auto-detected centroid
-      if (!state.sourceImg) return;
-      state.shipFocus = detectShipFocus(state.sourceImg);
-      render();
-    });
-
-    downloadBtn.addEventListener('click', () => {
-      state.exporting = true;
-      render();
-      const link = document.createElement('a');
-      const handlePart = state.handle ? `_${state.handle}` : '';
-      link.download = `natships_${state.block}_${state.aura.key}${handlePart}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      state.exporting = false;
-      render();
-    });
-
-    copySealBtn.addEventListener('click', async () => {
-      const text = makeSealString();
-      let ok = false;
-      try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(text);
-          ok = true;
+    // background tile color from scheme
+    ctx.fillStyle = '#0a0b10';
+    ctx.fillRect(0, 0, SIZE, SIZE);
+    const img = new Image();
+    const blobUrl = URL.createObjectURL(new Blob([svgStr], { type: 'image/svg+xml' }));
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, SIZE, SIZE);
+      URL.revokeObjectURL(blobUrl);
+      canvas.toBlob((blob) => {
+        const fname = 'unatom-' + String(block).padStart(5, '0') + '.png';
+        if (navigator.canShare && navigator.canShare({ files: [new File([blob], fname, { type: 'image/png' })] })) {
+          const file = new File([blob], fname, { type: 'image/png' });
+          navigator.share({ files: [file], title: 'UNATOM #' + block, text: 'my unatom · feed the chain · unatoms.fun' })
+            .catch(() => downloadBlob(blob, fname));
         } else {
-          const ta = document.createElement('textarea');
-          ta.value = text;
-          ta.style.position = 'fixed';
-          ta.style.opacity = '0';
-          document.body.appendChild(ta);
-          ta.select();
-          ok = document.execCommand('copy');
-          document.body.removeChild(ta);
+          downloadBlob(blob, fname);
         }
-      } catch (_) { ok = false; }
-      copySealBtn.textContent = ok ? 'seal copied' : 'copy failed';
-      setTimeout(() => { copySealBtn.textContent = 'copy seal'; }, 1400);
-    });
+      }, 'image/png');
+    };
+    img.onerror = () => showToast('render failed');
+    img.src = blobUrl;
+  };
 
-    // ============ DMT BREAKTHROUGH MECHANIC ============
-    breakthroughBtn.addEventListener('click', () => {
-      if (state.breakthroughActive) return;
-      state.breakthroughActive = true;
-      const start = performance.now();
-      const duration = 1800;
-      const startIdx = AURAS.indexOf(state.aura);
-      const finalIdx = (function(){
-        let next = startIdx;
-        while (next === startIdx) next = Math.floor(Math.random() * AURAS.length);
-        return next;
-      })();
-      const tick = (now) => {
-        // drive every animated element off this single clock so they stay in phase
-        state.animTick = now;
-        const t = Math.min(1, (now - start) / duration);
-        const eased = 1 - Math.pow(1 - t, 3);
-        const total = AURAS.length * 4 + finalIdx;
-        const idx = Math.floor(eased * total) % AURAS.length;
-        state.aura = AURAS[idx];
-        [...aurasEl.children].forEach((c, i) => c.classList.toggle('active', i === idx));
-        render();
-        if (t < 1) {
-          requestAnimationFrame(tick);
-        } else {
-          state.aura = AURAS[finalIdx];
-          [...aurasEl.children].forEach((c, i) => c.classList.toggle('active', i === finalIdx));
-          state.breakthroughActive = false;
-          render();
-        }
-      };
-      requestAnimationFrame(tick);
-    });
+  function downloadBlob(blob, fname){
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); showToast('saved'); }, 100);
+  }
+</script>
 
-    // subtle preview breath (skipped during export and breakthrough)
-    function loop(now) {
-      state.animTick = now;
-      if (!state.exporting && !state.breakthroughActive && state.sourceImg) render();
-      requestAnimationFrame(loop);
-    }
-    // breath is a tiny perturbation only — start the loop once first art loads
-    let breathStarted = false;
-    function startBreath() {
-      if (breathStarted) return;
-      breathStarted = true;
-      requestAnimationFrame(loop);
-    }
-
-    function makeSealString() {
-      const h = state.handle ? `@${state.handle}` : 'unsealed';
-      const cargo = state.crestImg ? (state.crestMode === 'planet' ? 'PLANET' : 'STICKER') : 'NONE';
-      return `NATSHIPS · BLOCK ${state.block} · ${state.aura.name.toUpperCase()} · ${h} · CARGO ${cargo}`;
-    }
-
-    // ============ RENDER ============
-    function render() {
-      const w = canvas.width, h = canvas.height;
-      ctx.clearRect(0, 0, w, h);
-
-      // 1. cosmic base wash
-      const baseGrad = ctx.createRadialGradient(w/2, h*0.42, 40, w/2, h/2, w*0.7);
-      baseGrad.addColorStop(0, '#0a1226');
-      baseGrad.addColorStop(1, '#02040a');
-      ctx.fillStyle = baseGrad;
-      ctx.fillRect(0, 0, w, h);
-
-      if (!state.sourceImg) {
-        ctx.fillStyle = 'rgba(237,244,255,.5)';
-        ctx.font = '600 22px "JetBrains Mono", monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('tuning transmission…', w/2, h/2);
-        sealText.innerHTML = `tuning <b>block ${state.block}</b>&hellip;`;
-        return;
-      }
-      startBreath();
-
-      // breath multiplier: ±5% halo intensity at rest. Locked to 1 during export and
-      // during breakthrough so the flare is the only thing moving.
-      const breath = (state.exporting || state.breakthroughActive)
-        ? 1
-        : (1 + Math.sin(state.animTick * 0.0014) * 0.05);
-      const aura = state.aura;
-
-      // Compute where the ship actually lands on the canvas (after framing + clamping)
-      // so the halo, tint, and any future ship-anchored overlays follow the rocket.
-      const focus = state.shipFocus || { x: 0.5, y: 0.5, w: 1, h: 1 };
-      // Adaptive zoom: rockets near the source center get a roomy 1.2x crop;
-      // rockets sitting near a source edge get tighter zoom so they still land
-      // close to the canvas center after framing without exposing empty edges.
-      const offCenter = Math.max(Math.abs(focus.x - 0.5), Math.abs(focus.y - 0.5));
-      // Gentler crop — the source art has intentional negative space we want to
-      // keep. Only zoom in more when the rocket is genuinely off-center.
-      const zoom = 1.06 + Math.min(0.28, offCenter * 0.7);
-      const drawW = w * zoom;
-      const drawH = h * zoom;
-      const idealDx = (w * 0.50) - (focus.x * drawW);
-      const idealDy = (h * 0.50) - (focus.y * drawH);
-      const minDx = w - drawW, minDy = h - drawH;
-      const dx = Math.min(0, Math.max(minDx, idealDx));
-      const dy = Math.min(0, Math.max(minDy, idealDy));
-      const shipCx = dx + focus.x * drawW;
-      const shipCy = dy + focus.y * drawH;
-
-      // 2. aura halo — anchored to the rocket's true canvas position
-      const halo = ctx.createRadialGradient(shipCx, shipCy, 30, shipCx, shipCy, w * 0.55 * breath);
-      halo.addColorStop(0, hexA(aura.hi, 0.55 * breath));
-      halo.addColorStop(0.35, hexA(aura.mid, 0.32));
-      halo.addColorStop(0.75, hexA(aura.lo, 0.1));
-      halo.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.globalCompositeOperation = 'screen';
-      ctx.fillStyle = halo;
-      ctx.fillRect(0, 0, w, h);
-      ctx.globalCompositeOperation = 'source-over';
-
-      // 3. source art — already positioned above
-      ctx.drawImage(state.sourceImg, dx, dy, drawW, drawH);
-
-      // 4. aura overlay wash — also follows the ship
-      ctx.globalCompositeOperation = 'overlay';
-      const tint = ctx.createRadialGradient(shipCx, shipCy, 60, shipCx, shipCy, w * 0.65);
-      tint.addColorStop(0, hexA(aura.mid, 0.22));
-      tint.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = tint;
-      ctx.fillRect(0, 0, w, h);
-      ctx.globalCompositeOperation = 'source-over';
-
-      // 5. cargo: sticker on hull OR planet in orbit
-      if (state.crestImg) {
-        if (state.crestMode === 'planet') drawCrestAsPlanet(w, h, aura);
-        else drawCrestAsSticker(w, h, aura);
-      }
-
-      // 6. vignette for circle-crop friendliness
-      const vg = ctx.createRadialGradient(w/2, h/2, w*0.34, w/2, h/2, w*0.6);
-      vg.addColorStop(0, 'rgba(0,0,0,0)');
-      vg.addColorStop(0.7, 'rgba(0,0,0,0.28)');
-      vg.addColorStop(1, 'rgba(0,0,0,0.72)');
-      ctx.fillStyle = vg;
-      ctx.fillRect(0, 0, w, h);
-
-      // 7. scan lines (DMT broadcast tactile)
-      ctx.globalAlpha = 0.06;
-      ctx.fillStyle = '#000';
-      for (let y = 0; y < h; y += 3) ctx.fillRect(0, y, w, 1);
-      ctx.globalAlpha = 1;
-
-      // 8. seal ring + microtext (decorative; sits at the inscribed-circle edge)
-      drawSealRing(w, h, aura);
-
-      // 9. mission patch — fully inside the inscribed circle so the handle + block
-      // remain visible when this PFP is shown circle-cropped on X / Discord.
-      drawMissionPatch(w, h, aura);
-
-      // 10. brand + DMT credit — bottom-center, also inside the circle
-      drawBrandStamp(w, h, aura);
-
-      // 11. breakthrough flare overlay
-      if (state.breakthroughActive) drawBreakthroughFlare(w, h, aura);
-
-      // text seal under canvas
-      const auraName = `<b>${aura.name}</b>`;
-      const handle = state.handle ? ` &middot; <b>@${state.handle}</b>` : '';
-      const cargo = state.crestImg ? ` &middot; cargo <b>${state.crestMode}</b>` : '';
-      sealText.innerHTML = `block <b>${state.block.toLocaleString()}</b> &middot; ${auraName}${handle}${cargo}`;
-    }
-
-    // ============ DECALS / OVERLAYS ============
-
-    function drawMissionPatch(w, h, aura) {
-      // Mission patch — positioned inside the inscribed circle with breathing
-      // room from the seal ring. Outer-edge distance from canvas center:
-      // sqrt(2)*(0.5-0.225)w + 0.062w ≈ 0.451w, comfortably below the seal-ring
-      // inner radius (~0.475w).
-      const cx = w * 0.225;
-      const cy = h * 0.225;
-      const rOuter = w * 0.062;
-      const rInner = w * 0.044;
-
-      ctx.save();
-      // patch shadow
-      ctx.beginPath();
-      ctx.arc(cx + 3, cy + 5, rOuter, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      ctx.filter = 'blur(6px)';
-      ctx.fill();
-      ctx.filter = 'none';
-
-      // outer ring (the patch band)
-      ctx.beginPath();
-      ctx.arc(cx, cy, rOuter, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(8,12,22,0.92)';
-      ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = hexA(aura.hi, 0.85);
-      ctx.shadowColor = hexA(aura.mid, 0.6);
-      ctx.shadowBlur = 10;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      // inner disk
-      const inner = ctx.createRadialGradient(cx - rInner*0.3, cy - rInner*0.3, rInner*0.2, cx, cy, rInner);
-      inner.addColorStop(0, hexA(aura.hi, 0.32));
-      inner.addColorStop(0.6, hexA(aura.mid, 0.18));
-      inner.addColorStop(1, 'rgba(4,6,12,0.95)');
-      ctx.beginPath();
-      ctx.arc(cx, cy, rInner, 0, Math.PI*2);
-      ctx.fillStyle = inner;
-      ctx.fill();
-      ctx.strokeStyle = hexA(aura.hi, 0.4);
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // block number stamped center
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = '700 10px "JetBrains Mono", monospace';
-      ctx.fillText('MISSION', cx, cy - 12);
-      ctx.font = '900 15px "JetBrains Mono", monospace';
-      ctx.shadowColor = hexA(aura.mid, 0.7);
-      ctx.shadowBlur = 8;
-      ctx.fillText(`DM-${state.block}`, cx, cy + 7);
-      ctx.shadowBlur = 0;
-
-      // arc text removed — at this patch size it just renders as smudges.
-      // The seal ring around the canvas already carries NATSHIPS + NON-ARBITRARY.
-
-      ctx.restore();
-    }
-
-    function drawArcText(text, cx, cy, radius, color, font, midAngle, topOriented) {
-      // Draw text along a circular arc, with the middle character at midAngle.
-      // topOriented=true keeps the text upright across the top of the circle.
-      ctx.save();
-      ctx.font = font;
-      ctx.fillStyle = color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const widths = [...text].map(ch => ctx.measureText(ch).width);
-      const total = widths.reduce((a,b)=>a+b, 0);
-      const arc = total / radius; // total angular span
-      let cursor = midAngle - arc/2;
-      for (let i = 0; i < text.length; i++) {
-        const charArc = widths[i] / radius;
-        const a = cursor + charArc/2;
-        ctx.save();
-        // position the character
-        const ang = topOriented ? a + Math.PI : a;
-        ctx.translate(cx + Math.cos(ang) * radius, cy + Math.sin(ang) * radius);
-        ctx.rotate(ang + (topOriented ? -Math.PI/2 : Math.PI/2));
-        ctx.fillText(text[i], 0, 0);
-        ctx.restore();
-        cursor += charArc;
-      }
-      ctx.restore();
-    }
-
-    function drawHullStencil(w, h, aura) {
-      // Vertical "NATSHIPS · BLOCK xxxxx" running up the right edge.
-      // Stenciled, low alpha, aura-tinted. Reads as side-of-rocket hull marking.
-      const handle = state.handle ? ` · @${state.handle}` : '';
-      const text = `NATSHIPS · BLOCK ${state.block}${handle}`;
-      ctx.save();
-      ctx.translate(w - 38, h * 0.72);
-      ctx.rotate(-Math.PI/2);
-      ctx.font = '900 22px "JetBrains Mono", monospace';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      // dark shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      ctx.fillText(text, 1, 2);
-      // aura tint fill
-      ctx.fillStyle = hexA(aura.hi, 0.78);
-      ctx.fillText(text, 0, 0);
-      // stencil notches (break the letters with thin black bars)
-      const metrics = ctx.measureText(text);
-      const tw = metrics.width;
-      ctx.globalCompositeOperation = 'destination-out';
-      const bars = 4;
-      for (let i = 0; i < bars; i++) {
-        const bx = (tw / (bars + 1)) * (i + 1);
-        ctx.fillRect(bx - 1, -16, 2, 32);
-      }
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.restore();
-    }
-
-    function drawBrandStamp(w, h, aura) {
-      // Handle pill at bottom-center, sized + positioned to stay inside the
-      // inscribed circle (the area that survives a circular profile-pic crop).
-      // If no handle is set we skip entirely — the seal ring already brands.
-      if (!state.handle) return;
-      ctx.save();
-      const tag = `@${state.handle}`;
-      ctx.font = '700 16px "JetBrains Mono", monospace';
-      const padX = 18;
-      const tw = ctx.measureText(tag).width + padX * 2;
-      const th = 30;
-      const tx = (w - tw) / 2;
-      const ty = h * 0.82;
-      roundRect(tx, ty, tw, th, 15);
-      ctx.fillStyle = 'rgba(4,6,12,0.78)';
-      ctx.fill();
-      ctx.strokeStyle = hexA(aura.hi, 0.7);
-      ctx.lineWidth = 1.4;
-      ctx.shadowColor = hexA(aura.mid, 0.6);
-      ctx.shadowBlur = 10;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = hexA(aura.hi, 0.96);
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(tag, w / 2, ty + th / 2 + 0.5);
-      ctx.restore();
-    }
-
-    function drawCrestAsSticker(w, h, aura) {
-      // peeling decal in lower-right hull
-      const cx = w * 0.74;
-      const cy = h * 0.62;
-      const size = w * 0.18;
-      const rotate = 0.12;
-
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotate);
-
-      // drop shadow for peel feel
-      ctx.shadowColor = 'rgba(0,0,0,0.55)';
-      ctx.shadowBlur = 16;
-      ctx.shadowOffsetX = 4;
-      ctx.shadowOffsetY = 8;
-
-      // base white "paper" of the sticker
-      roundRect(-size/2 - 8, -size/2 - 8, size + 16, size + 16, 18);
-      ctx.fillStyle = '#fff';
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-
-      // clip and draw image
-      ctx.save();
-      roundRect(-size/2, -size/2, size, size, 14);
-      ctx.clip();
-      const im = state.crestImg;
-      const ratio = im.width / im.height;
-      let cw, ch;
-      if (ratio > 1) { ch = size; cw = ch * ratio; }
-      else { cw = size; ch = cw / ratio; }
-      ctx.drawImage(im, -cw/2, -ch/2, cw, ch);
-      // light aura wash on image
-      ctx.globalCompositeOperation = 'soft-light';
-      ctx.fillStyle = hexA(aura.mid, 0.35);
-      ctx.fillRect(-size/2, -size/2, size, size);
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.restore();
-
-      // sticker border
-      roundRect(-size/2 - 4, -size/2 - 4, size + 8, size + 8, 16);
-      ctx.strokeStyle = hexA(aura.hi, 0.8);
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // corner curl (top-right) — small triangle suggesting a peel
-      ctx.beginPath();
-      ctx.moveTo(size/2 - 4, -size/2 - 8);
-      ctx.lineTo(size/2 + 18, -size/2 - 4);
-      ctx.lineTo(size/2 - 4, -size/2 + 14);
-      ctx.closePath();
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fill();
-      ctx.strokeStyle = hexA(aura.hi, 0.5);
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // tiny NATSHIPS micro-tag on sticker
-      ctx.font = '700 10px "JetBrains Mono", monospace';
-      ctx.fillStyle = 'rgba(8,12,22,0.7)';
-      ctx.textAlign = 'center';
-      ctx.fillText('NATSHIPS', 0, size/2 + 2);
-
-      ctx.restore();
-    }
-
-    function drawCrestAsPlanet(w, h, aura) {
-      // ringed sphere in the upper-RIGHT quadrant — mission patch owns upper-left.
-      const cx = w * 0.78;
-      const cy = h * 0.24;
-      const r = w * 0.11;
-
-      ctx.save();
-      // outer glow
-      const glow = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 2.2);
-      glow.addColorStop(0, hexA(aura.mid, 0.4));
-      glow.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = glow;
-      ctx.fillRect(cx - r*2.4, cy - r*2.4, r*4.8, r*4.8);
-
-      // orbit ring (drawn under planet)
-      ctx.beginPath();
-      ctx.ellipse(cx, cy + r*0.08, r * 1.55, r * 0.35, -0.35, 0, Math.PI*2);
-      ctx.strokeStyle = hexA(aura.hi, 0.55);
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.ellipse(cx, cy + r*0.08, r * 1.65, r * 0.40, -0.35, 0, Math.PI*2);
-      ctx.strokeStyle = hexA(aura.lo, 0.4);
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      // planet body — clip image into circle, then shade
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI*2);
-      ctx.clip();
-      const im = state.crestImg;
-      const ratio = im.width / im.height;
-      let cw, ch;
-      if (ratio > 1) { ch = r*2; cw = ch * ratio; }
-      else { cw = r*2; ch = cw / ratio; }
-      ctx.drawImage(im, cx - cw/2, cy - ch/2, cw, ch);
-
-      // atmospheric tint
-      ctx.globalCompositeOperation = 'soft-light';
-      ctx.fillStyle = hexA(aura.mid, 0.55);
-      ctx.fillRect(cx - r, cy - r, r*2, r*2);
-      ctx.globalCompositeOperation = 'source-over';
-
-      // terminator shadow on the dark side
-      const shade = ctx.createRadialGradient(cx - r*0.4, cy - r*0.4, r*0.2, cx, cy, r);
-      shade.addColorStop(0, 'rgba(0,0,0,0)');
-      shade.addColorStop(1, 'rgba(0,0,0,0.55)');
-      ctx.fillStyle = shade;
-      ctx.fillRect(cx - r, cy - r, r*2, r*2);
-      ctx.restore();
-
-      // limb rim
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI*2);
-      ctx.strokeStyle = hexA(aura.hi, 0.85);
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(cx, cy, r + 3, 0, Math.PI*2);
-      ctx.strokeStyle = hexA(aura.mid, 0.35);
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-
-      // tiny moon to sell the orbit (sits to the planet's inner side so it
-      // stays comfortably inside the inscribed circle on a circular crop)
-      ctx.beginPath();
-      const mx = cx - r * 1.45;
-      const my = cy + r * 0.22;
-      ctx.arc(mx, my, r * 0.1, 0, Math.PI*2);
-      ctx.fillStyle = hexA(aura.hi, 0.9);
-      ctx.shadowColor = hexA(aura.mid, 0.6);
-      ctx.shadowBlur = 10;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.restore();
-    }
-
-    function drawSealRing(w, h, aura) {
-      const cx = w/2, cy = h/2;
-      const rOuter = w * 0.495;
-      const rInner = w * 0.475;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, rOuter, 0, Math.PI*2);
-      ctx.strokeStyle = hexA(aura.hi, 0.85);
-      ctx.lineWidth = 2;
-      ctx.shadowColor = hexA(aura.mid, 0.8);
-      ctx.shadowBlur = 14;
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, rInner, 0, Math.PI*2);
-      ctx.strokeStyle = hexA(aura.hi, 0.18);
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // engraved microtext: substrate + frequency + invitation. Repeats end
-      // with a separator so the seam is always between fields, never mid-word.
-      const label = `NATSHIPS · BLOCK ${state.block} · ${aura.name.toUpperCase()} · DIGITAL MATTER · NON-ARBITRARY · ↯ JOIN THE FLEET ↯ · `;
-      // Repeat enough times to wrap the circle, then trim to a whole number of
-      // labels so the loop point lands on the " · " separator.
-      const reps = Math.max(2, Math.ceil(240 / label.length));
-      const ring = label.repeat(reps);
-      drawTextOnCircle(ring, cx, cy, (rOuter + rInner)/2, 'rgba(237,244,255,0.55)', '600 13px "JetBrains Mono", monospace', -Math.PI/2);
-    }
-
-    function drawTextOnCircle(text, cx, cy, radius, color, font, startAngle) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(startAngle);
-      ctx.font = font;
-      ctx.fillStyle = color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const total = text.length;
-      const anglePer = (Math.PI * 2) / total;
-      for (let i = 0; i < total; i++) {
-        ctx.save();
-        ctx.rotate(i * anglePer);
-        ctx.translate(0, -radius);
-        ctx.fillText(text[i], 0, 0);
-        ctx.restore();
-      }
-      ctx.restore();
-    }
-
-    function drawBreakthroughFlare(w, h, aura) {
-      // bright radial pulse during breakthrough cycle
-      const pulse = (Math.sin(state.animTick * 0.012) + 1) / 2;
-      const flare = ctx.createRadialGradient(w/2, h/2, 20, w/2, h/2, w * 0.6);
-      flare.addColorStop(0, hexA(aura.hi, 0.32 + pulse * 0.18));
-      flare.addColorStop(0.4, hexA(aura.mid, 0.18 * pulse));
-      flare.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.globalCompositeOperation = 'screen';
-      ctx.fillStyle = flare;
-      ctx.fillRect(0, 0, w, h);
-      // chromatic rings
-      for (let i = 0; i < 3; i++) {
-        const r = w * (0.25 + i * 0.12) + pulse * 22;
-        ctx.beginPath();
-        ctx.arc(w/2, h/2, r, 0, Math.PI*2);
-        ctx.strokeStyle = hexA(aura.hi, 0.22);
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-      ctx.globalCompositeOperation = 'source-over';
-    }
-
-    function roundRect(x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.lineTo(x + w - r, y);
-      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-      ctx.lineTo(x + w, y + h - r);
-      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-      ctx.lineTo(x + r, y + h);
-      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-      ctx.lineTo(x, y + r);
-      ctx.quadraticCurveTo(x, y, x + r, y);
-      ctx.closePath();
-    }
-
-    function hexA(hex, a) {
-      const c = hex.replace('#','');
-      const r = parseInt(c.length === 3 ? c[0]+c[0] : c.slice(0,2), 16);
-      const g = parseInt(c.length === 3 ? c[1]+c[1] : c.slice(2,4), 16);
-      const b = parseInt(c.length === 3 ? c[2]+c[2] : c.slice(4,6), 16);
-      return `rgba(${r},${g},${b},${a})`;
-    }
-
-    setBlock(state.block);
-  </script>
 </body>
 </html>

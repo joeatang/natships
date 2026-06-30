@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NATSHIPS · Tune the Signal</title>
+  <meta name="description" content="NATSHIPS is a tunable transmission from deep space. Tap to bring 15 hidden ships into focus, then copy your seal to remember the voyage.">
+  <meta property="og:title" content="NATSHIPS · Tune the Signal">
+  <meta property="og:description" content="Tap to tune. The transmission comes in as noise, locks into a ship, then drifts into an afterimage you can keep.">
+  <meta property="og:type" content="website">
+  <style>
+    :root {
+      --bg: #02040a;
+      --panel: rgba(10, 14, 24, 0.82);
+      --line: rgba(124, 231, 255, 0.18);
+      --text: #edf4ff;
+      --muted: rgba(237, 244, 255, 0.68);
+      --cyan: #7ce7ff;
+      --amber: #ffb266;
+      --violet: #b59dff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(124, 231, 255, 0.14) 0%, transparent 28%),
+        radial-gradient(circle at 18% 76%, rgba(181, 157, 255, 0.12) 0%, transparent 24%),
+        radial-gradient(circle at 82% 14%, rgba(255, 178, 102, 0.1) 0%, transparent 22%),
+        linear-gradient(180deg, #02040a 0%, #050816 52%, #02040a 100%);
+      overflow: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      background:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 64px 64px;
+      opacity: 0.14;
+      transform: perspective(1200px) rotateX(70deg) translateY(28vh) scale(1.1);
+      transform-origin: center bottom;
+      mask-image: radial-gradient(circle at center, rgba(0,0,0,0.65) 0%, transparent 74%);
+    }
+
+    body::after {
+      background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+      mix-blend-mode: screen;
+      opacity: 0.45;
+      animation: scan 14s linear infinite;
+    }
+
+    @keyframes scan {
+      from { transform: translateY(-20%); }
+      to { transform: translateY(20%); }
+    }
+
+    .shell {
+      min-height: 100vh;
+      padding: 24px;
+      display: grid;
+      place-items: center;
+    }
+
+    .card {
+      width: min(1040px, 100%);
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(12, 18, 33, 0.92), rgba(6, 8, 14, 0.8));
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.03) inset,
+        0 28px 120px rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(124, 231, 255, 0.12), transparent 22%),
+        radial-gradient(circle at 82% 18%, rgba(181, 157, 255, 0.12), transparent 20%),
+        radial-gradient(circle at 50% 85%, rgba(255, 178, 102, 0.08), transparent 24%);
+      pointer-events: none;
+    }
+
+    .inner {
+      position: relative;
+      padding: 28px;
+      display: grid;
+      gap: 24px;
+    }
+
+    .eyebrow {
+      font: 10px "JetBrains Mono", monospace;
+      letter-spacing: 0.42em;
+      text-transform: uppercase;
+      color: rgba(237, 244, 255, 0.56);
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(42px, 6vw, 82px);
+      line-height: 0.92;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #ffffff 0%, var(--cyan) 35%, var(--amber) 72%, #ffffff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .lede {
+      max-width: 820px;
+      margin: 14px 0 0;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .panel {
+      border-radius: 22px;
+      border: 1px solid rgba(124, 231, 255, 0.14);
+      background: var(--panel);
+      padding: 18px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.03) inset;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font: 11px "JetBrains Mono", monospace;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(237, 244, 255, 0.62);
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .button {
+      appearance: none;
+      border: 1px solid rgba(124, 231, 255, 0.22);
+      border-radius: 999px;
+      padding: 14px 18px;
+      color: #f7fbff;
+      text-decoration: none;
+      font: 11px "JetBrains Mono", monospace;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, rgba(20, 27, 48, 0.98), rgba(8, 10, 18, 0.98));
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(124, 231, 255, 0.55);
+      box-shadow: 0 0 0 1px rgba(124, 231, 255, 0.12) inset, 0 16px 28px rgba(0, 0, 0, 0.28);
+    }
+
+    .button.primary {
+      background: linear-gradient(180deg, rgba(29, 40, 74, 0.98), rgba(10, 14, 28, 0.98));
+      border-color: rgba(124, 231, 255, 0.34);
+    }
+
+    .meta-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .meta {
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(124, 231, 255, 0.12);
+      background: linear-gradient(180deg, rgba(12, 15, 25, 0.88), rgba(4, 6, 12, 0.68));
+    }
+
+    .meta span {
+      display: block;
+      font: 10px "JetBrains Mono", monospace;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(237, 244, 255, 0.54);
+      margin-bottom: 6px;
+    }
+
+    .meta strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.35;
+      color: #fff;
+    }
+
+    .archive {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .archive li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(124, 231, 255, 0.1);
+      color: rgba(237, 244, 255, 0.82);
+      font-size: 13px;
+    }
+
+    .archive li:last-child { border-bottom: 0; }
+
+    .archive a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    .archive a:hover { text-decoration: underline; }
+
+    .footer {
+      margin-top: 18px;
+      color: rgba(237, 244, 255, 0.5);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 860px) {
+      body { overflow: auto; }
+      .shell { padding: 14px; }
+      .card { border-radius: 22px; }
+      .inner { padding: 20px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="card" aria-label="NATSHIPS entry point">
+      <div class="inner">
+        <div>
+          <div class="eyebrow">a transmission from deep space</div>
+          <h1>NATSHIPS</h1>
+          <p class="lede">
+            NATSHIPS are vessels that <em>emerged</em> from Bitcoin blocks &mdash; not designed, discovered. Fifteen of them are hidden in a noisy signal. Tap to tune until one comes through, then bring it home through the <b>Re-Entry Studio</b> as a PFP only you could have made. No wallet, no sign-up &mdash; just you and the broadcast.
+          </p>
+          <div class="cta-row">
+            <a class="button primary" href="prototypes/black-box-prototype.html">Tune the signal &rarr;</a>
+            <a class="button" href="pfp/">Re-Entry Studio</a>
+          </div>
+        </div>
+
+        <div class="grid">
+          <section class="panel">
+            <h2>how it works</h2>
+            <p>
+              You are not browsing a menu. You are tuning a receiver. Every tap, click, or press moves the transmission through three phases &mdash; and each ship in the deck has its own version of all three.
+            </p>
+            <div class="meta-grid" style="margin-top: 16px;">
+              <div class="meta">
+                <span>step 1 &middot; noise</span>
+                <strong>The signal arrives blurred and cold. The ship is still a rumor.</strong>
+              </div>
+              <div class="meta">
+                <span>step 2 &middot; lock</span>
+                <strong>Tap again. The image stabilizes and the vessel becomes legible.</strong>
+              </div>
+              <div class="meta">
+                <span>step 3 &middot; drift</span>
+                <strong>One more tap. It fades into a warm afterimage &mdash; copy the seal to keep it.</strong>
+              </div>
+            </div>
+          </section>
+
+          <aside class="panel">
+            <h2>what to try</h2>
+            <ul class="archive">
+              <li><span>tap the window</span><strong>cycles the phase</strong></li>
+              <li><span>arrow keys</span><strong>move through the deck</strong></li>
+              <li><span>space bar</span><strong>next ship</strong></li>
+              <li><span>press C</span><strong>copy your seal</strong></li>
+              <li><span>press I</span><strong>retune the signal</strong></li>
+            </ul>
+            <p style="margin: 14px 0 0; font-size: 12px; color: var(--muted); line-height: 1.55;">
+              Works on phone, tablet, and desktop. Headphones optional but encouraged.
+            </p>
+          </aside>
+        </div>
+
+        <div class="footer panel">
+          NATSHIPS is an evergreen art experience &mdash; the same signal is here every time you return, but each visit tunes differently. Share your seal with anyone; comparing seals is half the point.
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
