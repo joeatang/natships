@@ -2,78 +2,322 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>UNATOMS · v0.6 · BLAST-OFF Series</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>UNATOMS · Catalog · BLAST-OFF Series</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#0a0a0c" />
+<meta property="og:title" content="UNATOMS · Catalog" />
+<meta property="og:description" content="The full field guide — traits, whispers, archetypes, elements, and the Block Oracle." />
+<meta property="og:url" content="https://unatom.fun/catalog/" />
+<meta property="og:image" content="https://unatom.fun/pfp/?block=10080" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23f0962d'/%3E%3Ccircle cx='12' cy='10' r='2.5' fill='%23fff'/%3E%3C/svg%3E" />
 <style>
   :root {
-    --ink: #0a0b10;
-    --paper: #f4eedf;
-    --paper-2: #ece4d0;
-    --paper-3: #ddd2b8;
-    --orange: #f7931a;
-    --cyan: #36d6ee;
-    --muted: #6f6a5e;
+    --bg: #0a0a0c;
+    --bg-2: #101015;
+    --bg-3: #18181f;
+    --paper: #0a0a0c;         /* legacy alias — kept for JS inline refs */
+    --paper-2: #14141a;        /* legacy alias — used by whisper/oracle inline styles */
+    --paper-3: rgba(243,238,227,0.14);
+    --ink: #f3eee3;
+    --muted: rgba(243,238,227,0.55);
+    --dim:   rgba(243,238,227,0.35);
+    --orange: #f0962d;
+    --cyan:   #5dd0e3;
+    --green:  #7dcf5b;
+    --pink:   #f17d8e;
+    --purple: #b388f0;
+    --line:   rgba(243,238,227,0.10);
   }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
-    font: 13px/1.5 ui-monospace, "SF Mono", Menlo, monospace; }
-  header { padding: 36px 48px 8px; max-width: 1400px; margin: 0 auto; }
-  header h1 { font: 600 22px/1.1 ui-sans-serif, system-ui, sans-serif;
-    margin: 0 0 4px; letter-spacing: -0.01em; }
-  header p { margin: 0; color: var(--muted); max-width: 720px; }
-  section { padding: 24px 48px 48px; max-width: 1400px; margin: 0 auto; }
-  section > h2 { font: 600 14px/1 ui-sans-serif, system-ui, sans-serif;
-    text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 4px; }
-  section > p.lede { color: var(--muted); margin: 0 0 20px; max-width: 760px; }
-  .hero { display: grid; grid-template-columns: minmax(380px, 520px) 1fr; gap: 36px;
-    align-items: start; padding: 16px 48px 48px; max-width: 1400px; margin: 0 auto; }
-  .hero svg { display: block; width: 100%; height: auto;
-    background: var(--paper-2); border-radius: 24px; }
-  .hero-meta { padding-top: 12px; }
-  .hero-meta dl { display: grid; grid-template-columns: 140px 1fr; gap: 6px 18px;
-    margin: 18px 0 0; }
-  .hero-meta dt { color: var(--muted); }
-  .hero-meta dd { margin: 0; }
-  .grid { display: grid; gap: 16px; }
-  .g-5 { grid-template-columns: repeat(5, 1fr); }
-  .g-6 { grid-template-columns: repeat(6, 1fr); }
-  .g-8 { grid-template-columns: repeat(8, 1fr); }
-  .g-4 { grid-template-columns: repeat(4, 1fr); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--ink);
+    font: 15px/1.55 "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+  body { min-height: 100dvh; }
+  ::selection { background: var(--orange); color: var(--bg); }
+
+  /* NAV */
+  .nav {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px clamp(16px, 4vw, 40px);
+    background: rgba(10,10,12,0.82);
+    backdrop-filter: saturate(140%) blur(12px);
+    -webkit-backdrop-filter: saturate(140%) blur(12px);
+    border-bottom: 1px solid var(--line);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .nav .brand { color: var(--orange); font-weight: 700; letter-spacing: 0.22em; }
+  .nav ul { display: flex; gap: 18px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .nav a { color: var(--muted); text-decoration: none; padding: 4px 0; }
+  .nav a:hover, .nav a[aria-current] { color: var(--ink); }
+  .nav a[aria-current] { border-bottom: 1.5px solid var(--orange); padding-bottom: 2px; }
+
+  /* LAYOUT */
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px); }
+  header.page {
+    padding: clamp(36px, 7vw, 72px) 0 clamp(12px, 3vw, 20px);
+  }
+  header.page .eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12px; letter-spacing: 0.32em; color: var(--orange);
+    text-transform: uppercase; margin-bottom: 14px;
+  }
+  header.page h1 {
+    font: 800 clamp(32px, 6vw, 56px)/1.05 "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em; margin: 0 0 14px;
+  }
+  header.page h1 span { color: var(--orange); }
+  header.page p.hero-lede {
+    color: var(--muted); margin: 0; max-width: 720px;
+    font-size: clamp(15px, 1.6vw, 17px); line-height: 1.55;
+  }
+
+  section {
+    padding: clamp(28px, 5vw, 56px) 0 clamp(8px, 2vw, 20px);
+    max-width: 1280px; margin: 0 auto;
+  }
+  section:not(.no-x-pad) { padding-left: clamp(16px, 4vw, 40px); padding-right: clamp(16px, 4vw, 40px); }
+  section > h2 {
+    font: 700 clamp(20px, 2.6vw, 26px)/1.15 "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.01em; margin: 0 0 6px;
+  }
+  section > h2::before {
+    content: ""; display: inline-block; width: 10px; height: 10px;
+    background: var(--orange); border-radius: 2px; margin-right: 12px;
+    transform: translateY(-2px);
+  }
+  section > p.lede {
+    color: var(--muted); margin: 0 0 24px; max-width: 760px;
+    font-size: clamp(14px, 1.4vw, 16px); line-height: 1.55;
+  }
+
+  /* HERO */
+  .hero {
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    gap: clamp(24px, 4vw, 40px);
+    padding: clamp(4px, 2vw, 12px) clamp(16px, 4vw, 40px) clamp(32px, 5vw, 56px);
+    max-width: 1280px; margin: 0 auto;
+  }
+  @media (min-width: 800px) { .hero { grid-template-columns: minmax(380px, 520px) 1fr; align-items: start; } }
+  .hero svg { display: block; width: 100%; max-width: 520px; height: auto;
+    background: var(--bg-2); border-radius: 24px;
+    border: 1px solid var(--line); }
+  .hero-meta { padding-top: 4px; }
+  .hero-meta h3 {
+    font: 700 clamp(24px, 3vw, 32px)/1.1 "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.01em; margin: 0 0 10px;
+  }
+  .hero-meta p { color: var(--muted); font-size: 15px; line-height: 1.6; margin: 0 0 20px; }
+  .hero-meta dl {
+    display: grid; grid-template-columns: minmax(110px, 140px) 1fr;
+    gap: 8px 20px; margin: 20px 0 0;
+    font-size: 14px;
+  }
+  .hero-meta dt {
+    color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 12px; padding-top: 2px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .hero-meta dd { margin: 0; color: var(--ink); }
+
+  /* GRIDS — responsive, no fixed columns */
+  .grid { display: grid; gap: clamp(10px, 1.4vw, 18px); }
+  .g-4 { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .g-5 { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+  .g-6 { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .g-8 { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  @media (max-width: 480px) {
+    .g-4, .g-5 { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .g-6, .g-8 { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+  }
   .cell { position: relative; }
-  .cell svg { width: 100%; height: auto; display: block;
-    background: var(--paper-2); border-radius: 14px; }
-  .cap { font-size: 11px; color: var(--muted); padding: 6px 4px 0;
-    text-align: center; letter-spacing: 0.03em; }
-  .cap strong { color: var(--ink); font-weight: 600; }
-  .table { display: grid; gap: 12px; grid-template-columns: repeat(5, 1fr);
-    background: var(--paper-2); padding: 16px; border-radius: 16px; }
-  .tcat { font: 600 11px/1 ui-sans-serif, system-ui, sans-serif;
-    text-transform: uppercase; letter-spacing: 0.12em;
-    color: var(--muted); margin: 0 0 6px; }
+  .cell svg {
+    width: 100%; height: auto; display: block;
+    background: var(--bg-2); border-radius: 14px;
+    border: 1px solid var(--line);
+    transition: transform .16s ease, border-color .16s ease;
+  }
+  .cell:hover svg { border-color: rgba(240,150,45,0.4); transform: translateY(-2px); }
+  .cap {
+    font-size: 12px; color: var(--muted);
+    padding: 8px 4px 0; text-align: center;
+    letter-spacing: 0.04em; line-height: 1.35;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .cap strong { color: var(--ink); font-weight: 700; letter-spacing: 0.06em; }
+
+  /* ELEMENT NAMESPACE TABLE */
+  .table {
+    display: grid; gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    background: var(--bg-2); padding: 20px; border-radius: 20px;
+    border: 1px solid var(--line);
+  }
+  .tcat {
+    font: 700 12px/1 ui-monospace, "SF Mono", Menlo, monospace;
+    text-transform: uppercase; letter-spacing: 0.18em;
+    color: var(--orange); margin: 0 0 10px;
+  }
   .tels { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tel { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px;
-    background: var(--paper); padding: 6px 8px; border-radius: 8px;
-    border: 1px solid var(--paper-3); }
-  .archetype-row { display: grid; grid-template-columns: 1fr 1fr; gap: 36px;
-    align-items: center; padding: 14px 16px; background: var(--paper-2);
-    border-radius: 16px; margin-bottom: 12px; }
-  .archetype-row svg { width: 220px; height: 220px; }
-  .archetype-row .desc h3 { font: 600 18px/1.2 ui-sans-serif, system-ui, sans-serif;
-    margin: 0 0 4px; }
-  .archetype-row .desc .dna { font-size: 11px; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
-  .archetype-row .desc p { margin: 0; color: #3a3833; }
-  footer { padding: 48px; text-align: center; color: var(--muted); font-size: 11px; }
+  .tel {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12px; color: var(--ink);
+    background: var(--bg-3); padding: 6px 10px; border-radius: 8px;
+    border: 1px solid var(--line);
+  }
+
+  /* ARCHETYPE ROW */
+  .archetype-row {
+    display: grid; grid-template-columns: 1fr;
+    gap: 22px; align-items: center;
+    padding: 22px; background: var(--bg-2);
+    border: 1px solid var(--line); border-radius: 20px; margin-bottom: 14px;
+  }
+  @media (min-width: 700px) { .archetype-row { grid-template-columns: 220px 1fr; gap: 32px; } }
+  .archetype-row svg {
+    width: 100%; max-width: 220px; height: auto;
+    background: var(--bg); border-radius: 14px; border: 1px solid var(--line);
+  }
+  .archetype-row .desc h3 {
+    font: 700 20px/1.2 "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    margin: 0 0 6px; color: var(--ink);
+  }
+  .archetype-row .desc .dna {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px; color: var(--orange);
+    text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 10px;
+  }
+  .archetype-row .desc p { margin: 0; color: var(--muted); line-height: 1.6; font-size: 14px; }
+
+  /* WHISPERS — overrides for inline styles inside #whisperList */
+  #whisperList .whisper {
+    grid-template-columns: 60px minmax(140px, 220px) 1fr !important;
+    background: var(--bg-2) !important;
+    border: 1px solid var(--line);
+    padding: 14px 18px !important;
+    margin-bottom: 8px !important;
+    border-radius: 12px !important;
+  }
+  @media (max-width: 640px) {
+    #whisperList .whisper {
+      grid-template-columns: 50px 1fr !important;
+      grid-template-areas: "sym fld" "w w" !important;
+      row-gap: 8px !important;
+    }
+    #whisperList .whisper .sym { grid-area: sym; }
+    #whisperList .whisper .fld { grid-area: fld; align-self: center; }
+    #whisperList .whisper .w   { grid-area: w; }
+  }
+  #whisperList .whisper .sym {
+    color: var(--orange) !important;
+    font: 700 26px/1 "Space Grotesk", ui-sans-serif, system-ui, sans-serif !important;
+  }
+  #whisperList .whisper .fld {
+    color: var(--muted) !important;
+    font: 700 11px/1.3 ui-monospace, "SF Mono", Menlo, monospace !important;
+    letter-spacing: 0.18em !important;
+  }
+  #whisperList .whisper .w {
+    color: var(--ink) !important;
+    font: italic 15px/1.55 "Iowan Old Style", "Palatino", Georgia, serif !important;
+    opacity: 0.92;
+  }
+
+  /* ORACLE FORM */
+  #oracleForm {
+    display: flex !important; flex-wrap: wrap; gap: 10px; align-items: center;
+    margin-bottom: 22px !important;
+  }
+  #oracleForm label { color: var(--muted) !important; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.16em; }
+  #oracleInput {
+    font: 700 18px ui-monospace, "SF Mono", Menlo, monospace !important;
+    padding: 12px 14px !important;
+    border: 1.5px solid var(--line) !important;
+    background: var(--bg-2) !important; color: var(--ink) !important;
+    border-radius: 10px !important;
+    width: 160px !important;
+    outline: none;
+  }
+  #oracleInput:focus { border-color: var(--orange) !important; }
+  #oracleForm button {
+    font: 700 12px "Space Grotesk", ui-sans-serif, system-ui, sans-serif !important;
+    letter-spacing: 0.16em !important; text-transform: uppercase !important;
+    padding: 12px 18px !important;
+    border-radius: 10px !important; cursor: pointer !important;
+    border: 1.5px solid var(--orange) !important;
+  }
+  #oracleForm button[type="submit"] {
+    background: var(--orange) !important; color: var(--bg) !important;
+  }
+  #oracleForm button[type="button"] {
+    background: transparent !important; color: var(--orange) !important;
+  }
+  #oracleForm button:active { transform: scale(0.97); }
+
+  /* ORACLE RESULT — override inline styles */
+  #oracleResult > div {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 24px !important; align-items: start !important;
+    padding: 20px !important;
+    background: var(--bg-2) !important;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+  }
+  @media (min-width: 800px) {
+    #oracleResult > div { grid-template-columns: minmax(240px, 340px) 1fr !important; gap: 32px !important; }
+  }
+  #oracleResult > div > div:first-child { max-width: 340px; }
+  #oracleResult > div svg { width: 100% !important; height: auto !important; background: var(--bg); border-radius: 14px; border: 1px solid var(--line); }
+  #oracleResult blockquote {
+    color: var(--ink) !important;
+    background: var(--bg-3) !important;
+    border-left: 4px solid var(--orange) !important;
+    padding: 14px 20px !important;
+    border-radius: 0 12px 12px 0 !important;
+    font: italic 16px/1.55 "Iowan Old Style", "Palatino", Georgia, serif !important;
+    margin: 0 0 20px !important;
+  }
+  #oracleResult dt { color: var(--muted) !important; text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  #oracleResult dd { color: var(--ink) !important; text-transform: capitalize; }
+  #oracleResult div[style*="Block "] { color: var(--orange) !important; }
+
+  /* WILD SHEET spillover — wildGrid uses g-4; keep responsive default */
+
+  footer {
+    padding: clamp(36px, 6vw, 64px) clamp(16px, 4vw, 40px);
+    text-align: center; color: var(--muted); font-size: 12px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    border-top: 1px solid var(--line); margin-top: 40px;
+  }
+  footer a { color: var(--orange); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>UNATOMS — BLAST-OFF Series · Specimen 010080 · Genesis</h1>
-  <p>Living elemental units of non-arbitrary digital matter, discovered inside Bitcoin block data.
-     v0.6 — every face has a pulse. Brows added, ancient eyes rescued from the dead-doll trap,
-     closed eyes finally show against dark shells. Plus glasses, elemental nature stamps,
-     Whispers, and a live Block Oracle.</p>
+<nav class="nav">
+  <a class="brand" href="/">UNATOM.FUN</a>
+  <ul>
+    <li><a href="/">Lab</a></li>
+    <li><a href="/showcase/">The Nineteen</a></li>
+    <li><a href="/catalog/" aria-current="page">Catalog</a></li>
+    <li><a href="/pfp/?block=10080">PFP</a></li>
+    <li><a href="https://x.com/takedmt" target="_blank" rel="noopener">@takedmt</a></li>
+  </ul>
+</nav>
+
+<header class="page wrap">
+  <div class="eyebrow">Field Guide · v0.6 · Blast-Off Series</div>
+  <h1>UN<span>ATOMS</span> &middot; Catalog</h1>
+  <p class="hero-lede">Living elemental units of non-arbitrary digital matter, discovered inside Bitcoin block data.
+     Every face has a pulse. 39 elements. 158 trait variants. One live Block Oracle.</p>
 </header>
 
 <div class="hero" id="hero"></div>
@@ -197,7 +441,9 @@
   <div class="grid g-4" id="wildGrid"></div>
 </section>
 
-<footer>UNATOMS v0.6 · prototype · SVG-first · 1024×1024 · BLAST-OFF series · takedmt</footer>
+<footer>
+  UNATOMS · BLAST-OFF · <a href="/">unatom.fun</a> · <a href="https://x.com/takedmt" target="_blank" rel="noopener">@takedmt</a>
+</footer>
 
 <script>
 //
@@ -1426,10 +1672,10 @@ const heroSVG = unatomSVG({
 document.getElementById('hero').innerHTML = `
   <div>${heroSVG}</div>
   <div class="hero-meta">
-    <h2>BLAST-OFF</h2>
-    <p style="margin:0;color:var(--muted)">Specimen 010080 — the first UNATOM
-      pulled from Bitcoin block data. Sacred, sealed, no mouth, six-pointed
-      Genesis eye, crystal matter wick, obsidian shell with doubled border.</p>
+    <h3>BLAST-OFF</h3>
+    <p>Specimen 010080 — the first UNATOM pulled from Bitcoin block data.
+      Sacred, sealed, no mouth, six-pointed Genesis eye, crystal matter wick,
+      obsidian shell with doubled border.</p>
     <dl>
       <dt>Block</dt>          <dd>010080</dd>
       <dt>Element</dt>        <dd>G — Genesis (ceremonial 1-of-1)</dd>
