@@ -323,7 +323,7 @@
     100%{transform:translate(0,150px) scale(.4) rotate(20deg);opacity:0}
   }
 
-  /* === KNOCK === */
+  /* === KNOCK / NONCE PANEL === */
   .knock-meta{
     font:600 11px/1 ui-monospace,monospace;
     letter-spacing:.18em;text-transform:uppercase;
@@ -331,6 +331,61 @@
     display:flex;gap:10px;
   }
   .knock-meta .num{color:var(--orange);font-weight:800}
+
+  .nonce-panel{
+    width:100%;max-width:340px;
+    display:flex;flex-direction:column;align-items:center;gap:9px;
+    padding:14px 18px 16px;
+    background:rgba(243,238,227,.04);
+    border:1px solid var(--line);
+    border-radius:14px;
+  }
+  .nonce-label{
+    font:600 9.5px/1 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.24em;text-transform:uppercase;
+    color:var(--muted);
+  }
+  .nonce-hash{
+    font:700 14.5px/1.35 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.02em;
+    color:var(--ink);
+    word-break:break-all;text-align:center;
+    min-height:20px;
+    transition:color .25s ease;
+  }
+  .nonce-hash .pfx{color:var(--muted);font-weight:500}
+  .nonce-hash .lead{color:var(--warm);text-shadow:0 0 6px rgba(249,188,79,.35)}
+  .nonce-hash.searching{animation:hashJitter .06s steps(2) 4}
+  .nonce-hash.lock{color:var(--green)}
+  .nonce-hash.lock .lead{color:var(--green);text-shadow:0 0 14px rgba(125,207,91,.7)}
+  @keyframes hashJitter{50%{transform:translateX(1px)}}
+  .nonce-diff{
+    display:flex;justify-content:space-between;align-items:center;
+    width:100%;
+    font:600 10px/1 ui-monospace,monospace;
+    letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);
+  }
+  .nonce-diff .num{color:var(--orange);font-weight:800}
+  .nonce-diff .zeros{color:var(--warm);font-weight:800}
+
+  /* === LEARNING DRIP === */
+  .drip{
+    font:600 10px/1.5 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.16em;text-transform:uppercase;
+    color:var(--warm);
+    text-align:center;
+    padding:0 14px;
+    margin:0 auto 10px;
+    max-width:340px;
+    min-height:14px;
+    opacity:0;
+    transform:translateY(4px);
+    transition:opacity .5s ease,transform .5s ease;
+    pointer-events:none;
+  }
+  .drip.show{opacity:.7;transform:translateY(0)}
+  .drip .tag{color:var(--muted);margin-right:6px}
 
   /* === BLINKS === */
   .blinks{
@@ -462,6 +517,8 @@
 
     <p class="whisper" id="whisper">—</p>
 
+    <div class="drip" id="drip" aria-live="polite"></div>
+
     <section class="action" id="action"></section>
   </main>
 
@@ -577,6 +634,7 @@ function summon(h) {
   renderPortrait();
   paintIdent();
   paintAction();
+  stepDrip('ready');
 }
 
 function renderPortrait() {
@@ -712,6 +770,7 @@ function enterFeed() {
   setLive('mood', 'curious');
   rollCrumbs();
   paintAction();
+  stepDrip('feed');
 }
 
 function rollCrumbs() {
@@ -749,12 +808,12 @@ function paintFeed(root) {
   const canKnock = STATE.belly.length > 0;
   // First entry shows the rule; later actions show reactions
   if (STATE.belly.length === 0 && STATE.rejected.length === 0) {
-    flash('tap a crumb to add it to the block.', 'block has 100 spaces. big ones may not fit.');
+    flash('tap a crumb to add it to the block.', 'pack until it feels right. big crumbs may bounce.');
   }
 
   root.innerHTML =
     '<div class="cap-row">' +
-      '<div class="cap-meta"><span>block space</span><span class="num">' + used + ' / ' + cap + ' vb</span></div>' +
+      '<div class="cap-meta"><span>packing block</span><span class="num">' + STATE.belly.length + ' item' + (STATE.belly.length === 1 ? '' : 's') + '</span></div>' +
       '<div class="cap"><div class="cap-fill' + (pct >= 90 ? ' full' : '') + '" style="width:' + pct + '%"></div></div>' +
     '</div>' +
     '<div class="crumbs" id="crumbsRow"></div>' +
@@ -869,6 +928,185 @@ function flyOut(id, cls) {
 function sample(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 // ============================================================================
+// NONCE READOUT (mining-style, replaces the /100 counter feel)
+// ============================================================================
+
+function randHex(n) {
+  let s = '';
+  for (let i = 0; i < n; i++) s += '0123456789abcdef'[Math.floor(Math.random() * 16)];
+  return s;
+}
+function renderNonce(lead) {
+  const total = 24;
+  const zeros = Math.max(0, Math.min(total, lead | 0));
+  const tail = randHex(total - zeros);
+  return '<span class="lead">' + '0'.repeat(zeros) + '</span>' + tail;
+}
+function paintNonce(lead, locked) {
+  const el = $('nonceHash');
+  if (el) {
+    el.innerHTML = '<span class="pfx">0x</span>' + renderNonce(lead);
+    el.classList.remove('searching', 'lock');
+    void el.offsetWidth;
+    el.classList.add(locked ? 'lock' : 'searching');
+  }
+  const z = $('knockZ');
+  if (z) z.textContent = lead;
+}
+
+// ============================================================================
+// LEARNING DRIPS — micro-education per step, rotates so returning users
+// always learn something new. Bank keyed by step; localStorage tracks index.
+// ============================================================================
+
+const LEARN_DRIPS = {
+  ready: [
+    'A BITCOIN BLOCK ARRIVES EVERY ~10 MINUTES, WORLDWIDE.',
+    'THE GENESIS BLOCK WAS MINED 03 JAN 2009.',
+    'EVERY UNATOM IS SEEDED BY A REAL BLOCK HEIGHT.',
+    'NO WALLET. NO MINT. THE BLOCK IS THE SEED.',
+  ],
+  feed: [
+    'MINERS PACK CRUMBS TOO \u2014 THEY CALL THEM "TRANSACTIONS".',
+    'HIGHER FEE = HIGHER PRIORITY. THAT\u2019S WHY FAT CRUMBS FIT FIRST.',
+    'A REAL BLOCK PACKS ~2000 TX INTO 1MB. YOU\u2019RE DOING A TINY VERSION.',
+    'MEMPOOL = THE WAITING ROOM FOR TRANSACTIONS.',
+    'MINERS SORT MEMPOOL BY FEE \u2014 EXACTLY WHAT YOU\u2019RE DOING.',
+  ],
+  knock: [
+    'MINERS TRY ~4 BILLION HASHES/SEC. YOU NEED A FEW.',
+    'LEADING ZEROS = DIFFICULTY. MORE ZEROS, HARDER BLOCK.',
+    'A BLOCK IS SEALED WHEN THE HASH STARTS WITH ENOUGH ZEROS.',
+    'THIS IS WHY MINING BURNS ELECTRICITY \u2014 GUESSING TAKES POWER.',
+    'IN REAL BITCOIN NO ONE KNOWS WHICH GUESS WINS. NEITHER DO YOU.',
+    'NONCE = THE ONE NUMBER MINERS ARE ALLOWED TO CHANGE.',
+  ],
+  blinks: [
+    '6 BLINKS = 6 CONFIRMATIONS. THE OG BITCOIN STANDARD.',
+    'EACH CONFIRM = ANOTHER BLOCK MINED ON TOP OF YOURS.',
+    'AFTER 6 CONFIRMS, A PAYMENT IS CONSIDERED FINAL.',
+    'MORE CONFIRMS = HARDER TO REVERSE. THAT\u2019S SECURITY.',
+  ],
+  receipt: [
+    'YOUR UNATOM\u2019S ELEMENT MAPS TO A REAL BITCOIN FIELD.',
+    'BLOCK HEIGHT DETERMINES EVERYTHING \u2014 NO WALLET NEEDED.',
+    'THIS SPECIMEN IS DETERMINISTIC. SAME BLOCK = SAME FRIEND.',
+    'THERE ARE EXACTLY 10,080 OF THESE. ONE PER BLOCK.',
+  ],
+};
+
+function drip(step) {
+  const bank = LEARN_DRIPS[step];
+  if (!bank || !bank.length) return null;
+  const key = 'unatom_drip_' + step;
+  let idx = 0;
+  try { idx = (parseInt(localStorage.getItem(key) || '0', 10) + 1) % bank.length; }
+  catch (e) { idx = Math.floor(Math.random() * bank.length); }
+  try { localStorage.setItem(key, String(idx)); } catch (e) {}
+  return bank[idx];
+}
+
+function showDrip(text, delay) {
+  const el = $('drip');
+  if (!el) return;
+  el.classList.remove('show');
+  el.innerHTML = '';
+  if (!text) return;
+  const ms = (delay == null) ? 900 : delay;
+  clearTimeout(showDrip._t);
+  showDrip._t = setTimeout(() => {
+    el.innerHTML = '<span class="tag">TIP</span>' + esc(text);
+    el.classList.add('show');
+  }, ms);
+}
+
+function stepDrip(step) { showDrip(drip(step)); }
+
+// ============================================================================
+// CHAIN POSTCARD SHARE TEXT \u2014 large randomized pool
+// Mixes miner-friendly, DMT/mystical, BTC culture, explorer, onboarding.
+// Placeholders resolved from live STATE + receipt.
+// ============================================================================
+
+function crumbsPhrase(belly) {
+  if (!belly || !belly.length) return 'nothing at all';
+  const counts = {};
+  belly.forEach(c => { counts[c.kind] = (counts[c.kind] || 0) + 1; });
+  const words = { hot: 'hot', cold: 'cold', fat: 'fat', dust: 'dust crumb', diamond: 'diamond' };
+  const parts = Object.entries(counts).map(([k, v]) =>
+    v + ' ' + (words[k] || k) + (v > 1 ? 's' : ''));
+  if (parts.length === 1) return parts[0];
+  if (parts.length === 2) return parts.join(' and ');
+  return parts.slice(0, -1).join(', ') + ', and ' + parts.slice(-1);
+}
+
+const SHARE_TEMPLATES = [
+  // MINER RESPECT
+  'miners spent {billions} guesses to seal block #{block}. i tapped {taps} times. UNATOM #{block} came through. thanks miners. {url}',
+  'block was {weather}. mempool was hungry. respect to the pool that landed it. my UNAT: {shell} {sym} with a {eye} eye. {url}',
+  'just sealed a block the honest way (tapping). shoutout to the mining nodes doing the real work. specimen {shell} {sym}. {url}',
+  'one specimen per block. #{block} \u2192 {shell} {sym}, {eye} eye. thanks to whoever mined it in real life. {url}',
+  'shoutout to the miners burning joules so i could tap {taps} times and pull UNATOM #{block}. we\u2019re all connected. {url}',
+  'thanks miners. sealed my UNAT in {taps} taps. yours took ~{billions} guesses. we\u2019re even. {url}',
+
+  // DMT / MYSTICAL
+  'asked the chain a question. it sent back UNATOM #{block} whispering: \u201c{whisper}\u201d \u00b7 {url}',
+  'specimen #{block} appeared. {eye} eye, {shell} shell, will not stop staring at me. {url}',
+  'DMT log: made contact with an UNATOM. {taps} taps. fed it {crumbs}. it lives at {url}',
+  'small entity emerged from block #{block}. said one line and vanished. keeping the seal. {url}',
+  'an UNATOM opened its eye during a {weather} block. i heard it whisper: \u201c{whisper}\u201d \u00b7 {url}',
+  'the block hummed. i tapped. it handed me a {shell} {sym} with a {eye} eye. keeping. {url}',
+
+  // BITCOIN CULTURE
+  'sealed a block the honest way (tapping). don\u2019t tell my ASIC. UNATOM #{block} is mine. {url}',
+  'mempool was {weather} and out of the noise came a little friend with a {eye} eye. UNATOM #{block}. {url}',
+  'hyperbitcoinization but the coins are little guys. UNATOM #{block} says hi. {url}',
+  'proof of tap. UNATOM #{block}, {shell} {sym}, sealed in {taps}. {url}',
+  'there are exactly 10,080 of these. mine is #{block}. tapped it into existence. {url}',
+  'block #{block} tried to hide from me. {taps} taps later it gave up a {eye}-eyed {sym}. {url}',
+
+  // EXPLORER / FIELD REPORT
+  'field report \u2014 block #{block}, weather {weather}, tap count {taps}. subject cooperative. {url}',
+  'extracted specimen #{block} from bitcoin. classification: {shell} {sym}, {eye} eye. seal {serial}. {url}',
+  'signal caught from block #{block}. resolved into a tiny living thing with a {eye} eye. keeping it. {url}',
+  'transmission from block #{block}. decoded as: {shell} {sym}. tapping to lock in \u2026 {url}',
+
+  // ONBOARDING / HYPE
+  'if you tap a bitcoin block gently enough, it hands you a small living thing. proof: {url}',
+  'you can adopt an UNATOM at {url}. mine is #{block}, {shell} {sym}. no wallet needed. free.',
+  'unatoms are here. one per bitcoin block. i got #{block}. show me yours. {url}',
+  'no wallet. no mint. just tap. i got UNATOM #{block} in {taps} taps. {url}',
+
+  // FUNNY / MIX
+  'the block was {weather}. the wick leaked. UNATOM #{block} still showed up. resilient king. {url}',
+  'i fed the block {crumbs}. it burped up UNATOM #{block}. fair trade. {url}',
+  'told bitcoin i wanted a friend. it printed UNATOM #{block}, {eye}-eyed and quiet. i\u2019ll take it. {url}',
+];
+
+function pickShareText(u, blk, r) {
+  const w = STATE.weather || {};
+  const whispers = (window.UNATOM && UNATOM.WHISPERS) || {};
+  const wsp = (whispers[u.sym] && whispers[u.sym].whisper) || 'I am the address of this moment.';
+  const url = 'unatom.fun';
+  const billions = (3 + Math.floor(Math.random() * 7)) + '.' + Math.floor(Math.random() * 10) + ' billion';
+  const vars = {
+    block:    blk.toLocaleString(),
+    taps:     STATE.knocks || r.taps || 0,
+    weather:  verdictLabel(w.verdict || 'live'),
+    eye:      (u.thirdEye || 'open').replace(/([A-Z])/g, ' $1').toLowerCase().trim(),
+    shell:    u.scheme,
+    sym:      u.sym,
+    crumbs:   crumbsPhrase(STATE.belly),
+    whisper:  wsp,
+    serial:   r.serial,
+    billions: billions,
+    url:      url,
+  };
+  const template = sample(SHARE_TEMPLATES);
+  return template.replace(/\{(\w+)\}/g, (_, k) => vars[k] != null ? vars[k] : '');
+}
+
+// ============================================================================
 // STEP 3 — KNOCK
 // ============================================================================
 
@@ -890,13 +1128,21 @@ function enterKnock() {
   STATE.knocks = 0;
   STATE.leaks = 0;
   paintAction();
+  stepDrip('knock');
 }
 
 function paintKnock(root) {
   flash('tap to guess the block hash.', 'miners do this billions of times — you only need a few.');
   root.innerHTML =
-    '<div class="knock-meta">taps <span class="num" id="knockN">0</span></div>' +
-    '<button class="pill hot big" id="knockBtn">TAP TO TRY</button>' +
+    '<div class="nonce-panel">' +
+      '<div class="nonce-label">nonce · sha256 attempt</div>' +
+      '<div class="nonce-hash" id="nonceHash"><span class="pfx">0x</span>' + renderNonce(0) + '</div>' +
+      '<div class="nonce-diff">' +
+        '<span>attempts <span class="num" id="knockN">0</span></span>' +
+        '<span>leading zeros <span class="zeros" id="knockZ">0</span></span>' +
+      '</div>' +
+    '</div>' +
+    '<button class="pill hot big" id="knockBtn">TAP TO GUESS</button>' +
     '<button class="ghost" id="rerun">— start over —</button>';
   $('knockBtn').onclick = () => doKnock();
   $('rerun').onclick = () => { haptic(8); runAgain(); };
@@ -911,6 +1157,11 @@ function doKnock() {
   void pw.offsetWidth;
   pw.classList.add('knocking');
   haptic(22);
+
+  // Mining-style nonce reveal. Leading zeros grow with sqrt(taps) so users
+  // FEEL progress without seeing a numeric goal (goal stays hidden).
+  const lead = Math.min(20, Math.floor(Math.sqrt(STATE.knocks) * 2));
+  paintNonce(lead, false);
 
   const u = STATE.unatom;
   if ((u.drip === 'brokenWick' || u.drip === 'splitDrip') && Math.random() < 0.4) {
@@ -929,6 +1180,7 @@ function doKnock() {
 
   if (STATE.knocks >= STATE.knockGoal) {
     // SUCCESS BURST
+    paintNonce(20, true);
     setTimeout(() => {
       const upgrade = { open: 'oracle', closedEye: 'open', sealed: 'open',
                          halo: 'oracle', aperture: 'oracle', frost: 'diamond' };
@@ -954,6 +1206,7 @@ function enterBlinks() {
   STATE.live.mood = 'blissed';
   renderPortrait();
   paintAction();
+  stepDrip('blinks');
 }
 
 function paintBlinks(root) {
@@ -1000,6 +1253,7 @@ function enterReceipt() {
   renderPortrait();
   buildReceipt();
   paintAction();
+  stepDrip('receipt');
 }
 
 function buildReceipt() {
@@ -1102,8 +1356,8 @@ async function sharePoster(u, blk, r) {
   }
   const fname = 'unatom-' + blk + '.png';
   const file = new File([blob], fname, { type: 'image/png' });
-  const text = 'I adopted UNATOM #' + blk.toLocaleString() + ' / 10,080 (' + u.scheme + ' ' + u.sym + ') and fed the chain. § ' + r.serial;
-  const shareUrl = location.origin + location.pathname;
+  const text = pickShareText(u, blk, r);
+  const shareUrl = 'https://unatom.fun';
   // 1) Best path: native share sheet WITH the image file.
   //    On iOS X webview this surfaces "Save Image" → writes to Photos / Camera Roll.
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -1118,6 +1372,9 @@ async function sharePoster(u, blk, r) {
   // 2) Show the poster inline so user can long-press to save (iOS: "Add to Photos")
   showPosterOverlay(blob, fname, text + ' ' + shareUrl);
   btn.textContent = original;
+  // Chain-postcard auto-copy: caption already lives on clipboard the moment
+  // the poster appears, so the user can paste-and-post in one tap.
+  copyShareLine(text, null);
 }
 
 function buildPosterCanvas(u, blk, r) {
@@ -1233,10 +1490,10 @@ function showPosterOverlay(blob, filename, shareText) {
     ov.className = 'poster-overlay';
     ov.innerHTML =
       '<img id="posterImg" alt="your unatom poster">' +
-      '<div class="hint">tap & hold the image → <b>add to photos</b><br>then post on X / IG and tag <b>@takedmt</b></div>' +
+      '<div class="hint">caption copied ✓ · tap & hold the image → <b>add to photos</b><br>then paste in X / IG and tag <b>@takedmt</b></div>' +
       '<div class="row">' +
         '<a id="posterDl" class="primary">save</a>' +
-        '<button id="posterCopy">copy caption</button>' +
+        '<button id="posterCopy">copy new caption</button>' +
         '<button id="posterClose">close</button>' +
       '</div>';
     document.body.appendChild(ov);
@@ -1251,10 +1508,17 @@ function showPosterOverlay(blob, filename, shareText) {
   // Some iOS browsers ignore <a download> on cross-origin; here url is blob so it's same-origin.
   // For iOS Safari/X webview the long-press is the most reliable camera-roll path.
 
+  // 'copy new caption' rerolls the postcard message so users can spin until
+  // they find one that fits their vibe.
   document.getElementById('posterCopy').onclick = () => {
+    const fresh = pickShareText(STATE.unatom, STATE.block, STATE.receipt) + ' https://unatom.fun';
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(shareText).then(() => {
+      navigator.clipboard.writeText(fresh).then(() => {
         document.getElementById('posterCopy').textContent = 'copied ✓';
+        setTimeout(() => {
+          const el = document.getElementById('posterCopy');
+          if (el) el.textContent = 'reroll caption';
+        }, 1400);
       });
     }
   };
@@ -1267,9 +1531,8 @@ function showPosterOverlay(blob, filename, shareText) {
 
 function doShare(u, r) {
   const btn = $('shareBtn');
-  const line = 'I ran Bitcoin with UNATOM #' + STATE.block.toLocaleString() + ' (' + u.scheme + ' ' + u.sym + '). ' +
-               r.verdict + ' ' + r.diag + ' § ' + r.serial;
-  const url = location.origin + location.pathname;
+  const line = pickShareText(u, STATE.block, r);
+  const url = 'https://unatom.fun';
   // 1) Native Share API — best path on iOS X in-app browser + modern Android Chrome
   if (navigator.share) {
     navigator.share({ title: 'NAT READY? — UNATOMS', text: line, url }).then(() => {
@@ -1283,7 +1546,7 @@ function doShare(u, r) {
 function copyShareLine(text, btn) {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = 'copied ✓';
+      if (btn) btn.textContent = 'copied ✓';
     }).catch(() => { execCopyFallback(text, btn); });
     return;
   }
@@ -1302,9 +1565,9 @@ function execCopyFallback(text, btn) {
   try { ta.setSelectionRange(0, text.length); } catch (e) {}
   try {
     const ok = document.execCommand('copy');
-    btn.textContent = ok ? 'copied ✓' : 'tap & hold to copy';
+    if (btn) btn.textContent = ok ? 'copied ✓' : 'tap & hold to copy';
   } catch (e) {
-    btn.textContent = 'tap & hold to copy';
+    if (btn) btn.textContent = 'tap & hold to copy';
   }
   document.body.removeChild(ta);
 }
