@@ -386,6 +386,8 @@
   }
   .drip.show{opacity:.7;transform:translateY(0)}
   .drip .tag{color:var(--muted);margin-right:6px}
+  .drip .tag.lore{color:var(--pink)}
+  .drip .tag.nat{color:var(--cyan)}
 
   /* === BLINKS === */
   .blinks{
@@ -959,39 +961,59 @@ function paintNonce(lead, locked) {
 // always learn something new. Bank keyed by step; localStorage tracks index.
 // ============================================================================
 
+// tag: 'TIP' (bitcoin mechanics) · 'LORE' (dmt / consciousness / plant) · 'NAT' (project)
 const LEARN_DRIPS = {
   ready: [
-    'A BITCOIN BLOCK ARRIVES EVERY ~10 MINUTES, WORLDWIDE.',
-    'THE GENESIS BLOCK WAS MINED 03 JAN 2009.',
-    'EVERY UNATOM IS SEEDED BY A REAL BLOCK HEIGHT.',
-    'NO WALLET. NO MINT. THE BLOCK IS THE SEED.',
+    { tag:'TIP',  text:'A BITCOIN BLOCK ARRIVES EVERY ~10 MINUTES, WORLDWIDE.' },
+    { tag:'LORE', text:'DMT WAS FIRST SYNTHESIZED IN 1931. NOBODY KNEW WHAT TO DO WITH IT.' },
+    { tag:'TIP',  text:'THE GENESIS BLOCK WAS MINED 03 JAN 2009.' },
+    { tag:'LORE', text:'AYAHUASCA MEANS \u201CVINE OF THE SOUL\u201D IN QUECHUA.' },
+    { tag:'NAT',  text:'EVERY UNATOM IS SEEDED BY A REAL BLOCK HEIGHT.' },
+    { tag:'LORE', text:'DMT IS STRUCTURALLY CLOSE TO SEROTONIN. YOUR BRAIN ALREADY KNOWS THE SHAPE.' },
+    { tag:'TIP',  text:'NO WALLET. NO MINT. THE BLOCK IS THE SEED.' },
+    { tag:'LORE', text:'\u201CPSYCHEDELIC\u201D WAS COINED IN 1957. IT MEANS \u201CMIND-MANIFESTING\u201D.' },
   ],
   feed: [
-    'MINERS PACK CRUMBS TOO \u2014 THEY CALL THEM "TRANSACTIONS".',
-    'HIGHER FEE = HIGHER PRIORITY. THAT\u2019S WHY FAT CRUMBS FIT FIRST.',
-    'A REAL BLOCK PACKS ~2000 TX INTO 1MB. YOU\u2019RE DOING A TINY VERSION.',
-    'MEMPOOL = THE WAITING ROOM FOR TRANSACTIONS.',
-    'MINERS SORT MEMPOOL BY FEE \u2014 EXACTLY WHAT YOU\u2019RE DOING.',
+    { tag:'TIP',  text:'MINERS PACK CRUMBS TOO \u2014 THEY CALL THEM \u201CTRANSACTIONS\u201D.' },
+    { tag:'LORE', text:'AYAHUASCA = DMT + AN MAOI. THE VINE MAKES THE LEAF WORK.' },
+    { tag:'TIP',  text:'HIGHER FEE = HIGHER PRIORITY. FAT CRUMBS FIT FIRST.' },
+    { tag:'LORE', text:'THE CHACRUNA LEAF HOLDS THE DMT. THE CAAPI VINE UNLOCKS IT.' },
+    { tag:'TIP',  text:'A REAL BLOCK PACKS ~2000 TX INTO 1MB. YOU\u2019RE DOING A TINY VERSION.' },
+    { tag:'LORE', text:'YOUR BODY MAY MAKE TRACE DMT. SCIENCE STILL DOESN\u2019T KNOW WHY.' },
+    { tag:'TIP',  text:'MEMPOOL = THE WAITING ROOM FOR TRANSACTIONS.' },
+    { tag:'LORE', text:'SNUFF, BREW, VAPOR, TOAD \u2014 EVERY CULTURE FOUND A DELIVERY METHOD.' },
+    { tag:'TIP',  text:'MINERS SORT MEMPOOL BY FEE \u2014 EXACTLY WHAT YOU\u2019RE DOING.' },
   ],
   knock: [
-    'MINERS TRY ~4 BILLION HASHES/SEC. YOU NEED A FEW.',
-    'LEADING ZEROS = DIFFICULTY. MORE ZEROS, HARDER BLOCK.',
-    'A BLOCK IS SEALED WHEN THE HASH STARTS WITH ENOUGH ZEROS.',
-    'THIS IS WHY MINING BURNS ELECTRICITY \u2014 GUESSING TAKES POWER.',
-    'IN REAL BITCOIN NO ONE KNOWS WHICH GUESS WINS. NEITHER DO YOU.',
-    'NONCE = THE ONE NUMBER MINERS ARE ALLOWED TO CHANGE.',
+    { tag:'TIP',  text:'MINERS TRY ~4 BILLION HASHES/SEC. YOU NEED A FEW.' },
+    { tag:'LORE', text:'SMOKED DMT LASTS ABOUT 15 MINUTES. THE VINE STRETCHES IT TO FOUR HOURS.' },
+    { tag:'TIP',  text:'LEADING ZEROS = DIFFICULTY. MORE ZEROS, HARDER BLOCK.' },
+    { tag:'LORE', text:'TERENCE McKENNA NAMED THEM \u201CMACHINE ELVES\u201D. THE NAME STUCK.' },
+    { tag:'TIP',  text:'A BLOCK IS SEALED WHEN THE HASH STARTS WITH ENOUGH ZEROS.' },
+    { tag:'LORE', text:'5-MEO-DMT LIVES IN THE COLORADO RIVER TOAD. DIFFERENT MOLECULE, DIFFERENT TRIP.' },
+    { tag:'TIP',  text:'MINING BURNS ELECTRICITY BECAUSE GUESSING TAKES POWER.' },
+    { tag:'LORE', text:'THE \u201CSPIRIT MOLECULE\u201D NAME COMES FROM A DEA-APPROVED 1990S STUDY.' },
+    { tag:'TIP',  text:'IN REAL BITCOIN NO ONE KNOWS WHICH GUESS WINS. NEITHER DO YOU.' },
+    { tag:'LORE', text:'TOLERANCE DOESN\u2019T BUILD LIKE OTHER PSYCHEDELICS. NOVELTY EVERY TIME.' },
+    { tag:'TIP',  text:'NONCE = THE ONE NUMBER MINERS ARE ALLOWED TO CHANGE.' },
   ],
   blinks: [
-    '6 BLINKS = 6 CONFIRMATIONS. THE OG BITCOIN STANDARD.',
-    'EACH CONFIRM = ANOTHER BLOCK MINED ON TOP OF YOURS.',
-    'AFTER 6 CONFIRMS, A PAYMENT IS CONSIDERED FINAL.',
-    'MORE CONFIRMS = HARDER TO REVERSE. THAT\u2019S SECURITY.',
+    { tag:'TIP',  text:'6 BLINKS = 6 CONFIRMATIONS. THE OG BITCOIN STANDARD.' },
+    { tag:'LORE', text:'MANY TRIP REPORTS OPEN THE SAME WAY: A WAITING ROOM, THEN THE VEIL.' },
+    { tag:'TIP',  text:'EACH CONFIRM = ANOTHER BLOCK MINED ON TOP OF YOURS.' },
+    { tag:'LORE', text:'ACROSS CULTURES, THE ENTITIES ARE DESCRIBED AS PLAYFUL AND OLDER THAN YOU.' },
+    { tag:'TIP',  text:'AFTER 6 CONFIRMS, A PAYMENT IS CONSIDERED FINAL.' },
+    { tag:'LORE', text:'SIX BREATHS. TEN MINUTES. THE UNIVERSE USES ROUND NUMBERS.' },
+    { tag:'TIP',  text:'MORE CONFIRMS = HARDER TO REVERSE. THAT\u2019S SECURITY.' },
   ],
   receipt: [
-    'YOUR UNATOM\u2019S ELEMENT MAPS TO A REAL BITCOIN FIELD.',
-    'BLOCK HEIGHT DETERMINES EVERYTHING \u2014 NO WALLET NEEDED.',
-    'THIS SPECIMEN IS DETERMINISTIC. SAME BLOCK = SAME FRIEND.',
-    'THERE ARE EXACTLY 10,080 OF THESE. ONE PER BLOCK.',
+    { tag:'NAT',  text:'YOUR UNATOM\u2019S ELEMENT MAPS TO A REAL BITCOIN FIELD.' },
+    { tag:'LORE', text:'YOU DON\u2019T KEEP A TRIP. YOU KEEP WHAT THE TRIP LEAVES BEHIND.' },
+    { tag:'TIP',  text:'BLOCK HEIGHT DETERMINES EVERYTHING \u2014 NO WALLET NEEDED.' },
+    { tag:'LORE', text:'OAKLAND DECRIMINALIZED NATURAL PSYCHEDELICS IN 2019. OTHERS FOLLOWED.' },
+    { tag:'NAT',  text:'THIS SPECIMEN IS DETERMINISTIC. SAME BLOCK = SAME FRIEND.' },
+    { tag:'LORE', text:'THE MOLECULE IS TINY. THE STORIES AROUND IT ARE HUGE.' },
+    { tag:'NAT',  text:'THERE ARE EXACTLY 10,080 OF THESE. ONE PER BLOCK.' },
   ],
 };
 
@@ -1006,16 +1028,20 @@ function drip(step) {
   return bank[idx];
 }
 
-function showDrip(text, delay) {
+function showDrip(entry, delay) {
   const el = $('drip');
   if (!el) return;
   el.classList.remove('show');
   el.innerHTML = '';
+  if (!entry) return;
+  const tag  = (entry.tag  || 'TIP').toUpperCase();
+  const text = entry.text || '';
   if (!text) return;
-  const ms = (delay == null) ? 900 : delay;
+  const cls  = tag === 'LORE' ? 'tag lore' : tag === 'NAT' ? 'tag nat' : 'tag';
+  const ms   = (delay == null) ? 900 : delay;
   clearTimeout(showDrip._t);
   showDrip._t = setTimeout(() => {
-    el.innerHTML = '<span class="tag">TIP</span>' + esc(text);
+    el.innerHTML = '<span class="' + cls + '">' + tag + '</span>' + esc(text);
     el.classList.add('show');
   }, ms);
 }
@@ -1329,7 +1355,6 @@ function paintReceipt(root) {
     '</div>' +
     '<button class="pill again big" id="runAgain">RUN A NEW UNATOM</button>' +
     '<button class="ghost" id="shareBtn">save my unatom →</button>' +
-    '<a class="ghost" href="./showcase/" style="text-decoration:none;display:inline-block">see the 19 →</a>' +
     '<a class="ghost" href="./catalog/" style="text-decoration:none;display:inline-block">see all 10,080 →</a>';
 
   $('runAgain').onclick = () => { haptic(28); runAgain(); };
