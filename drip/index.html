@@ -430,13 +430,16 @@ async function init() {
   if (btcRes.status === 'fulfilled') paintBtcChip(btcRes.value);
   if (dripRes.status === 'fulfilled') paintDripChip(dripRes.value);
 
-  S.unatom   = UNATOM.fromBlock(S.block);
-  S.hasGem   = S.unatom.swag === 'dmtGem';
+  S.unatom     = UNATOM.fromBlock(S.block);
+  S.hasGem     = S.unatom.swagKind === 'dmtGem';
   S.dripAmount = S.hasGem ? GEM_DRIP : BASE_DRIP;
   S.tweetCopy  = buildTweetCopy(S.unatom, S.block, S.dripAmount, S.hasGem);
 
   renderPortrait();
-  setStep('roll');
+
+  // If the campaign has ended, skip claim flow — show conclusion
+  const dripActive = dripRes.status !== 'fulfilled' || dripRes.value.active !== false;
+  setStep(dripActive ? 'roll' : 'ended');
   $('boot').remove();
 }
 
@@ -517,6 +520,7 @@ function setStep(step) {
     pending: paintPending,
     done:    paintDone,
     error:   paintError,
+    ended:   paintEnded,
   };
   (painters[step] || paintRoll)();
 }
@@ -531,7 +535,8 @@ function paintRoll() {
 
   const whisperText = UNATOM.WHISPERS[S.unatom.sym]?.whisper || '';
 
-  let html = '';
+  // Show which element this is out of 10,080
+  let html = '<div class="step-lbl">ELEMENT <em>#' + S.block.toLocaleString() + '</em> OF 10,080</div>';
 
   if (S.hasGem) {
     html += '<div class="gem-badge"><span class="ico">💎</span> GEM DETECTED — 3× DRIP</div>';
@@ -550,9 +555,9 @@ function paintRoll() {
 
   html +=
     '<button class="pill hot" id="buildBtn">BUILD MY POSTER ⚗️</button>' +
-    '<button class="shuffle-chip" id="shuffleBtn"><span>⟳</span> try another element</button>' +
-    '<span class="ghost" style="text-align:center;max-width:300px;line-height:1.55">' +
-      'poster · post on X · claim your DMT-NAT' +
+    '<button class="shuffle-chip" id="shuffleBtn"><span>⟳</span> explore a different element</button>' +
+    '<span class="ghost" style="text-align:center;max-width:320px;line-height:1.6">' +
+      '3 steps: save the poster → post it → claim your DMT-NAT' +
     '</span>';
 
   $('action').innerHTML = html;
@@ -560,7 +565,7 @@ function paintRoll() {
   $('shuffleBtn').onclick = () => {
     S.block = rollBlock();
     S.unatom = UNATOM.fromBlock(S.block);
-    S.hasGem = S.unatom.swag === 'dmtGem';
+    S.hasGem = S.unatom.swagKind === 'dmtGem';
     S.dripAmount = S.hasGem ? GEM_DRIP : BASE_DRIP;
     S.tweetCopy = buildTweetCopy(S.unatom, S.block, S.dripAmount, S.hasGem);
     renderPortrait();
@@ -719,6 +724,7 @@ function paintWallet() {
       '<label for="walletInput">your Solana wallet address</label>' +
       '<input class="step-input" id="walletInput" type="text" autocomplete="off" autocorrect="off" spellcheck="false"' +
         ' placeholder="AbCd1234…XyZ">' +
+      '<span style="font:italic 11px/1.55 Georgia,serif;color:var(--muted);padding-left:4px;display:block;margin-top:4px">this is where DMT-NAT lands. use Phantom, Solflare, or any Solana wallet app.</span>' +
     '</div>' +
     '<button class="boost-toggle" id="boostToggle"><span class="arr">▶</span> have a TAKEDMT trade? get 5× more</button>' +
     '<div class="boost-wrap" id="boostWrap">' +
@@ -858,6 +864,24 @@ function paintError() {
     S.tweetUrl = ''; S.wallet = ''; S.natTxHash = '';
     setStep('roll');
   };
+}
+
+// ============================================================================
+// ENDED — campaign complete, default back to explore mode
+// ============================================================================
+
+function paintEnded() {
+  setPortraitClass('sm idle');
+  setHalo('');
+  $('ident').textContent = 'UNATOM #' + S.block.toLocaleString() + ' · ' + S.unatom.sym + ' · ' + S.unatom.scheme;
+  $('action').innerHTML =
+    '<div class="done-wrap">' +
+      '<div class="step-lbl" style="margin-bottom:16px">THE DRIP IS COMPLETE</div>' +
+      '<div style="font:700 26px/1.35 Georgia,serif;color:var(--ink);text-align:center;max-width:320px">TAKEDMT graduated.<br>every drop was claimed.</div>' +
+      '<p class="done-note">the elements live on. each UNATOM still carries a story mined from a real Bitcoin block — and always will.</p>' +
+    '</div>' +
+    '<a class="pill" href="https://unatom.fun" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;background:rgba(243,238,227,.12)">EXPLORE THE ELEMENTS →</a>' +
+    '<a class="ghost" href="https://unatom.fun/catalog/" target="_blank" rel="noopener" style="text-decoration:none">see all 10,080 unatoms →</a>';
 }
 
 // ============================================================================

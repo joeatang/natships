@@ -496,6 +496,25 @@
     .portrait-wrap{width:min(64vw,380px)}
     .whisper{font-size:18px}
   }
+
+  /* === DRIP TEASER STRIP === */
+  .drip-strip{
+    width:100%;max-width:480px;
+    display:none;align-items:center;justify-content:space-between;
+    background:rgba(240,150,45,.07);
+    border:1px solid rgba(240,150,45,.2);
+    border-radius:12px;
+    padding:11px 16px;
+    margin:6px 0 2px;
+    gap:12px;
+    font:600 10.5px/1 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.18em;text-transform:uppercase;
+    color:var(--orange);
+  }
+  .drip-strip.live{display:flex}
+  .drip-strip .ds-dot{width:6px;height:6px;border-radius:50%;background:var(--orange);animation:livepulse 1.6s ease-in-out infinite;flex-shrink:0}
+  .drip-strip .ds-link{color:rgba(240,150,45,.75);text-decoration:none;white-space:nowrap}
+  .drip-strip .ds-link:active{color:var(--orange)}
 </style>
 </head>
 <body class="state-ready">
@@ -508,6 +527,15 @@
     <div class="chip"><span class="dot"></span><span class="lbl">newest block</span><span id="tipNum">—</span></div>
     <div class="chip weather" id="weatherPill" data-v="—"><span class="lbl">bitcoin</span><span id="weatherTxt">—</span></div>
   </header>
+
+  <!-- Drip teaser — shown only while campaign is active -->
+  <div class="drip-strip" id="dripStrip">
+    <span style="display:flex;align-items:center;gap:8px">
+      <span class="ds-dot"></span>
+      <span id="dripStripTxt">THE DRIP IS LIVE</span>
+    </span>
+    <a class="ds-link" href="/drip/">claim yours →</a>
+  </div>
 
   <main class="stage">
     <div class="portrait-wrap idle" id="portraitWrap">
@@ -1368,7 +1396,7 @@ function paintReceipt(root) {
     '</div>' +
     '<button class="pill again big" id="runAgain">RUN A NEW UNATOM</button>' +
     '<button class="ghost" id="shareBtn">save my unatom →</button>' +
-    '<a class="ghost" href="/drip/?block=' + STATE.block + '" style="text-decoration:none;display:inline-block;color:rgba(240,150,45,.7)">✦ your element has a drip →</a>' +
+    (window.DRIP_LIVE ? '<a class="ghost" href="/drip/?block=' + STATE.block + '" style="text-decoration:none;display:inline-block;color:rgba(240,150,45,.7)">✦ your element has a drip →</a>' : '') +
     '<a class="ghost" href="./catalog/" style="text-decoration:none;display:inline-block">see all 10,080 →</a>';
 
   $('runAgain').onclick = () => { haptic(28); runAgain(); };
@@ -1637,6 +1665,9 @@ async function boot() {
   summon(rollSeriesBlock());
   setTimeout(() => { const b = $('boot'); if (b) b.style.display = 'none'; }, 320);
 
+  // Show drip teaser strip if campaign is active (fire-and-forget)
+  loadDripStrip();
+
   // periodic weather refresh in ready/feed/receipt states
   setInterval(async () => {
     if (STATE.step === 'knock' || STATE.step === 'blinks') return;
@@ -1645,6 +1676,24 @@ async function boot() {
     paintWeather(w);
     if (STATE.step === 'ready') flash(chainGreeting(), traitGreeting());
   }, 60000);
+}
+
+async function loadDripStrip() {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 3000);
+    const data = await fetch('https://drip.unatom.fun/api/drip/status', {signal: ctrl.signal}).then(r => r.json());
+    clearTimeout(t);
+    if (!data.active) return;
+    window.DRIP_LIVE = true;
+    const strip = $('dripStrip');
+    if (!strip) return;
+    const txt = $('dripStripTxt');
+    if (txt && typeof data.remaining === 'number') {
+      txt.textContent = 'THE DRIP · ' + data.remaining.toLocaleString() + ' drops left';
+    }
+    strip.classList.add('live');
+  } catch(e) { /* silent — strip stays hidden if offline */ }
 }
 
 boot();
