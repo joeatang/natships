@@ -1,0 +1,36 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>blazed examples</title>
+<style>
+  body{margin:0;background:#0a0a0c;color:#f3eee3;font-family:ui-sans-serif,system-ui,Helvetica,Arial,sans-serif;padding:32px}
+  h1{font-size:32px;margin:0 0 6px;letter-spacing:-.01em}
+  .lede{color:rgba(243,238,227,.55);margin:0 0 28px;font:500 15px ui-monospace,Menlo,monospace;letter-spacing:.08em}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;max-width:1600px}
+  .cell{background:#111319;border:1px solid #2a2c36;border-radius:14px;padding:14px}
+  .cell svg{width:100%;height:auto;display:block;border-radius:10px}
+  .cap{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:.16em}
+  .cap .blk{color:#f0962d}
+  .cap .badge{color:#f17d8e}
+  .sub{font:500 12px ui-monospace,Menlo,monospace;color:rgba(243,238,227,.5);margin-top:4px;letter-spacing:.06em}
+</style></head><body>
+<h1>Blazed Bluntie</h1>
+<p class="lede">2.9% OF THE SERIES · GUARANTEED ON EVERY BLOCK CONTAINING "420"</p>
+<div class="grid" id="g"></div>
+<script src="../unatom-render.js"></script>
+<script>
+  // Curated to show off the range: 420-family, wink, aviator-hide, ancient-smoke-only, wonder, sleepy-compound
+  const blocks = [420, 1420, 4200, 4269, 9420, 155, 181, 333];
+  const g = document.getElementById('g');
+  for (const b of blocks) {
+    const t = UNATOM.fromBlock(b);
+    const is420 = String(b).includes('420');
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.innerHTML = UNATOM.svg(t) +
+      '<div class="cap"><span class="blk">#' + b.toLocaleString() + ' · ' + t.sym + '</span>' +
+      '<span class="badge">' + (is420 ? '420 BLOCK' : 'RARE ROLL') + '</span></div>' +
+      '<div class="sub">' + t.scheme + ' · ' + t.mood + ' · ' + t.thirdEye +
+      (t.glasses !== 'none' ? ' · ' + t.glasses : '') + '</div>';
+    g.appendChild(cell);
+  }
+</script>
+</body></html>

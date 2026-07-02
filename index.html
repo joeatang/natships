@@ -745,6 +745,19 @@ function chainGreeting() {
 function traitGreeting() {
   const u = STATE.unatom;
   // First-person, plain meaning. Tells the player WHAT this character does.
+  if (u.pin === 'HAL')     return "I'm hal. running bitcoin.";
+  if (u.pin === 'SATOSHI') return "I'm satoshi. nine years absent. still here.";
+  if (u.pin === 'HERO')    return "I'm the hero. quest engaged.";
+  if (u.pin === 'PIZZA')   return "I'm pizza day. ten thousand for two pies.";
+  if (u.pin === 'DOH')     return "d'oh. missed another block.";
+  if (u.pin === 'PIPES')   return "it's-a me. plumbing the mempool.";
+  if (u.pin === 'PUNK')    return "punk. always was. always will be.";
+  if (u.pin === 'FROG')    return "rare pepe. handle with care.";
+  if (u.pin === 'DOGE')    return "much block. very seal. wow.";
+  if (u.pin === 'WOJAK')   return "feels heavy today.";
+  if (u.pin === 'BLOCK_RUNNER') return "I'm the block runner. two moves out.";
+  if (u.pin === 'MEMEMOSES')    return "I'm mememoses. tablets in hand. they're jpegs now.";
+  if (u.blazedBluntie)            return "I'm a blazed bluntie. take your time. no rush.";
   if (u.thirdEye === 'diamond')   return "I'm a diamond. I find blocks fast.";
   if (u.thirdEye === 'burn')      return "I run hot. feed me orange ones.";
   if (u.thirdEye === 'frost')     return "I run cold. blue crumbs suit me.";

@@ -1,0 +1,63 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>rare pins</title>
+<style>
+  body{margin:0;background:#0a0a0c;color:#f3eee3;font-family:ui-sans-serif,system-ui,Helvetica,Arial,sans-serif;padding:32px}
+  h1{font-size:34px;margin:0 0 6px;letter-spacing:-.01em}
+  .lede{color:rgba(243,238,227,.55);margin:0 0 28px;font:500 14px ui-monospace,Menlo,monospace;letter-spacing:.08em}
+  .row{margin:0 0 34px}
+  .rowhead{display:flex;justify-content:space-between;align-items:baseline;margin:0 4px 12px;padding-bottom:8px;border-bottom:1px solid #2a2c36}
+  .rowhead .name{font:800 16px ui-monospace,Menlo,monospace;letter-spacing:.18em;color:#f3eee3}
+  .rowhead .rare{font:600 12px ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#5dd0e3}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1400px}
+  .cell{background:#111319;border:1px solid #2a2c36;border-radius:14px;padding:12px}
+  .cell svg{width:100%;height:auto;display:block;border-radius:10px}
+  .cap{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.14em}
+  .cap .blk{color:#f0962d}
+  .cap .anch{color:#f0962d;font-weight:800}
+  .sub{font:500 10px ui-monospace,Menlo,monospace;color:rgba(243,238,227,.5);margin-top:4px;letter-spacing:.05em}
+</style></head><body>
+<h1>Rare Homage Pins · Series 0</h1>
+<p class="lede">145 PINS ACROSS 10,080 BLOCKS · 1.44% · 12 ARCHETYPES · DETERMINISTIC SHUFFLE</p>
+<div id="stage"></div>
+<script src="../unatom-render.js"></script>
+<script>
+  const stage = document.getElementById('stage');
+  const order = ['SATOSHI','HAL','HERO','FROG','BLOCK_RUNNER','MEMEMOSES','PUNK','DOH','PIPES','DOGE','PIZZA','WOJAK'];
+  for (const key of order) {
+    const cfg = UNATOM.PINS[key];
+    const locs = UNATOM.pinLocations(key);
+    const pct = (cfg.target / 10080 * 100).toFixed(2);
+    // pick 3 samples: anchor (if any) + spread
+    const picks = cfg.anchor ? [cfg.anchor] : [];
+    const rest = locs.filter(h => h !== cfg.anchor);
+    // sample evenly spaced
+    const step = Math.max(1, Math.floor(rest.length / (3 - picks.length)));
+    for (let i = 0; picks.length < 3 && i < rest.length; i += step) picks.push(rest[i]);
+    while (picks.length < 3 && rest.length > 0) picks.push(rest[rest.length - 1]);
+
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML =
+      '<div class="rowhead"><span class="name">' + cfg.label + '</span>' +
+      '<span class="rare">' + cfg.target + ' OF 10,080 · ' + pct + '%' +
+      (cfg.anchor ? ' · ANCHOR #' + cfg.anchor.toLocaleString() : ' · NO ANCHOR') + '</span></div>' +
+      '<div class="grid"></div>';
+    const g = row.querySelector('.grid');
+    for (const b of picks) {
+      const t = UNATOM.fromBlock(b);
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      const anchor = (b === cfg.anchor);
+      cell.innerHTML = UNATOM.svg(t) +
+        '<div class="cap"><span class="' + (anchor ? 'anch' : 'blk') + '">#' + b.toLocaleString() +
+        (anchor ? ' \u2605 ANCHOR' : '') + '</span>' +
+        '<span class="blk">' + t.sym + '</span></div>' +
+        '<div class="sub">' + t.scheme + ' \u00b7 ' + t.mood + ' \u00b7 ' + t.thirdEye +
+        (t.glasses !== 'none' ? ' \u00b7 ' + t.glasses : '') +
+        (t.blazedBluntie ? ' \u00b7 BLAZED' : '') + '</div>';
+      g.appendChild(cell);
+    }
+    stage.appendChild(row);
+  }
+</script>
+</body></html>

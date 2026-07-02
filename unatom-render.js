@@ -260,6 +260,93 @@ function closedEye(cx, cy, r, sch, zen = false) {
 }
 
 // -----------------------------------------------------------------------------
+// Blazed Bluntie — hazy-eyed overlay. Composes on top of any mood: bloodshot
+// tint + red veins + heavier upper lid inside the sclera, plus two curls of
+// smoke drifting up-and-outward from each eye. If eyes are closed/blackout
+// the internal layer is skipped and only smoke sells the vibe.
+// -----------------------------------------------------------------------------
+function blazedOverlay(sch, mood) {
+  const cfg = MOODS[mood] || MOODS.calm;
+  const eyesClosed = (cfg.lid >= 0.95);
+  const blackOut = !!cfg.blackOut;
+  const r  = LOWER_EYE_R;
+  const cy = LOWER_EYE_CY;
+  const cxL = CX - LOWER_EYE_DX;
+  const cxR = CX + LOWER_EYE_DX;
+
+  // colour on any shell — pink stays readable on light + dark tiles
+  const tintCol = '#f28fa1';
+  const veinCol = '#c73a3a';
+  const smokeCol = '#f4eedf';
+
+  function bloodshot(cx, idx) {
+    const winkClosed = (mood === 'wink' && idx === 1);
+    if (eyesClosed || blackOut || winkClosed) return '';
+    // pink haze inside sclera
+    const tint = `<circle cx="${cx}" cy="${cy}" r="${r - 8}"
+      fill="${tintCol}" opacity="0.30"/>`;
+    // a handful of curved red veins radiating from mid-eye to the rim,
+    // dodging the pupil zone (r < 0.35r)
+    const angles = [-2.35, -1.7, -0.55, 0.35, 1.05, 1.9];
+    let veins = '';
+    for (const a of angles) {
+      const rIn = r * 0.36;
+      const rOut = r * 0.9;
+      const x1 = cx + Math.cos(a) * rIn;
+      const y1 = cy + Math.sin(a) * rIn;
+      const mx = cx + Math.cos(a + 0.18) * (r * 0.65);
+      const my = cy + Math.sin(a + 0.18) * (r * 0.65);
+      const x2 = cx + Math.cos(a) * rOut;
+      const y2 = cy + Math.sin(a) * rOut;
+      veins += `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)}
+        Q ${mx.toFixed(1)} ${my.toFixed(1)}
+        ${x2.toFixed(1)} ${y2.toFixed(1)}"
+        fill="none" stroke="${veinCol}" stroke-width="2.4"
+        stroke-linecap="round" opacity="0.6"/>`;
+    }
+    // heavy top lid — half-crescent inside eye, sits over any existing lid
+    const lidH = r * 0.34;
+    const heavyLid = `<path d="M ${cx-r+7} ${cy}
+      A ${r-7} ${r-7} 0 0 1 ${cx+r-7} ${cy}
+      L ${cx+r-7} ${cy - r + lidH} L ${cx-r+7} ${cy - r + lidH} Z"
+      fill="${sch.tile}" opacity="0.7"/>`;
+    // lash-line under the heavy lid so it reads as an eyelid, not a smudge
+    const lidRim = `<path d="M ${cx - r + 10} ${cy - r + lidH + 2}
+      Q ${cx} ${cy - r + lidH + 10} ${cx + r - 10} ${cy - r + lidH + 2}"
+      fill="none" stroke="${BASE.pupil}" stroke-width="4.5"
+      stroke-linecap="round" opacity="0.6"/>`;
+    return tint + veins + heavyLid + lidRim;
+  }
+
+  function smoke(cx, dir) {
+    // origin: top-outer edge of the eye, then drift up and out
+    const ox = cx + r * 0.72 * dir;
+    const oy = cy - r * 0.55;
+    // three soft puffs rising, growing then fading
+    const puffs = [
+      { rx: 12, ry:  9, dx:  4 * dir, dy: -32, o: 0.35 },
+      { rx: 17, ry: 12, dx: 14 * dir, dy: -70, o: 0.26 },
+      { rx: 11, ry:  8, dx: 26 * dir, dy: -108, o: 0.16 },
+    ];
+    let out = '';
+    for (const p of puffs) {
+      out += `<ellipse cx="${(ox+p.dx).toFixed(1)}" cy="${(oy+p.dy).toFixed(1)}"
+        rx="${p.rx}" ry="${p.ry}" fill="${smokeCol}" opacity="${p.o}"/>`;
+    }
+    // curly wisp trailing between puffs
+    out += `<path d="M ${ox.toFixed(1)} ${oy.toFixed(1)}
+      Q ${(ox + 10*dir).toFixed(1)} ${(oy - 30).toFixed(1)}
+        ${(ox + 4*dir).toFixed(1)} ${(oy - 55).toFixed(1)}
+      T ${(ox + 20*dir).toFixed(1)} ${(oy - 100).toFixed(1)}"
+      fill="none" stroke="${smokeCol}" stroke-width="2"
+      opacity="0.4" stroke-linecap="round"/>`;
+    return out;
+  }
+
+  return bloodshot(cxL, 0) + bloodshot(cxR, 1) + smoke(cxL, -1) + smoke(cxR, +1);
+}
+
+// -----------------------------------------------------------------------------
 // Brows — three strokes above each eye. Single highest-impact personality dial.
 // Rendered between lower eyes and third eye, drawn UNDER glasses for stacking.
 // -----------------------------------------------------------------------------
@@ -1110,13 +1197,372 @@ function rngForBlock(height) {
   return sfc32(a,b,c,d);
 }
 
+// -----------------------------------------------------------------------------
+// Rare homage pins — super-rare traits distributed across the series.
+//
+// Each pin has:
+//   • label       — display name shown in stats / greeting / receipt
+//   • anchor      — optional single block that ALWAYS gets this pin (numerology)
+//   • target      — total copies across the whole 10,080 series (anchor incl.)
+//   • traits      — fully-specified UNATOM trait profile (no PRNG)
+//   • [renderer]  — optional overlay for visual signatures (see renderPin below)
+//
+// Distribution is deterministic: a fixed-seed shuffle allocates non-anchor
+// blocks to each pin quota. Iteration order is rarest → most common so the
+// scarcest pins get first pick of the shuffled pool.
+//
+// Homages are abstracted: never a logo, never a face — always translated into
+// UNATOM's own vocabulary (triforce, hood, cap, donut, ears, tear, slice).
+// -----------------------------------------------------------------------------
+const PINS = {
+  SATOSHI: { label:'SATOSHI', anchor:2009, target:3,
+    traits:{ sym:'Ha', scheme:'obsidian', border:'sealed', thirdEye:'sealed',
+      mood:'ancient', mouthKind:'noMouth', drip:'noDrip',
+      glasses:'none', brows:'none', nature:'void', swagKind:'orbitDot', eco:'btc',
+      blazedBluntie:false } },
+  HAL: { label:'HAL', anchor:1, target:3,
+    traits:{ sym:'Wt', scheme:'frost', border:'frostEdge', thirdEye:'halo',
+      mood:'meditate', mouthKind:'signalSmile', drip:'crystalDrip',
+      glasses:'none', brows:'none', nature:'ice', swagKind:'haloNode', eco:'orbit',
+      blazedBluntie:false } },
+  HERO: { label:'THE HERO', anchor:1986, target:7,
+    traits:{ sym:'Dy', scheme:'jade', border:'doubleLine', thirdEye:'open',
+      mood:'lockedIn', mouthKind:'signalSmile', drip:'crystalDrip',
+      glasses:'none', brows:'raised', nature:'earth', swagKind:'crownDot', eco:'diamond',
+      blazedBluntie:false } },
+  FROG: { label:'FROG ONE', anchor:4269, target:7,
+    traits:{ sym:'Me', scheme:'jade', border:'clean', thirdEye:'open',
+      mood:'rookie', mouthKind:'bitTongue', drip:'seedDrip',
+      glasses:'none', brows:'flat', nature:'earth', swagKind:'none', eco:'orbit',
+      blazedBluntie:true } },
+  BLOCK_RUNNER: { label:'BLOCK RUNNER', anchor:null, target:5,
+    traits:{ sym:'Ht', scheme:'chalk', border:'clean', thirdEye:'open',
+      mood:'soft', mouthKind:'nullLine', drip:'seedDrip',
+      glasses:'regular', brows:'flat', nature:'none', swagKind:'ordinalTag', eco:'orbit',
+      blazedBluntie:false } },
+  MEMEMOSES: { label:'MEMEMOSES', anchor:null, target:5,
+    traits:{ sym:'Hs', scheme:'graphite', border:'clean', thirdEye:'crosshair',
+      mood:'sideEye', mouthKind:'smirk', drip:'cyanDrip',
+      glasses:'memeMose', brows:'single', nature:'none', swagKind:'diamondStud', eco:'orbit',
+      blazedBluntie:false } },
+  PUNK: { label:'PUNK 8-BIT', anchor:2017, target:12,
+    traits:{ sym:'Ce', scheme:'chalk', border:'notched', thirdEye:'pixel',
+      mood:'sideEye', mouthKind:'compressionTeeth', drip:'noDrip',
+      glasses:'shades', brows:'flat', nature:'none', swagKind:'pixelScar', eco:'threeDot',
+      blazedBluntie:false } },
+  DOH: { label:'DOH', anchor:1989, target:15,
+    traits:{ sym:'Bf', scheme:'chalk', border:'clean', thirdEye:'open',
+      mood:'wonder', mouthKind:'gaspPort', drip:'noDrip',
+      glasses:'none', brows:'raised', nature:'none', swagKind:'none', eco:'orbit',
+      blazedBluntie:false } },
+  PIPES: { label:'PIPES', anchor:1981, target:15,
+    traits:{ sym:'Vn', scheme:'chalk', border:'clean', thirdEye:'open',
+      mood:'curious', mouthKind:'sealedSlit', drip:'noDrip',
+      glasses:'none', brows:'flat', nature:'none', swagKind:'none', eco:'orbit',
+      blazedBluntie:false } },
+  DOGE: { label:'DOGE', anchor:2013, target:18,
+    traits:{ sym:'Ne', scheme:'bronze', border:'clean', thirdEye:'open',
+      mood:'mismatched', mouthKind:'bitTongue', drip:'noDrip',
+      glasses:'none', brows:'raised', nature:'none', swagKind:'none', eco:'orbit',
+      blazedBluntie:false } },
+  PIZZA: { label:'PIZZA DAY', anchor:10050, target:25,
+    traits:{ sym:'Va', scheme:'ember', border:'clean', thirdEye:'aperture',
+      mood:'wonder', mouthKind:'bitTongue', drip:'seedDrip',
+      glasses:'none', brows:'raised', nature:'fire', swagKind:'ordinalTag', eco:'orbit',
+      blazedBluntie:false } },
+  WOJAK: { label:'WOJAK', anchor:2010, target:30,
+    traits:{ sym:'Ie', scheme:'bone', border:'clean', thirdEye:'closedEye',
+      mood:'shy', mouthKind:'sleepSmile', drip:'seedDrip',
+      glasses:'none', brows:'furrowed', nature:'none', swagKind:'none', eco:'orbit',
+      blazedBluntie:false } },
+};
+
+// Deterministic block-to-pin assignment. Built once at module load.
+const PIN_ASSIGNMENTS = (function buildPinAssignments() {
+  const map = new Map();
+  // 1) Claim anchor blocks first — they always win their pin
+  for (const key of Object.keys(PINS)) {
+    const anchor = PINS[key].anchor;
+    if (anchor && anchor !== BLAST_OFF) map.set(anchor, key);
+  }
+  // 2) Build eligible pool = all series blocks except anchors + BLAST_OFF
+  const pool = [];
+  for (let h = 1; h <= SERIES_SIZE; h++) {
+    if (h === BLAST_OFF) continue;
+    if (map.has(h)) continue;
+    pool.push(h);
+  }
+  // 3) Deterministic Fisher-Yates shuffle using a fixed seed
+  const [a,b,c,d] = cyrb128('UNATOM/PINS/v1/shuffle');
+  const rng = sfc32(a,b,c,d);
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+  }
+  // 4) Slice quotas from the front of the shuffled pool, rarest-first
+  let cursor = 0;
+  for (const key of Object.keys(PINS)) {
+    const cfg = PINS[key];
+    const need = cfg.anchor ? Math.max(0, cfg.target - 1) : cfg.target;
+    for (let i = 0; i < need && cursor < pool.length; i++, cursor++) {
+      map.set(pool[cursor], key);
+    }
+  }
+  return map;
+})();
+
+function pinFor(height) {
+  const key = PIN_ASSIGNMENTS.get(Number(height));
+  if (!key) return null;
+  const cfg = PINS[key];
+  return { key, label: cfg.label, traits: cfg.traits };
+}
+
+// Enumerate every block assigned a given pin (sorted ascending).
+function pinLocations(key) {
+  const out = [];
+  for (const [h, k] of PIN_ASSIGNMENTS) if (k === key) out.push(h);
+  return out.sort((a,b) => a - b);
+}
+
+function renderPin(kind, sch) {
+  switch (kind) {
+    case 'HAL':     return pinHal(sch);
+    case 'HERO':    return pinHero(sch);
+    case 'SATOSHI': return pinSatoshi(sch);
+    case 'DOH':     return pinDoh(sch);
+    case 'PIPES':   return pinPipes(sch);
+    case 'PUNK':    return pinPunk(sch);
+    case 'FROG':    return pinFrog(sch);
+    case 'DOGE':    return pinDoge(sch);
+    case 'WOJAK':   return pinWojak(sch);
+    case 'PIZZA':   return pinPizza(sch);
+    // BLOCK_RUNNER and MEMEMOSES ride purely on their trait profiles.
+    default:        return '';
+  }
+}
+
+function pinHal(sch) {
+  // frozen tear under the left eye + tiny "01" tag
+  const cx = CX - LOWER_EYE_DX;
+  const cy = LOWER_EYE_CY + LOWER_EYE_R - 6;
+  const tear = `<path d="M ${cx} ${cy}
+    Q ${cx-14} ${cy+20} ${cx-6} ${cy+42}
+    Q ${cx} ${cy+58} ${cx+6} ${cy+42}
+    Q ${cx+14} ${cy+20} ${cx} ${cy} Z"
+    fill="#a8e6f0" stroke="${BASE.pupil}" stroke-width="3.5"/>`;
+  const spark = `<g stroke="${sch.a}" stroke-width="2.5" stroke-linecap="round">
+    <line x1="${cx+18}" y1="${cy+32}" x2="${cx+28}" y2="${cy+32}"/>
+    <line x1="${cx+23}" y1="${cy+27}" x2="${cx+23}" y2="${cy+37}"/></g>`;
+  const tag = `<text x="${TILE.x + TILE.w - 30}" y="${TILE.y + TILE.h - 30}"
+    text-anchor="end" font-family="ui-monospace,Menlo,monospace"
+    font-size="22" font-weight="700" fill="${sch.sym}" opacity="0.7"
+    letter-spacing="0.14em">01</text>`;
+  return tear + spark + tag;
+}
+
+function pinHero(sch) {
+  // triforce replaces the third-eye
+  const cx = CX, cy = THIRD_EYE_CY;
+  const s = 62, h = s * 0.866;
+  const clear = `<circle cx="${cx}" cy="${cy}" r="${THIRD_EYE_R + 8}" fill="${sch.tile}"/>`;
+  const tri = (px, py) => `<path d="M ${px} ${(py - h*2/3).toFixed(1)}
+    L ${(px - s/2).toFixed(1)} ${(py + h/3).toFixed(1)}
+    L ${(px + s/2).toFixed(1)} ${(py + h/3).toFixed(1)} Z"
+    fill="#f7c948" stroke="${BASE.pupil}" stroke-width="4" stroke-linejoin="round"/>`;
+  return clear +
+    tri(cx, cy - h/2 - 2) +
+    tri(cx - s/2 - 1, cy + h/2 + 2) +
+    tri(cx + s/2 + 1, cy + h/2 + 2);
+}
+
+function pinSatoshi(sch) {
+  // dark hood cowling over the top of the tile
+  const cx = CX;
+  const y1 = TILE.y - 12;
+  const y2 = TILE.y + 240;
+  const hood = `<path d="M ${cx-192} ${y1+34}
+    Q ${cx} ${y1 - 88} ${cx+192} ${y1+34}
+    L ${cx+178} ${y2}
+    Q ${cx+120} ${y2+30} ${cx} ${y2+38}
+    Q ${cx-120} ${y2+30} ${cx-178} ${y2} Z"
+    fill="#0a0a0c" stroke="${sch.a}" stroke-width="2.5" opacity="0.94"/>`;
+  const rim = `<path d="M ${cx-174} ${y2-10}
+    Q ${cx} ${y2+10} ${cx+174} ${y2-10}"
+    fill="none" stroke="${sch.a}" stroke-width="2" opacity="0.55"/>`;
+  // faint orange glow behind the hood — satoshi's aura
+  const glow = `<circle cx="${cx}" cy="${THIRD_EYE_CY + 30}" r="140"
+    fill="${BASE.orange}" opacity="0.08"/>`;
+  return glow + hood + rim;
+}
+
+function pinDoh(sch) {
+  // pink donut ring around the third-eye, sprinkles, and a single hair-curl
+  const cx = CX, cy = THIRD_EYE_CY;
+  const rr = THIRD_EYE_R + 20;
+  const donut = `<circle cx="${cx}" cy="${cy}" r="${rr}"
+    fill="none" stroke="#f17d8e" stroke-width="12" opacity="0.92"/>`;
+  const sprinkleColors = ['#f7c948','#5dd0e3','#f0962d','#7dcf5b','#f4eedf','#c43a1f'];
+  let sprinkles = '';
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 + 0.25;
+    const x = cx + Math.cos(a) * rr;
+    const y = cy + Math.sin(a) * rr;
+    const c = sprinkleColors[i % sprinkleColors.length];
+    const rot = ((a * 180 / Math.PI) + 30).toFixed(0);
+    sprinkles += `<rect x="${(x-2).toFixed(1)}" y="${(y-5).toFixed(1)}"
+      width="4" height="10" fill="${c}" stroke="${BASE.pupil}" stroke-width="1"
+      transform="rotate(${rot} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+  }
+  const hair = `<path d="M ${cx-34} ${TILE.y+8}
+    C ${cx-44} ${TILE.y-38} ${cx+14} ${TILE.y-46} ${cx+34} ${TILE.y-10}"
+    fill="none" stroke="${BASE.pupil}" stroke-width="6" stroke-linecap="round"/>`;
+  return donut + sprinkles + hair;
+}
+
+function pinPipes(sch) {
+  // red plumber's cap above the tile + mustache above the mouth
+  const cx = CX;
+  const y0 = TILE.y - 2;
+  const cap = `<path d="M ${cx-118} ${y0}
+    Q ${cx-96} ${y0-96} ${cx-8} ${y0-102}
+    L ${cx+8} ${y0-102}
+    Q ${cx+96} ${y0-96} ${cx+118} ${y0} Z"
+    fill="#c43a1f" stroke="${BASE.pupil}" stroke-width="4"/>`;
+  const brim = `<path d="M ${cx-140} ${y0}
+    Q ${cx} ${y0-16} ${cx+140} ${y0}
+    L ${cx+118} ${y0+6}
+    Q ${cx} ${y0-2} ${cx-118} ${y0+6} Z"
+    fill="#a02e18" stroke="${BASE.pupil}" stroke-width="4"/>`;
+  const badge = `<circle cx="${cx}" cy="${y0-72}" r="24"
+    fill="${BASE.white}" stroke="${BASE.pupil}" stroke-width="3"/>
+    <text x="${cx}" y="${y0-62}" text-anchor="middle"
+      font-family="Impact,Arial Black,sans-serif" font-size="30" font-weight="900"
+      fill="#c43a1f">M</text>`;
+  const my = MOUTH_CY - 20;
+  const mustache = `<path d="M ${cx-60} ${my}
+    Q ${cx-42} ${my-6} ${cx-14} ${my+6}
+    Q ${cx} ${my+2} ${cx+14} ${my+6}
+    Q ${cx+42} ${my-6} ${cx+60} ${my}
+    Q ${cx+44} ${my+14} ${cx+18} ${my+12}
+    Q ${cx} ${my+10} ${cx-18} ${my+12}
+    Q ${cx-44} ${my+14} ${cx-60} ${my} Z"
+    fill="${BASE.pupil}"/>`;
+  return cap + brim + badge + mustache;
+}
+
+function pinPunk(sch) {
+  // 8-bit smoking pipe in the bottom-right corner of the tile
+  const x0 = TILE.x + TILE.w - 210;
+  const y0 = TILE.y + TILE.h - 130;
+  const px = (x, y, w, h, fill) =>
+    `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"/>`;
+  const wood = '#5a3418';
+  const bowl = '#7a3a1e';
+  // stem (angled left-down)
+  const stem = [
+    px(x0-56, y0+18, 14, 8, wood),
+    px(x0-42, y0+14, 14, 8, wood),
+    px(x0-28, y0+10, 14, 8, wood),
+    px(x0-14, y0+6,  14, 8, wood),
+    px(x0,    y0+2,  16, 8, wood),
+  ].join('');
+  // bowl
+  const bowlG = [
+    px(x0+16, y0-8,  14, 22, bowl),
+    px(x0+30, y0-18, 14, 32, bowl),
+    px(x0+44, y0-8,  14, 22, bowl),
+  ].join('');
+  const glow = `<rect x="${x0+30}" y="${y0-22}" width="14" height="6" fill="${BASE.orange}"/>`;
+  // pixel smoke rising off the bowl
+  const smokeCol = '#f4eedf';
+  const smoke = [
+    `<rect x="${x0+34}" y="${y0-40}" width="14" height="14" fill="${smokeCol}" opacity="0.5"/>`,
+    `<rect x="${x0+50}" y="${y0-58}" width="16" height="16" fill="${smokeCol}" opacity="0.4"/>`,
+    `<rect x="${x0+70}" y="${y0-78}" width="18" height="18" fill="${smokeCol}" opacity="0.28"/>`,
+    `<rect x="${x0+90}" y="${y0-100}" width="14" height="14" fill="${smokeCol}" opacity="0.18"/>`,
+  ].join('');
+  return stem + bowlG + glow + smoke;
+}
+
+function pinFrog(sch) {
+  // two green frog-eye domes replace the third-eye zone
+  const cx = CX, cy = THIRD_EYE_CY;
+  const clear = `<rect x="${cx - 110}" y="${cy - 62}" width="220" height="124"
+    fill="${sch.tile}"/>`;
+  const bump = (bx) => `
+    <circle cx="${bx}" cy="${cy}" r="44"
+      fill="#a3d977" stroke="${BASE.pupil}" stroke-width="5"/>
+    <circle cx="${bx}" cy="${cy}" r="24"
+      fill="${BASE.white}" stroke="${BASE.pupil}" stroke-width="3"/>
+    <circle cx="${bx-2}" cy="${cy+3}" r="11" fill="${BASE.pupil}"/>
+    <circle cx="${bx-6}" cy="${cy-2}" r="3" fill="${BASE.white}"/>`;
+  return clear + bump(cx - 48) + bump(cx + 48);
+}
+
+function pinDoge(sch) {
+  // two triangular shibe ears above the tile + "wow" tag
+  const cx = CX;
+  const y0 = TILE.y - 2;
+  const ear = (dx) => `<path d="M ${cx + dx - 46} ${y0}
+    L ${cx + dx} ${y0 - 84}
+    L ${cx + dx + 46} ${y0} Z"
+    fill="#c68b3c" stroke="${BASE.pupil}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M ${cx + dx - 22} ${y0 - 12}
+    L ${cx + dx} ${y0 - 56}
+    L ${cx + dx + 22} ${y0 - 12} Z"
+    fill="#f2c78d"/>`;
+  const wow = `<text x="${TILE.x + 46}" y="${TILE.y + TILE.h - 34}"
+    font-family="Comic Sans MS,Chalkduster,cursive" font-size="26"
+    font-weight="700" fill="${sch.a}" opacity="0.85"
+    transform="rotate(-6 ${TILE.x + 46} ${TILE.y + TILE.h - 34})">wow</text>`;
+  return ear(-92) + ear(92) + wow;
+}
+
+function pinWojak(sch) {
+  // single sad blue tear under the left eye
+  const cx = CX - LOWER_EYE_DX + 12;
+  const cy = LOWER_EYE_CY + LOWER_EYE_R - 6;
+  const tear = `<path d="M ${cx} ${cy}
+    Q ${cx-10} ${cy+22} ${cx-3} ${cy+44}
+    Q ${cx} ${cy+56} ${cx+3} ${cy+44}
+    Q ${cx+10} ${cy+22} ${cx} ${cy} Z"
+    fill="#6ec5ff" stroke="${BASE.pupil}" stroke-width="3"/>
+    <ellipse cx="${cx-2}" cy="${cy+18}" rx="2.5" ry="5"
+      fill="${BASE.white}" opacity="0.7"/>`;
+  return tear;
+}
+
+function pinPizza(sch) {
+  // pizza slice replaces the third-eye
+  const cx = CX, cy = THIRD_EYE_CY;
+  const clear = `<circle cx="${cx}" cy="${cy}" r="${THIRD_EYE_R + 8}" fill="${sch.tile}"/>`;
+  const slice = `<path d="M ${cx} ${cy - 46}
+    L ${cx - 46} ${cy + 30}
+    L ${cx + 46} ${cy + 30} Z"
+    fill="#f7c948" stroke="${BASE.pupil}" stroke-width="4" stroke-linejoin="round"/>`;
+  const crust = `<path d="M ${cx - 48} ${cy + 30}
+    Q ${cx} ${cy + 50} ${cx + 48} ${cy + 30}"
+    fill="#8a5a2e" stroke="${BASE.pupil}" stroke-width="4" stroke-linejoin="round"/>`;
+  const pep = `
+    <circle cx="${cx - 10}" cy="${cy - 6}" r="6" fill="#c43a1f" stroke="${BASE.pupil}" stroke-width="1.5"/>
+    <circle cx="${cx + 14}" cy="${cy + 4}" r="6" fill="#c43a1f" stroke="${BASE.pupil}" stroke-width="1.5"/>
+    <circle cx="${cx - 6}" cy="${cy + 18}" r="5" fill="#c43a1f" stroke="${BASE.pupil}" stroke-width="1.5"/>`;
+  return clear + slice + crust + pep;
+}
+
 function unatomFromBlock(height) {
   // ceremonial pin — the BLAST-OFF is fixed
   if (Number(height) === BLAST_OFF) {
     return { sym:'G', blk:height, scheme:'obsidian', border:'doubleLine',
       thirdEye:'genesis', mood:'ancient', mouthKind:'noMouth',
       drip:'crystalDrip', glasses:'none', nature:'aether',
-      swagKind:'haloNode', eco:'diamond' };
+      swagKind:'haloNode', eco:'diamond', blazedBluntie:false };
+  }
+  // Rare 1-of-1 homage pin at this height, if any
+  const pin = pinFor(height);
+  if (pin) {
+    return { ...pin.traits, blk: height, pin: pin.key, pinLabel: pin.label };
   }
   const rng = rngForBlock(height);
   const pick = (arr) => arr[Math.floor(rng() * arr.length)];
@@ -1152,8 +1598,13 @@ function unatomFromBlock(height) {
     'sideRivet','dmtGem','orbitDot','voidPatch','minerMark','littleX','microChain']);
   const eco = pick(['orbit','orbit','diamond','threeDot','btc']);
 
+  // Blazed Bluntie — hazy eye trait. Guaranteed on any block that contains "420",
+  // otherwise a rare (~3%) roll. Roll is APPENDED so existing per-block traits stay stable.
+  const blazedBluntie = String(height).includes('420') || rng() < 0.03;
+
   return { sym, blk: height, scheme, border, thirdEye: tEye, mood,
-    mouthKind, drip, glasses: glassesKind, brows: browKind, nature, swagKind, eco };
+    mouthKind, drip, glasses: glassesKind, brows: browKind, nature, swagKind, eco,
+    blazedBluntie };
 }
 
 // -----------------------------------------------------------------------------
@@ -1167,6 +1618,8 @@ function unatomSVG(opts = {}) {
     border      = 'clean',
     thirdEye:   thirdEyeKind = 'open',
     mood        = 'calm',
+    blazedBluntie = false,
+    pin         = null,
     mouthKind   = 'signalSmile',
     drip        = 'seedDrip',
     swagKind    = 'none',
@@ -1194,12 +1647,14 @@ function unatomSVG(opts = {}) {
     ${showBlock ? blockNumber(blk, sch) : ''}
     ${thirdEye(CX, THIRD_EYE_CY, THIRD_EYE_R, sch, thirdEyeKind)}
     ${lowerEyes(sch, mood)}
+    ${blazedBluntie ? blazedOverlay(sch, mood) : ''}
     ${brows(sch, browsKind)}
     ${glasses(sch, glassesKind)}
     ${mouth(CX, MOUTH_CY, 130, mouthKind, sch)}
     ${showSymbol ? chestSymbol(sym, sch) : ''}
     ${natureMark(sch, natureKind)}
     ${bodySwag}
+    ${pin ? renderPin(pin, sch) : ''}
   </svg>`;
 }
 
@@ -1211,6 +1666,7 @@ root.UNATOM = {
   SYMBOL_BASE_Y, SYMBOL_SIZE, LOWER_EYE_R, LOWER_EYE_DX, THIRD_EYE_R,
   MOODS, BROWS, THIRD_EYES, MOUTHS, DRIPS, SWAGS, GLASSES, NATURES,
   WHISPERS,
+  PINS, pinFor, pinLocations,
   cyrb128, sfc32, rngForBlock,
   fromBlock: unatomFromBlock,
   svg: unatomSVG,
