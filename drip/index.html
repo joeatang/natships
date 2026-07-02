@@ -417,10 +417,11 @@ const $ = id => document.getElementById(id);
 // ============================================================================
 
 async function init() {
-  // URL param: allow lab to link to /drip/?block=N
+  // Direct access is gated — the drip is the reward for playing NAT READY.
+  // A block MUST come from the receipt state at unatom.fun.
   const params = new URLSearchParams(location.search);
   const bp = parseInt(params.get('block'), 10);
-  S.block = (bp >= 1 && bp <= 10080) ? bp : rollBlock();
+  const hasBlock = (bp >= 1 && bp <= 10080);
 
   // Parallel network fetches — both optional
   const [btcRes, dripRes] = await Promise.allSettled([
@@ -430,6 +431,14 @@ async function init() {
   if (btcRes.status === 'fulfilled') paintBtcChip(btcRes.value);
   if (dripRes.status === 'fulfilled') paintDripChip(dripRes.value);
 
+  // No block → gate. Send them to play first.
+  if (!hasBlock) {
+    setStep('gate');
+    $('boot').remove();
+    return;
+  }
+
+  S.block      = bp;
   S.unatom     = UNATOM.fromBlock(S.block);
   S.hasGem     = S.unatom.swagKind === 'dmtGem';
   S.dripAmount = S.hasGem ? GEM_DRIP : BASE_DRIP;
@@ -521,6 +530,7 @@ function setStep(step) {
     done:    paintDone,
     error:   paintError,
     ended:   paintEnded,
+    gate:    paintGate,
   };
   (painters[step] || paintRoll)();
 }
@@ -864,6 +874,27 @@ function paintError() {
     S.tweetUrl = ''; S.wallet = ''; S.natTxHash = '';
     setStep('roll');
   };
+}
+
+// ============================================================================
+// GATE — direct visitors go play NAT READY first
+// ============================================================================
+
+function paintGate() {
+  // Hide portrait — there's no element until they earn one
+  const pw = $('portraitWrap');
+  if (pw) pw.style.display = 'none';
+  const ident = $('ident'); if (ident) ident.style.display = 'none';
+  const whisper = $('whisper'); if (whisper) whisper.style.display = 'none';
+
+  $('action').innerHTML =
+    '<div class="done-wrap">' +
+      '<div class="step-lbl" style="margin-bottom:16px;color:var(--orange)">THE DRIP</div>' +
+      '<div style="font:700 26px/1.35 Georgia,serif;color:var(--ink);text-align:center;max-width:340px">every unatom drips.</div>' +
+      '<p class="done-note" style="max-width:340px;line-height:1.6">complete a unatom at <b style="color:var(--ink)">unatom.fun</b> and the receipt reveals your drop. amounts scale with rarity. free while <b style="color:var(--orange)">$TAKEDMT</b> is bonding.</p>' +
+    '</div>' +
+    '<a class="pill hot" href="https://unatom.fun" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">PLAY NAT READY →</a>' +
+    '<a class="ghost" href="https://unatom.fun/catalog/" target="_blank" rel="noopener" style="text-decoration:none">or browse all 10,080 elements</a>';
 }
 
 // ============================================================================
