@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0a0a0c">
+<title>THE DRIP · UNATOMS</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23f0962d'/%3E%3Ccircle cx='12' cy='10' r='3' fill='%230a0a0c'/%3E%3Ccircle cx='12' cy='10' r='1.2' fill='%23f0962d'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0a0a0c;
+    --ink:#f3eee3;
+    --bone:#f3eee3;
+    --orange:#f0962d;
+    --cyan:#5dd0e3;
+    --green:#7dcf5b;
+    --pink:#f17d8e;
+    --warm:#f9bc4f;
+    --muted:rgba(243,238,227,0.5);
+    --line:rgba(243,238,227,0.12);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);overscroll-behavior:none}
+  body{
+    font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;
+    min-height:100vh;min-height:100dvh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:max(8px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;
+  }
+
+  /* === CHAIN STRIP === */
+  .chain{display:flex;gap:8px;width:100%;max-width:480px;justify-content:space-between}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;
+    font:600 10.5px/1 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.14em;text-transform:uppercase;
+    padding:7px 11px;
+    background:rgba(243,238,227,.06);border:1px solid var(--line);
+    border-radius:999px;color:var(--ink);
+  }
+  .chip .lbl{opacity:.55;font-weight:500}
+  .chip .dot{width:6px;height:6px;border-radius:50%;background:#666;display:inline-block}
+  .chip[data-live="true"] .dot{background:var(--green);box-shadow:0 0 8px var(--green);animation:livepulse 1.6s ease-in-out infinite}
+  @keyframes livepulse{50%{opacity:.45}}
+  .chip.drip-active{border-color:rgba(240,150,45,.35);color:var(--orange)}
+
+  /* === STAGE === */
+  .stage{
+    width:100%;max-width:480px;
+    display:flex;flex-direction:column;align-items:center;
+    flex:1;justify-content:flex-start;
+  }
+
+  /* === PORTRAIT === */
+  .portrait-wrap{
+    position:relative;
+    width:min(72vw,320px);aspect-ratio:1;
+    margin:14px 0 4px;
+    display:flex;align-items:center;justify-content:center;
+    will-change:transform,filter;
+    transition:width .4s ease;
+  }
+  .portrait-wrap svg{width:100%;height:100%;display:block;overflow:visible}
+  .portrait-wrap.idle{animation:idleSway 6s ease-in-out infinite}
+  .portrait-wrap.breathe{animation:breathe 2.6s ease-in-out infinite}
+  .portrait-wrap.burst{animation:openburst .9s cubic-bezier(.2,.8,.3,1)}
+  .portrait-wrap.sm{width:min(36vw,160px)}
+  @keyframes idleSway{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(.3deg)}}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.015)}}
+  @keyframes openburst{
+    0%{transform:scale(1);filter:drop-shadow(0 0 0 transparent)}
+    35%{transform:scale(1.08);filter:drop-shadow(0 0 40px rgba(240,150,45,.9))}
+    70%{transform:scale(1.02);filter:drop-shadow(0 0 20px rgba(240,150,45,.4))}
+    100%{transform:scale(1);filter:drop-shadow(0 0 0 transparent)}
+  }
+
+  .halo{
+    position:absolute;inset:0;border-radius:50%;pointer-events:none;
+    opacity:0;transition:opacity .4s ease;
+    background:radial-gradient(circle at 50% 38%,rgba(240,150,45,.32),transparent 55%);
+  }
+  .halo.gem{opacity:.5;background:radial-gradient(circle at 50% 38%,rgba(240,150,45,.5),transparent 58%);animation:gemGlow 2.4s ease-in-out infinite}
+  .halo.done{opacity:.7;background:radial-gradient(circle at 50% 38%,rgba(125,207,91,.55),transparent 58%)}
+  @keyframes gemGlow{50%{opacity:.3}}
+
+  /* === IDENT === */
+  .ident{
+    font:600 10.5px/1 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
+    margin:6px 0 10px;text-align:center;min-height:12px;
+  }
+
+  /* === ACTION === */
+  .action{
+    width:100%;max-width:460px;
+    display:flex;flex-direction:column;align-items:center;gap:12px;
+    margin-bottom:18px;
+  }
+
+  /* === STEP LABEL === */
+  .step-lbl{
+    font:600 10px/1 ui-monospace,monospace;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--muted);padding:2px 0;
+  }
+  .step-lbl em{font-style:normal;color:var(--orange)}
+
+  /* === DRIP AMOUNT DISPLAY === */
+  .drip-display{
+    width:100%;max-width:340px;
+    background:rgba(240,150,45,.07);
+    border:1px solid rgba(240,150,45,.22);
+    border-radius:16px;
+    padding:18px 24px;
+    text-align:center;
+  }
+  .drip-display .lbl{
+    font:600 10px/1 ui-monospace,monospace;letter-spacing:.22em;text-transform:uppercase;
+    color:rgba(240,150,45,.7);margin-bottom:10px;
+  }
+  .drip-display .num{
+    font:900 44px/1 ui-monospace,"SF Mono",Menlo,monospace;
+    color:var(--orange);letter-spacing:-.02em;
+  }
+  .drip-display .unit{
+    font:600 12px/1 ui-monospace,monospace;letter-spacing:.18em;text-transform:uppercase;
+    color:rgba(240,150,45,.65);margin-top:6px;
+  }
+  .drip-display.gem{
+    background:rgba(240,150,45,.12);border-color:rgba(240,150,45,.45);
+    box-shadow:0 0 28px rgba(240,150,45,.15);
+  }
+
+  /* === GEM BADGE === */
+  .gem-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    font:700 11px/1 ui-monospace,monospace;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--orange);
+    background:rgba(240,150,45,.1);border:1px solid rgba(240,150,45,.35);
+    border-radius:999px;padding:7px 14px;
+    animation:gemPulse 2s ease-in-out infinite;
+  }
+  @keyframes gemPulse{50%{box-shadow:0 0 16px rgba(240,150,45,.35)}}
+  .gem-badge .ico{font-size:14px}
+
+  /* === WHISPER === */
+  .whisper{
+    font:italic 16px/1.45 Georgia,"Times New Roman",serif;
+    text-align:center;margin:0 0 8px;padding:0 14px;
+    max-width:380px;color:var(--ink);opacity:.75;
+    min-height:44px;
+  }
+
+  /* === PILLS / GHOST === */
+  .pill{
+    font:700 17px/1 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.16em;text-transform:uppercase;
+    background:var(--bone);color:#0a0a0c;
+    border:none;border-radius:999px;
+    padding:18px 28px;cursor:pointer;
+    width:100%;max-width:340px;min-height:60px;
+    box-shadow:0 0 0 1px rgba(243,238,227,.5),0 6px 22px rgba(0,0,0,.45);
+    transition:transform .08s,box-shadow .15s,background .15s,color .15s;
+    -webkit-appearance:none;appearance:none;
+  }
+  .pill:active{transform:scale(.96)}
+  .pill[disabled]{opacity:.4;cursor:not-allowed;background:rgba(243,238,227,.18);color:var(--muted);box-shadow:none}
+  .pill.hot{background:var(--orange);color:#1a1207}
+  .pill.go{background:var(--green);color:#0b1707;animation:hover 2.2s ease-in-out infinite}
+  @keyframes hover{50%{transform:translateY(-3px);box-shadow:0 0 0 1px rgba(125,207,91,.5),0 12px 28px rgba(125,207,91,.3)}}
+  .ghost{
+    background:transparent;border:none;color:var(--muted);
+    font:500 12px/1 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.14em;text-transform:uppercase;padding:8px 16px;cursor:pointer;
+  }
+  .ghost:active{color:var(--ink)}
+
+  /* === SHUFFLE CHIP === */
+  .shuffle-chip{
+    display:inline-flex;align-items:center;gap:7px;
+    background:rgba(243,238,227,.06);color:var(--muted);
+    border:1px dashed var(--line);border-radius:999px;
+    padding:7px 14px;
+    font:600 10.5px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;
+    cursor:pointer;transition:opacity .15s,background .15s;
+  }
+  .shuffle-chip:active{opacity:.6;background:rgba(243,238,227,.12)}
+
+  /* === STEP INPUT === */
+  .step-input-wrap{width:100%;max-width:340px;display:flex;flex-direction:column;gap:6px}
+  .step-input-wrap label{
+    font:600 10px/1 ui-monospace,monospace;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--muted);padding-left:4px;
+  }
+  .step-input{
+    width:100%;padding:16px 18px;
+    background:rgba(243,238,227,.06);
+    border:1px solid var(--line);border-radius:14px;
+    color:var(--ink);font:500 15px/1.3 ui-monospace,SF Mono,Menlo,monospace;
+    outline:none;-webkit-appearance:none;appearance:none;
+    transition:border-color .2s,background .2s;
+    -webkit-user-select:text;user-select:text;
+  }
+  .step-input::placeholder{color:rgba(243,238,227,.28)}
+  .step-input:focus{border-color:rgba(240,150,45,.5);background:rgba(243,238,227,.09)}
+  .step-input.error{border-color:rgba(241,125,142,.6)}
+
+  /* === TWEET COPY BOX === */
+  .copy-block{
+    width:100%;max-width:340px;
+    background:rgba(243,238,227,.05);
+    border:1px solid var(--line);border-radius:14px;
+    padding:14px 16px;
+    font:400 13px/1.55 ui-monospace,SF Mono,Menlo,monospace;
+    color:var(--muted);
+    white-space:pre-wrap;word-break:break-word;
+    -webkit-user-select:text;user-select:text;
+  }
+  .copy-block strong{color:var(--ink);font-weight:600}
+
+  /* === TRADE BOOST SECTION === */
+  .boost-toggle{
+    display:inline-flex;align-items:center;gap:8px;
+    font:500 11px/1 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);cursor:pointer;padding:4px 0;
+    background:none;border:none;
+  }
+  .boost-toggle .arr{transition:transform .2s;display:inline-block;font-size:10px}
+  .boost-toggle.open .arr{transform:rotate(90deg)}
+  .boost-wrap{
+    width:100%;max-width:340px;
+    overflow:hidden;max-height:0;
+    transition:max-height .3s ease;
+  }
+  .boost-wrap.open{max-height:180px}
+
+  /* === SYNTH DOTS === */
+  .synth-wrap{
+    display:flex;flex-direction:column;align-items:center;gap:20px;
+    padding:16px 0;
+  }
+  .synth-dots{display:flex;gap:10px;justify-content:center}
+  .synth-dot{
+    width:11px;height:11px;border-radius:50%;
+    background:var(--orange);opacity:.2;
+    animation:synthPop 1.4s ease-in-out infinite;
+  }
+  .synth-dot:nth-child(2){animation-delay:.22s}
+  .synth-dot:nth-child(3){animation-delay:.44s}
+  @keyframes synthPop{40%{opacity:1;transform:scale(1.3)}70%{opacity:.5}}
+  .synth-label{
+    font:italic 17px/1.4 Georgia,serif;color:var(--muted);text-align:center;max-width:300px;
+  }
+
+  /* === DONE STATE === */
+  .done-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+  .done-amount{
+    font:900 60px/1 ui-monospace,"SF Mono",Menlo,monospace;
+    color:var(--orange);letter-spacing:-.02em;
+  }
+  .done-unit{
+    font:700 14px/1 ui-monospace,monospace;letter-spacing:.22em;text-transform:uppercase;
+    color:rgba(240,150,45,.7);margin-top:-6px;
+  }
+  .done-note{
+    font:italic 16px/1.5 Georgia,serif;color:var(--muted);
+    max-width:320px;margin-top:4px;
+  }
+  .done-serial{
+    font:600 11px/1 ui-monospace,monospace;letter-spacing:.18em;text-transform:uppercase;
+    color:rgba(243,238,227,.3);margin-top:8px;
+  }
+
+  /* === ERROR STATE === */
+  .error-msg{
+    font:italic 16px/1.5 Georgia,serif;
+    color:var(--pink);text-align:center;max-width:320px;
+  }
+
+  /* === POSTER OVERLAY === */
+  .poster-overlay{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.95);
+    display:none;align-items:center;justify-content:center;
+    flex-direction:column;z-index:9999;
+    padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
+    overflow-y:auto;gap:18px;
+  }
+  .poster-overlay.show{display:flex}
+  .poster-overlay img{
+    max-width:100%;max-height:54vh;
+    border-radius:18px;
+    box-shadow:0 14px 50px rgba(0,0,0,.7);
+    -webkit-touch-callout:default;
+    -webkit-user-select:auto;user-select:auto;pointer-events:auto;
+  }
+  .poster-overlay .hint{
+    color:var(--ink);font:600 13px/1.5 -apple-system,system-ui,sans-serif;
+    text-align:center;letter-spacing:.04em;max-width:340px;
+  }
+  .poster-overlay .hint b{color:var(--orange)}
+  .poster-overlay .copy-row{
+    display:flex;flex-direction:column;gap:10px;
+    width:100%;max-width:340px;
+  }
+  .poster-overlay .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:340px}
+  .poster-overlay .row button,.poster-overlay .row a{
+    background:none;border:1px solid rgba(243,238,227,.3);
+    color:var(--ink);padding:11px 22px;border-radius:999px;
+    font:600 12px/1 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;
+    cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;
+    transition:border-color .15s,background .15s;
+  }
+  .poster-overlay .row button:active,.poster-overlay .row a:active{
+    background:rgba(243,238,227,.08);
+  }
+  .poster-overlay .row a.primary{
+    background:var(--orange);color:#1a1207;border-color:var(--orange);
+    font-weight:700;
+  }
+  .poster-overlay .tweet-text{
+    background:rgba(243,238,227,.05);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;
+    font:400 12px/1.55 ui-monospace,Menlo,monospace;
+    color:var(--muted);white-space:pre-wrap;word-break:break-word;
+    -webkit-user-select:text;user-select:text;
+  }
+  .poster-overlay .tweet-text strong{color:var(--ink)}
+
+  /* === MARK (footer) === */
+  .mark{
+    font:600 9.5px/1 ui-monospace,monospace;letter-spacing:.24em;text-transform:uppercase;
+    color:rgba(243,238,227,.32);padding:14px 0 4px;
+  }
+  .mark a{color:inherit;text-decoration:none}
+
+  /* === BOOT === */
+  .boot{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:var(--bg);z-index:50;flex-direction:column;gap:14px;
+    font:italic 16px/1 Georgia,serif;color:var(--muted);
+  }
+  .boot .dotrow{display:flex;gap:8px}
+  .boot .b{width:9px;height:9px;border-radius:50%;background:var(--muted);animation:bootblink 1.2s ease-in-out infinite}
+  .boot .b:nth-child(2){animation-delay:.15s}
+  .boot .b:nth-child(3){animation-delay:.3s}
+  @keyframes bootblink{50%{opacity:.18}}
+
+  @media (min-width:540px){
+    body{padding:24px 16px}
+    .portrait-wrap{width:min(60vw,300px)}
+    .portrait-wrap.sm{width:min(28vw,140px)}
+  }
+</style>
+</head>
+
+<body>
+  <div class="boot" id="boot">
+    <div class="dotrow"><div class="b"></div><div class="b"></div><div class="b"></div></div>
+    <div>locating your element…</div>
+  </div>
+
+  <header class="chain">
+    <div class="chip" id="tipChip"><span class="dot" id="tipDot"></span><span class="lbl">bitcoin</span><span id="tipNum">—</span></div>
+    <div class="chip" id="dripChip"><span class="lbl">drip</span><span id="dripNum">active</span></div>
+  </header>
+
+  <main class="stage">
+    <div class="portrait-wrap idle" id="portraitWrap">
+      <div class="halo" id="halo"></div>
+      <div id="portrait"></div>
+    </div>
+
+    <div class="ident" id="ident"></div>
+    <section class="action" id="action"></section>
+  </main>
+
+  <!-- Poster fullscreen overlay -->
+  <div class="poster-overlay" id="posterOverlay"></div>
+
+  <footer class="mark">THE DRIP · <a href="https://unatom.fun" target="_blank" rel="noopener">unatom.fun</a> · <a href="https://x.com/takedmt" target="_blank" rel="noopener">@takedmt</a></footer>
+
+<script src="../unatom-render.js"></script>
+<script>
+'use strict';
+
+// === CONFIG (update API_BASE once your Cloudflare Worker is deployed) ===
+const API_BASE = 'https://drip.unatom.fun/api';
+const BASE_DRIP  = 50_000;   // DMT-NAT for standard poster share
+const GEM_DRIP   = 150_000;  // DMT-NAT for dmtGem swag holder (3×)
+const TRADE_MULT = 5;         // multiplier for verified nat.fun TAKEDMT trade
+
+// === STATE ===
+const S = {
+  step: 'roll',   // roll → poster → tweet → wallet → pending → done | error
+  block: null,
+  unatom: null,
+  hasGem: false,
+  dripAmount: 0,
+  posterBlob: null,
+  tweetCopy: '',
+  tweetUrl: '',
+  wallet: '',
+  natTxHash: '',
+  result: null,
+  errorMsg: '',
+  btcLive: false,
+  dripRemaining: null,
+};
+
+const $ = id => document.getElementById(id);
+
+// ============================================================================
+// BOOT
+// ============================================================================
+
+async function init() {
+  // URL param: allow lab to link to /drip/?block=N
+  const params = new URLSearchParams(location.search);
+  const bp = parseInt(params.get('block'), 10);
+  S.block = (bp >= 1 && bp <= 10080) ? bp : rollBlock();
+
+  // Parallel network fetches — both optional
+  const [btcRes, dripRes] = await Promise.allSettled([
+    fetchBtcTip(),
+    fetchDripStatus(),
+  ]);
+  if (btcRes.status === 'fulfilled') paintBtcChip(btcRes.value);
+  if (dripRes.status === 'fulfilled') paintDripChip(dripRes.value);
+
+  S.unatom   = UNATOM.fromBlock(S.block);
+  S.hasGem   = S.unatom.swag === 'dmtGem';
+  S.dripAmount = S.hasGem ? GEM_DRIP : BASE_DRIP;
+  S.tweetCopy  = buildTweetCopy(S.unatom, S.block, S.dripAmount, S.hasGem);
+
+  renderPortrait();
+  setStep('roll');
+  $('boot').remove();
+}
+
+function rollBlock() {
+  return 1 + Math.floor(Math.random() * 10080);
+}
+
+// ============================================================================
+// NETWORK
+// ============================================================================
+
+async function fetchBtcTip() {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 5000);
+  const tip = await fetch('https://mempool.space/api/blocks/tip/height', {signal: ctrl.signal}).then(r => r.text());
+  clearTimeout(t);
+  return { tip: parseInt(tip, 10), live: true };
+}
+
+async function fetchDripStatus() {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 4000);
+  const r = await fetch(API_BASE + '/drip/status', {signal: ctrl.signal}).then(r => r.json());
+  clearTimeout(t);
+  return r;
+}
+
+function paintBtcChip(data) {
+  $('tipNum').textContent = '#' + data.tip.toLocaleString();
+  $('tipDot').dataset.live = data.live ? 'true' : 'false';
+  $('tipChip').setAttribute('data-live', data.live ? 'true' : 'false');
+  S.btcLive = data.live;
+}
+
+function paintDripChip(data) {
+  S.dripRemaining = data.remaining;
+  if (!data.active) {
+    $('dripNum').textContent = 'ended';
+    $('dripChip').style.color = 'var(--muted)';
+    return;
+  }
+  if (typeof data.remaining === 'number') {
+    $('dripNum').textContent = data.remaining.toLocaleString() + ' left';
+    $('dripChip').classList.add('drip-active');
+  }
+}
+
+// ============================================================================
+// PORTRAIT
+// ============================================================================
+
+function renderPortrait(overrides) {
+  const opts = Object.assign({}, S.unatom, overrides || {});
+  $('portrait').innerHTML = UNATOM.svg(opts);
+  $('ident').textContent = 'UNATOM #' + S.block.toLocaleString() + ' · ' + S.unatom.sym + ' · ' + S.unatom.scheme;
+}
+
+function setPortraitClass(cls) {
+  const pw = $('portraitWrap');
+  pw.className = 'portrait-wrap ' + (cls || 'idle');
+}
+
+function setHalo(cls) {
+  $('halo').className = 'halo' + (cls ? ' ' + cls : '');
+}
+
+// ============================================================================
+// STEP MACHINE
+// ============================================================================
+
+function setStep(step) {
+  S.step = step;
+  const painters = {
+    roll:    paintRoll,
+    poster:  paintPoster,
+    tweet:   paintTweet,
+    wallet:  paintWallet,
+    pending: paintPending,
+    done:    paintDone,
+    error:   paintError,
+  };
+  (painters[step] || paintRoll)();
+}
+
+// ============================================================================
+// STEP 1 — ROLL (pick your element)
+// ============================================================================
+
+function paintRoll() {
+  setPortraitClass('idle');
+  setHalo(S.hasGem ? 'gem' : '');
+
+  const whisperText = UNATOM.WHISPERS[S.unatom.sym]?.whisper || '';
+
+  let html = '';
+
+  if (S.hasGem) {
+    html += '<div class="gem-badge"><span class="ico">💎</span> GEM DETECTED — 3× DRIP</div>';
+  }
+
+  html +=
+    '<div class="drip-display' + (S.hasGem ? ' gem' : '') + '">' +
+      '<div class="lbl">your drip</div>' +
+      '<div class="num">' + (S.dripAmount / 1000).toFixed(0) + 'K</div>' +
+      '<div class="unit">DMT-NAT</div>' +
+    '</div>';
+
+  if (whisperText) {
+    html += '<p class="whisper">' + esc(whisperText) + '</p>';
+  }
+
+  html +=
+    '<button class="pill hot" id="buildBtn">BUILD MY POSTER ⚗️</button>' +
+    '<button class="shuffle-chip" id="shuffleBtn"><span>⟳</span> try another element</button>' +
+    '<span class="ghost" style="text-align:center;max-width:300px;line-height:1.55">' +
+      'poster · post on X · claim your DMT-NAT' +
+    '</span>';
+
+  $('action').innerHTML = html;
+  $('buildBtn').onclick = () => startBuildPoster();
+  $('shuffleBtn').onclick = () => {
+    S.block = rollBlock();
+    S.unatom = UNATOM.fromBlock(S.block);
+    S.hasGem = S.unatom.swag === 'dmtGem';
+    S.dripAmount = S.hasGem ? GEM_DRIP : BASE_DRIP;
+    S.tweetCopy = buildTweetCopy(S.unatom, S.block, S.dripAmount, S.hasGem);
+    renderPortrait();
+    paintRoll();
+  };
+}
+
+// ============================================================================
+// STEP 2 — POSTER (build + show overlay)
+// ============================================================================
+
+function paintPoster() {
+  setPortraitClass('breathe');
+
+  $('action').innerHTML =
+    '<div class="step-lbl"><em>STEP 1 OF 3</em> · SAVE YOUR POSTER</div>' +
+    '<div class="synth-wrap">' +
+      '<div class="synth-dots"><div class="synth-dot"></div><div class="synth-dot"></div><div class="synth-dot"></div></div>' +
+      '<div class="synth-label">building your poster…</div>' +
+    '</div>';
+}
+
+async function startBuildPoster() {
+  setStep('poster');
+  try {
+    const cnv = await buildDripPoster(S.unatom, S.block, S.dripAmount, S.hasGem);
+    const blob = await new Promise(res => cnv.toBlob(res, 'image/png', 0.96));
+    S.posterBlob = blob;
+    showPosterOverlay(blob);
+    // action area updates while overlay is open
+    setPortraitClass('sm idle');
+    paintPosterAction();
+  } catch (e) {
+    console.warn('poster build failed', e);
+    // Skip straight to tweet step — poster is optional if canvas fails
+    S.posterBlob = null;
+    setStep('tweet');
+  }
+}
+
+function paintPosterAction() {
+  const action = $('action');
+  if (!action) return;
+  action.innerHTML =
+    '<div class="step-lbl"><em>STEP 1 OF 3</em> · SAVE YOUR POSTER</div>' +
+    '<span class="ghost" style="text-align:center;line-height:1.6;max-width:280px">' +
+      'save the image, then post it on X with the tweet text provided' +
+    '</span>' +
+    '<button class="ghost" id="reopenBtn">↑ reopen poster</button>';
+
+  $('reopenBtn').onclick = () => {
+    if (S.posterBlob) showPosterOverlay(S.posterBlob);
+  };
+}
+
+function showPosterOverlay(blob) {
+  const url = URL.createObjectURL(blob);
+  const fname = 'unatom-drip-' + S.block + '.png';
+
+  const ov = $('posterOverlay');
+  ov.innerHTML =
+    '<img src="' + url + '" alt="UNATOM #' + S.block + ' drip poster" id="posterImg">' +
+    '<div class="hint"><b>tap and hold</b> the image → save to camera roll</div>' +
+    '<div class="copy-row">' +
+      '<div class="tweet-text" id="tweetCopyText">' + formatTweetHtml(S.tweetCopy) + '</div>' +
+    '</div>' +
+    '<div class="row">' +
+      '<button onclick="copySavePoster(\'' + url + '\',\'' + fname + '\')">SAVE IMAGE</button>' +
+      '<button id="copyTweetBtn">COPY TWEET</button>' +
+      '<a href="' + xIntentUrl(S.tweetCopy) + '" target="_blank" rel="noopener" class="primary">POST ON X →</a>' +
+    '</div>' +
+    '<button class="pill go" id="postedBtn">I POSTED IT →</button>' +
+    '<button class="ghost" id="closeOvBtn">← back to my element</button>';
+
+  ov.classList.add('show');
+
+  $('copyTweetBtn').onclick = () => {
+    copyText(S.tweetCopy, $('copyTweetBtn'), 'COPIED ✓');
+  };
+  $('postedBtn').onclick = () => {
+    ov.classList.remove('show');
+    URL.revokeObjectURL(url);
+    setStep('tweet');
+  };
+  $('closeOvBtn').onclick = () => {
+    ov.classList.remove('show');
+    URL.revokeObjectURL(url);
+    setStep('roll');
+  };
+}
+
+function copySavePoster(url, fname) {
+  const a = document.createElement('a');
+  a.href = url; a.download = fname;
+  a.click();
+}
+
+function formatTweetHtml(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/(#\w+)/g,'<strong>$1</strong>')
+    .replace(/(@\w+)/g,'<strong>$1</strong>');
+}
+
+function xIntentUrl(text) {
+  return 'https://x.com/intent/tweet?text=' + encodeURIComponent(text);
+}
+
+// ============================================================================
+// STEP 3 — TWEET URL
+// ============================================================================
+
+function paintTweet() {
+  setPortraitClass('sm idle');
+  $('action').innerHTML =
+    '<div class="step-lbl"><em>STEP 2 OF 3</em> · VERIFY YOUR POST</div>' +
+    '<div class="step-input-wrap">' +
+      '<label for="tweetInput">paste your tweet URL</label>' +
+      '<input class="step-input" id="tweetInput" type="url" autocomplete="off" autocorrect="off" spellcheck="false"' +
+        ' placeholder="https://x.com/yourname/status/…">' +
+    '</div>' +
+    '<span class="ghost" style="text-align:center;line-height:1.6;max-width:300px">' +
+      'open your posted tweet · copy the URL from the address bar · paste it here' +
+    '</span>' +
+    '<button class="pill hot" id="tweetNextBtn" disabled>NEXT →</button>' +
+    '<button class="ghost" id="tweetBackBtn">← back</button>';
+
+  const inp = $('tweetInput');
+  const btn = $('tweetNextBtn');
+
+  inp.addEventListener('input', () => {
+    const ok = isValidTweetUrl(inp.value);
+    inp.classList.toggle('error', inp.value.length > 10 && !ok);
+    btn.disabled = !ok;
+  });
+
+  btn.onclick = () => {
+    S.tweetUrl = inp.value.trim();
+    setStep('wallet');
+  };
+  $('tweetBackBtn').onclick = () => setStep('roll');
+
+  // Auto-focus on desktop; skip on mobile to avoid layout jump
+  if (window.matchMedia('(min-width:540px)').matches) inp.focus();
+}
+
+// ============================================================================
+// STEP 4 — WALLET
+// ============================================================================
+
+function paintWallet() {
+  setPortraitClass('sm idle');
+  $('action').innerHTML =
+    '<div class="step-lbl"><em>STEP 3 OF 3</em> · CLAIM YOUR DRIP</div>' +
+    '<div class="step-input-wrap">' +
+      '<label for="walletInput">your Solana wallet address</label>' +
+      '<input class="step-input" id="walletInput" type="text" autocomplete="off" autocorrect="off" spellcheck="false"' +
+        ' placeholder="AbCd1234…XyZ">' +
+    '</div>' +
+    '<button class="boost-toggle" id="boostToggle"><span class="arr">▶</span> have a TAKEDMT trade? get 5× more</button>' +
+    '<div class="boost-wrap" id="boostWrap">' +
+      '<div class="step-input-wrap" style="margin-top:8px">' +
+        '<label for="tradeInput">nat.fun TAKEDMT buy tx signature (optional)</label>' +
+        '<input class="step-input" id="tradeInput" type="text" autocomplete="off" autocorrect="off" spellcheck="false"' +
+          ' placeholder="5WH…tx signature from your trade">' +
+      '</div>' +
+    '</div>' +
+    '<button class="pill hot" id="synthBtn" disabled>SYNTHESIZE ⚗️</button>' +
+    '<button class="ghost" id="walletBackBtn">← back</button>';
+
+  const walletInp = $('walletInput');
+  const synthBtn  = $('synthBtn');
+  const boostWrap = $('boostWrap');
+
+  walletInp.addEventListener('input', () => {
+    const ok = isValidSolAddr(walletInp.value.trim());
+    walletInp.classList.toggle('error', walletInp.value.length > 10 && !ok);
+    synthBtn.disabled = !ok;
+  });
+
+  $('boostToggle').onclick = function() {
+    this.classList.toggle('open');
+    boostWrap.classList.toggle('open');
+  };
+
+  synthBtn.onclick = () => {
+    S.wallet = walletInp.value.trim();
+    S.natTxHash = ($('tradeInput')?.value || '').trim();
+    setStep('pending');
+    submitClaim();
+  };
+  $('walletBackBtn').onclick = () => setStep('tweet');
+}
+
+// ============================================================================
+// STEP 5 — PENDING
+// ============================================================================
+
+function paintPending() {
+  setPortraitClass('breathe');
+  setHalo('');
+  renderPortrait({ mood: 'lockedIn' });
+
+  $('action').innerHTML =
+    '<div class="synth-wrap">' +
+      '<div class="synth-dots"><div class="synth-dot"></div><div class="synth-dot"></div><div class="synth-dot"></div></div>' +
+      '<div class="synth-label">extracting DMT-NAT from the chain…</div>' +
+    '</div>';
+}
+
+async function submitClaim() {
+  try {
+    const resp = await fetch(API_BASE + '/claim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tweetUrl:   S.tweetUrl,
+        wallet:     S.wallet,
+        block:      S.block,
+        natTxHash:  S.natTxHash || null,
+      }),
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok || !data.ok) {
+      S.errorMsg = data.error || 'something went wrong. try again.';
+      setStep('error');
+      return;
+    }
+
+    S.result = data;
+    setStep('done');
+
+  } catch (e) {
+    // Network error — likely backend not yet deployed
+    S.errorMsg = 'backend not reachable — the drip worker is not deployed yet. come back soon.';
+    setStep('error');
+  }
+}
+
+// ============================================================================
+// STEP 6 — DONE
+// ============================================================================
+
+function paintDone() {
+  setPortraitClass('burst');
+  setHalo('done');
+  setTimeout(() => setPortraitClass('idle'), 1200);
+
+  const amount = S.result?.amount ?? S.dripAmount;
+  const txSig  = S.result?.txSig || '';
+  const wallet = S.wallet;
+  const short  = wallet.slice(0, 4) + '…' + wallet.slice(-4);
+
+  const shareUrl = xIntentUrl(
+    '⚗️ just synthesized ' + amount.toLocaleString() + ' DMT-NAT from my UNATOM element.\n\n' +
+    'the drip is live at unatom.fun/drip — free until @takedmt graduates 🧪\n\n#TAKEDMT #UNATOMS'
+  );
+
+  $('action').innerHTML =
+    '<div class="done-wrap">' +
+      '<div class="done-amount">+' + (amount / 1000).toFixed(0) + 'K</div>' +
+      '<div class="done-unit">DMT-NAT synthesized</div>' +
+      '<p class="done-note">sent to ' + esc(short) + ' · check your wallet in a few minutes.</p>' +
+      (txSig && !txSig.startsWith('DEV') ? '<div class="done-serial">TX: ' + txSig.slice(0,12) + '…</div>' : '') +
+    '</div>' +
+    '<a class="pill go" href="' + shareUrl + '" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">TELL THE WORLD →</a>' +
+    '<a class="ghost" href="/drip/?block=' + rollBlock() + '" style="text-decoration:none">share the drip with a friend →</a>';
+}
+
+// ============================================================================
+// ERROR
+// ============================================================================
+
+function paintError() {
+  setPortraitClass('sm idle');
+  setHalo('');
+
+  $('action').innerHTML =
+    '<p class="error-msg">' + esc(S.errorMsg) + '</p>' +
+    '<button class="pill" id="retryBtn">TRY AGAIN</button>' +
+    '<button class="ghost" id="errBackBtn">← start over</button>';
+
+  $('retryBtn').onclick = () => {
+    // Re-attempt from wallet step if we have a tweet URL already
+    if (S.tweetUrl && S.wallet) {
+      setStep('pending');
+      submitClaim();
+    } else {
+      setStep('tweet');
+    }
+  };
+  $('errBackBtn').onclick = () => {
+    S.tweetUrl = ''; S.wallet = ''; S.natTxHash = '';
+    setStep('roll');
+  };
+}
+
+// ============================================================================
+// POSTER CANVAS (1080 × 1350 — THE DRIP edition)
+// ============================================================================
+
+function buildDripPoster(u, blk, amount, hasGem) {
+  const W = 1080, H = 1350;
+  const cnv = document.createElement('canvas');
+  cnv.width = W; cnv.height = H;
+  const ctx = cnv.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#0a0a0c';
+  ctx.fillRect(0, 0, W, H);
+
+  // Vignette
+  const vg = ctx.createRadialGradient(W/2, H * 0.42, 200, W/2, H * 0.42, W * 0.75);
+  vg.addColorStop(0, 'rgba(243,238,227,0.04)');
+  vg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+
+  // Gem glow — warm radial bloom
+  if (hasGem) {
+    const gl = ctx.createRadialGradient(W/2, H * 0.4, 80, W/2, H * 0.4, 520);
+    gl.addColorStop(0, 'rgba(240,150,45,0.18)');
+    gl.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gl; ctx.fillRect(0, 0, W, H);
+  }
+
+  // Top bar: wordmark left, element tag right
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#f0962d';
+  ctx.font = '700 32px -apple-system,system-ui,"Segoe UI",Roboto,sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('THE DRIP', 64, 80);
+
+  ctx.fillStyle = 'rgba(243,238,227,0.5)';
+  ctx.font = '600 22px ui-monospace,Menlo,monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('UNATOM #' + blk.toLocaleString(), W - 64, 80);
+
+  // UNATOM SVG — center portrait
+  const svgStr = UNATOM.svg(u);
+  return drawSvgToCanvas(ctx, svgStr, 140, 150, 800, 800).then(() => {
+    ctx.textAlign = 'center';
+
+    // Identity
+    ctx.fillStyle = '#f3eee3';
+    ctx.font = '700 60px -apple-system,system-ui,"Segoe UI",Roboto,sans-serif';
+    ctx.fillText('UNATOM #' + blk.toLocaleString(), W/2, 1018);
+
+    const cat = UNATOM.CATEGORIES.find(c => c.els.includes(u.sym));
+    const catLbl = cat ? cat.label.toLowerCase() : 'matter';
+    ctx.font = '500 26px ui-monospace,Menlo,monospace';
+    ctx.fillStyle = 'rgba(243,238,227,0.5)';
+    ctx.fillText(u.sym + '  ·  ' + catLbl + '  ·  ' + u.scheme, W/2, 1060);
+
+    // Divider
+    ctx.strokeStyle = 'rgba(243,238,227,0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(140, 1088); ctx.lineTo(W-140, 1088); ctx.stroke();
+
+    // Amount label
+    ctx.font = '600 18px ui-monospace,Menlo,monospace';
+    ctx.fillStyle = 'rgba(240,150,45,0.65)';
+    ctx.fillText('DMT-NAT EXTRACTED', W/2, 1116);
+
+    // Big amount
+    ctx.font = '900 88px ui-monospace,"SF Mono",Menlo,monospace';
+    ctx.fillStyle = '#f0962d';
+    ctx.fillText('+' + amount.toLocaleString(), W/2, 1210);
+
+    // Gem badge on poster
+    if (hasGem) {
+      ctx.font = '700 20px ui-monospace,Menlo,monospace';
+      ctx.fillStyle = 'rgba(240,150,45,0.8)';
+      ctx.fillText('💎  GEM DETECTED — 3× YIELD', W/2, 1250);
+    }
+
+    // Footer
+    ctx.font = '600 17px ui-monospace,Menlo,monospace';
+    ctx.fillStyle = 'rgba(243,238,227,0.35)';
+    ctx.fillText('UNATOMS  ·  FEED THE CHAIN  ·  unatom.fun/drip', W/2, 1312);
+
+    return cnv;
+  });
+}
+
+function drawSvgToCanvas(ctx, svgStr, x, y, w, h) {
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const img  = new Image();
+    img.onload  = () => { ctx.drawImage(img, x, y, w, h); URL.revokeObjectURL(url); resolve(); };
+    img.onerror = e  => { URL.revokeObjectURL(url); reject(e); };
+    img.src = url;
+  });
+}
+
+// ============================================================================
+// TWEET COPY GENERATOR
+// ============================================================================
+
+function buildTweetCopy(u, blk, amount, hasGem) {
+  return (
+    '⚗️ SYNTHESIS COMPLETE\n\n' +
+    'my element — UNATOM #' + blk + ' · ' + u.sym + ' · ' + u.scheme + '\n' +
+    'extracted ' + amount.toLocaleString() + ' DMT-NAT straight from the chain\n\n' +
+    '10,080 elements exist. every one has a drip.\n' +
+    (hasGem ? 'mine holds a gem. 💎' : 'some hold a gem. 💎') + '\n\n' +
+    '→ unatom.fun/drip (live until @takedmt graduates 🧪)\n\n' +
+    '#TAKEDMT #UNATOMS'
+  );
+}
+
+// ============================================================================
+// VALIDATION
+// ============================================================================
+
+function isValidTweetUrl(url) {
+  return /^https?:\/\/(x\.com|twitter\.com)\/[^/]+\/status\/\d+/.test((url || '').trim());
+}
+
+function isValidSolAddr(addr) {
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr || '');
+}
+
+// ============================================================================
+// UTILS
+// ============================================================================
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function copyText(text, btn, successLabel) {
+  const orig = btn.textContent;
+  const doFallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && location.protocol === 'https:') {
+    navigator.clipboard.writeText(text).catch(doFallback);
+  } else { doFallback(); }
+  btn.textContent = successLabel;
+  setTimeout(() => { btn.textContent = orig; }, 1800);
+}
+
+// ============================================================================
+// KICK OFF
+// ============================================================================
+
+init();
+</script>
+</body>
+</html>

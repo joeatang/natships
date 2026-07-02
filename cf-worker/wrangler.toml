@@ -1,0 +1,22 @@
+name = "drip-worker"
+main = "drip-worker.js"
+compatibility_date = "2024-09-23"
+
+# KV Namespaces
+# After running `wrangler kv:namespace create CLAIMS` and `wrangler kv:namespace create COUNTER`
+# paste the returned IDs below.
+kv_namespaces = [
+  { binding = "CLAIMS",  id = "REPLACE_WITH_CLAIMS_KV_ID"  },
+  { binding = "COUNTER", id = "REPLACE_WITH_COUNTER_KV_ID" },
+]
+
+# Secret environment variables — set these with:
+#   wrangler secret put X_BEARER_TOKEN
+#   wrangler secret put CAMPAIGN_START_ISO
+# (never put secrets in this file)
+
+# Worker routes
+# Uncomment and update once you have a domain:
+# routes = [
+#   { pattern = "drip.unatom.fun/api/*", zone_name = "unatom.fun" }
+# ]
