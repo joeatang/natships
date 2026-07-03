@@ -508,9 +508,90 @@
     letter-spacing:.16em;text-transform:uppercase;
     color:rgba(240,150,45,.85);
     text-align:center;
+    cursor:pointer;
+    transition:background .18s,border-color .18s,transform .08s;
+    -webkit-appearance:none;appearance:none;
   }
+  .drip-strip:hover{background:rgba(240,150,45,.11);border-color:rgba(240,150,45,.3)}
+  .drip-strip:active{transform:scale(.985)}
   .drip-strip.ended{display:none}
   .drip-strip .ds-dot{width:6px;height:6px;border-radius:50%;background:var(--orange);animation:livepulse 1.6s ease-in-out infinite;flex-shrink:0}
+
+  /* === NAT READY TEASER POPUP === */
+  .teaser-ov{
+    position:fixed;inset:0;z-index:9998;
+    display:none;align-items:center;justify-content:center;
+    background:rgba(6,5,3,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));
+    animation:teaserFade .22s ease;
+  }
+  .teaser-ov.show{display:flex}
+  @keyframes teaserFade{from{opacity:0}to{opacity:1}}
+  .teaser-card{
+    position:relative;
+    width:100%;max-width:380px;
+    background:linear-gradient(180deg,#151009,#0c0a07);
+    border:1px solid rgba(240,150,45,.28);
+    border-radius:20px;
+    padding:40px 26px 30px;
+    text-align:center;
+    box-shadow:0 20px 70px rgba(0,0,0,.7),0 0 60px rgba(240,150,45,.08);
+    animation:teaserPop .34s cubic-bezier(.2,.9,.3,1.2);
+  }
+  @keyframes teaserPop{from{transform:scale(.85) translateY(14px);opacity:0}to{transform:none;opacity:1}}
+  .teaser-close{
+    position:absolute;top:12px;right:14px;
+    background:none;border:none;color:rgba(243,238,227,.4);
+    font:400 24px/1 sans-serif;cursor:pointer;padding:4px 8px;
+  }
+  .teaser-close:active{color:var(--ink)}
+  .teaser-kicker{
+    font:600 9.5px/1 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.32em;text-transform:uppercase;
+    color:rgba(240,150,45,.6);margin-bottom:16px;
+  }
+  .teaser-title{
+    font:800 clamp(38px,13vw,56px)/0.92 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.02em;text-transform:uppercase;
+    color:var(--orange);
+    margin:0 0 20px;
+    animation:natFlash 1.1s steps(1) infinite;
+    text-shadow:0 0 28px rgba(240,150,45,.45);
+  }
+  @keyframes natFlash{0%,49%{opacity:1}50%,79%{opacity:.32}80%,100%{opacity:1}}
+  .teaser-body{
+    font:400 14.5px/1.6 Georgia,'Times New Roman',serif;
+    color:rgba(243,238,227,.82);
+    margin:0 auto 22px;max-width:300px;
+  }
+  .teaser-body b{color:var(--orange);font-weight:700}
+  .teaser-steps{
+    display:flex;flex-direction:column;gap:7px;
+    margin:0 auto 24px;max-width:280px;text-align:left;
+  }
+  .teaser-steps div{
+    font:600 10.5px/1.4 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(243,238,227,.55);
+    display:flex;gap:10px;align-items:center;
+  }
+  .teaser-steps div span{color:var(--orange);font-weight:700;min-width:14px}
+  .teaser-cta{
+    font:700 15px/1 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.14em;text-transform:uppercase;
+    background:var(--orange);color:#1a1207;
+    border:none;border-radius:999px;
+    padding:16px 28px;width:100%;max-width:280px;
+    cursor:pointer;box-shadow:0 6px 22px rgba(240,150,45,.25);
+    -webkit-appearance:none;appearance:none;
+  }
+  .teaser-cta:active{transform:scale(.97)}
+  .teaser-fine{
+    margin-top:14px;
+    font:500 9.5px/1.4 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(243,238,227,.3);
+  }
 </style>
 </head>
 <body class="state-ready">
@@ -524,10 +605,27 @@
     <div class="chip weather" id="weatherPill" data-v="—"><span class="lbl">bitcoin</span><span id="weatherTxt">—</span></div>
   </header>
 
-  <!-- Drip teaser — atmospheric. no link. discovery happens through the game. -->
-  <div class="drip-strip" id="dripStrip">
+  <!-- Drip teaser — clickable, opens the NAT READY? popup. -->
+  <button class="drip-strip" id="dripStrip" type="button">
     <span class="ds-dot"></span>
-    <span id="dripStripTxt">every unatom drips · complete one to find out</span>
+    <span id="dripStripTxt">every unatom drips · tap to find out</span>
+  </button>
+
+  <!-- NAT READY? teaser popup -->
+  <div class="teaser-ov" id="teaserOv">
+    <div class="teaser-card">
+      <button class="teaser-close" id="teaserClose" aria-label="close">×</button>
+      <div class="teaser-kicker">incoming transmission</div>
+      <h2 class="teaser-title">NAT<br>READY?</h2>
+      <p class="teaser-body">every unatom you run is <b>digital matter</b> condensing out of a Bitcoin block. soon, running one will <b>drip</b> a little NAT back to you — free, while it lasts.</p>
+      <div class="teaser-steps">
+        <div><span>1</span> run the block</div>
+        <div><span>2</span> matter condenses on your receipt</div>
+        <div><span>3</span> claim the drip</div>
+      </div>
+      <button class="teaser-cta" id="teaserCta">RUN THE BLOCK →</button>
+      <div class="teaser-fine">no wallet needed to play</div>
+    </div>
   </div>
 
   <main class="stage">
@@ -1660,6 +1758,7 @@ async function boot() {
 
   // Show drip teaser strip if campaign is active (fire-and-forget)
   loadDripStrip();
+  wireTeaser();
 
   // periodic weather refresh in ready/feed/receipt states
   setInterval(async () => {
@@ -1684,6 +1783,30 @@ async function loadDripStrip() {
     }
     window.DRIP_LIVE = true;
   } catch(e) { /* silent — keep static teaser showing */ }
+}
+
+function wireTeaser() {
+  const strip = $('dripStrip');
+  const ov    = $('teaserOv');
+  const close = $('teaserClose');
+  const cta   = $('teaserCta');
+  if (!strip || !ov) return;
+
+  const open = () => { haptic(12); ov.classList.add('show'); };
+  const shut = () => { ov.classList.remove('show'); };
+
+  strip.addEventListener('click', open);
+  close && close.addEventListener('click', shut);
+  // CTA drops the popup and returns focus to the game's main action
+  cta && cta.addEventListener('click', () => {
+    shut();
+    haptic(20);
+    const go = $('goKnock') || $('runAgain');
+    if (go) go.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  // Tap backdrop or press Escape to dismiss
+  ov.addEventListener('click', (e) => { if (e.target === ov) shut(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') shut(); });
 }
 
 boot();
