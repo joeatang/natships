@@ -707,7 +707,7 @@
   <!-- Drip teaser — clickable, opens the NAT READY? popup. -->
   <button class="drip-strip" id="dripStrip" type="button">
     <span class="ds-dot"></span>
-    <span id="dripStripTxt">every unatom drips · tap to find out</span>
+    <span id="dripStripTxt">UNAT READY FOR THIS ANNOUNCEMENT? · TAP TO FIND OUT</span>
   </button>
 
   <!-- NAT READY? teaser popup -->
@@ -952,7 +952,7 @@ function paintReady(root) {
 
   const btn = document.createElement('button');
   btn.className = 'pill big';
-  btn.textContent = 'NAT READY?';
+  btn.textContent = 'RUN THE BLOCK →';
   btn.onclick = () => { haptic(20); markIntroSeen(); enterFeed(); };
   root.appendChild(btn);
 }
@@ -1554,15 +1554,16 @@ function buildReceipt() {
 
 const KIND_PREFIX = {
   hot:     ['PYRO','THERMO','IGNI','EMBER'],
-  cold:    ['CRYO','FRIGO','GLACI','FROST'],
+  cold:    ['CRYO','FRIGO','GLACIO','FROST'],
   fat:     ['BARY','DENSO','MASSI','PLUMBO'],
   dust:    ['KONI','CINDER','FUMO','MOTE'],
   diamond: ['CRYSTA','PRISMA','VITREO','CLARI'],
 };
-// element / mineral stems — the name must read as periodic-table matter, never a substance
-const CX_ROOTS = ['VANAD','FERRO','COBALT','TITAN','ZINC','CARBON','SILIC','MAGNES',
-  'SODI','POTASS','MANGAN','CHROM','NICKEL','CUPR','ARGON','NEON','XENON','QUARTZ',
-  'LITHI','BORON','SULF','PHOSPH','CALCI','GRAPHE'];
+// roots = real Bitcoin block / tx fields — the SAME vocabulary the UNATOM elements map to
+// (Hash, Merkle, Nonce, Bits, Difficulty, Chainwork, Witness, Locktime, Sequence, Coinbase...)
+const CX_ROOTS = ['HASH','MERKL','NONCE','BIT','DIFF','CHAIN','WITN','LOCK','SEQ','COINB',
+  'VERS','VALUE','SCRIPT','HEADR','WEIGHT','HEIGHT','MEDIAN','STRIP','SIZE','TIME',
+  'VOUT','VIN','TXID','FEE'];
 // mineral / element endings only (-ite -ium -ide -ate) — no drug-sounding -ine / -ol / -caine
 const CX_SUFFIX = ['ITE','IUM','IDE','ATE'];
 const KIND_SCHEME = { hot:'ember', cold:'frost', fat:'bronze', dust:'ash', diamond:'void' };
