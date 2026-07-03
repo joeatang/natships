@@ -162,6 +162,22 @@
     max-width:320px;
   }
 
+  /* === FIRST-VISIT INTRO (new traffic hand-hold) === */
+  .intro-card{
+    width:100%;max-width:340px;
+    margin:2px 0 14px;
+    padding:14px 16px;
+    border-radius:14px;
+    background:rgba(240,150,45,.07);
+    border:1px solid rgba(240,150,45,.22);
+    text-align:center;
+    animation:introIn .5s ease-out both;
+  }
+  @keyframes introIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .intro-card .ic-k{font:700 8.5px/1 ui-monospace,monospace;letter-spacing:.28em;text-transform:uppercase;color:var(--orange);margin-bottom:7px}
+  .intro-card .ic-b{font:400 13px/1.5 -apple-system,system-ui,sans-serif;color:var(--ink)}
+  .intro-card .ic-b b{color:var(--orange);font-weight:700}
+
   /* === POSTER OVERLAY (camera-roll save) === */
   .poster-overlay{
     position:fixed;inset:0;
@@ -914,6 +930,15 @@ function paintAction() {
 function paintReady(root) {
   flash(chainGreeting(), traitGreeting());
 
+  // First-visit hand-hold: plainly say what a UNATOM is (once per device).
+  if (!introSeen()) {
+    const intro = document.createElement('div');
+    intro.className = 'intro-card';
+    intro.innerHTML = '<div class="ic-k">new here?</div>' +
+      '<div class="ic-b">a <b>UNATOM</b> is digital matter — a tiny character born from one real Bitcoin block. run the block to bring yours to life.</div>';
+    root.appendChild(intro);
+  }
+
   const shuf = document.createElement('button');
   shuf.className = 'shuffle-chip';
   shuf.innerHTML = '<span class="ico">⟳</span><span>try a different unatom</span>';
@@ -928,9 +953,12 @@ function paintReady(root) {
   const btn = document.createElement('button');
   btn.className = 'pill big';
   btn.textContent = 'NAT READY?';
-  btn.onclick = () => { haptic(20); enterFeed(); };
+  btn.onclick = () => { haptic(20); markIntroSeen(); enterFeed(); };
   root.appendChild(btn);
 }
+
+function introSeen() { try { return !!localStorage.getItem('unatom_intro_seen'); } catch (e) { return false; } }
+function markIntroSeen() { try { localStorage.setItem('unatom_intro_seen', '1'); } catch (e) {} }
 
 function chainGreeting() {
   const v = STATE.weather.verdict;
@@ -1176,58 +1204,58 @@ function paintNonce(lead, locked) {
 // always learn something new. Bank keyed by step; localStorage tracks index.
 // ============================================================================
 
-// tag: 'TIP' (bitcoin mechanics) · 'LORE' (dmt / consciousness / plant) · 'NAT' (project)
+// tag: 'TIP' (bitcoin mechanics) · 'LORE' (Digital Matter Theory thesis, w/ the odd DMT wink) · 'NAT' (project)
 const LEARN_DRIPS = {
   ready: [
     { tag:'TIP',  text:'A BITCOIN BLOCK ARRIVES EVERY ~10 MINUTES, WORLDWIDE.' },
-    { tag:'LORE', text:'DMT WAS FIRST SYNTHESIZED IN 1931. NOBODY KNEW WHAT TO DO WITH IT.' },
+    { tag:'LORE', text:'DIGITAL MATTER THEORY: PATTERNS IN BITCOIN DATA BECOME A SUBSTANCE YOU CAN HOLD.' },
     { tag:'TIP',  text:'THE GENESIS BLOCK WAS MINED 03 JAN 2009.' },
-    { tag:'LORE', text:'AYAHUASCA MEANS \u201CVINE OF THE SOUL\u201D IN QUECHUA.' },
+    { tag:'LORE', text:'NON-ARBITRARY MEANS THE CHAIN DECIDES THE TRAITS \u2014 NOT A DESIGNER.' },
     { tag:'NAT',  text:'EVERY UNATOM IS SEEDED BY A REAL BLOCK HEIGHT.' },
-    { tag:'LORE', text:'DMT IS STRUCTURALLY CLOSE TO SEROTONIN. YOUR BRAIN ALREADY KNOWS THE SHAPE.' },
+    { tag:'LORE', text:'ONE DATA POINT IN A BLOCK IS ALL IT TAKES TO MAKE DIGITAL MATTER.' },
     { tag:'TIP',  text:'NO WALLET. NO MINT. THE BLOCK IS THE SEED.' },
-    { tag:'LORE', text:'\u201CPSYCHEDELIC\u201D WAS COINED IN 1957. IT MEANS \u201CMIND-MANIFESTING\u201D.' },
+    { tag:'LORE', text:'DMT? THE INTERNET STILL ARGUES: DIGITAL MATTER THEORY, OR THE OTHER THING. IT\u2019S BOTH NOW.' },
   ],
   feed: [
     { tag:'TIP',  text:'MINERS PACK CRUMBS TOO \u2014 THEY CALL THEM \u201CTRANSACTIONS\u201D.' },
-    { tag:'LORE', text:'AYAHUASCA = DMT + AN MAOI. THE VINE MAKES THE LEAF WORK.' },
+    { tag:'LORE', text:'$NAT IS BORN WITH EVERY BLOCK AND HANDED TO THE MINER WHO WON IT.' },
     { tag:'TIP',  text:'HIGHER FEE = HIGHER PRIORITY. FAT CRUMBS FIT FIRST.' },
-    { tag:'LORE', text:'THE CHACRUNA LEAF HOLDS THE DMT. THE CAAPI VINE UNLOCKS IT.' },
+    { tag:'LORE', text:'$NAT\u2019S SUPPLY IS READ STRAIGHT FROM THE BLOCK\u2019S \u201CBITS\u201D FIELD.' },
     { tag:'TIP',  text:'A REAL BLOCK PACKS ~2000 TX INTO 1MB. YOU\u2019RE DOING A TINY VERSION.' },
-    { tag:'LORE', text:'YOUR BODY MAY MAKE TRACE DMT. SCIENCE STILL DOESN\u2019T KNOW WHY.' },
+    { tag:'LORE', text:'THE \u201CBITS\u201D FIELD IS STORED IN HEX. DMT READS IT AS A NUMBER TO SET THE MATTER.' },
     { tag:'TIP',  text:'MEMPOOL = THE WAITING ROOM FOR TRANSACTIONS.' },
-    { tag:'LORE', text:'SNUFF, BREW, VAPOR, TOAD \u2014 EVERY CULTURE FOUND A DELIVERY METHOD.' },
+    { tag:'LORE', text:'AYAHUASCA: THE VINE MAKES THE LEAF WORK. HERE, THE BLOCK MAKES THE DATA MEAN SOMETHING.' },
     { tag:'TIP',  text:'MINERS SORT MEMPOOL BY FEE \u2014 EXACTLY WHAT YOU\u2019RE DOING.' },
   ],
   knock: [
     { tag:'TIP',  text:'MINERS TRY ~4 BILLION HASHES/SEC. YOU NEED A FEW.' },
-    { tag:'LORE', text:'SMOKED DMT LASTS ABOUT 15 MINUTES. THE VINE STRETCHES IT TO FOUR HOURS.' },
+    { tag:'LORE', text:'DMT TIES BITCOIN\u2019S VALUE TO ITS THERMODYNAMICS: ENERGY IN, MATTER OUT.' },
     { tag:'TIP',  text:'LEADING ZEROS = DIFFICULTY. MORE ZEROS, HARDER BLOCK.' },
-    { tag:'LORE', text:'TERENCE McKENNA NAMED THEM \u201CMACHINE ELVES\u201D. THE NAME STUCK.' },
+    { tag:'LORE', text:'MORE HASH POWER MEANS A HARDER TARGET \u2014 AND A SMALLER \u201CBITS\u201D VALUE.' },
     { tag:'TIP',  text:'A BLOCK IS SEALED WHEN THE HASH STARTS WITH ENOUGH ZEROS.' },
-    { tag:'LORE', text:'5-MEO-DMT LIVES IN THE COLORADO RIVER TOAD. DIFFERENT MOLECULE, DIFFERENT TRIP.' },
+    { tag:'LORE', text:'ORDINAL THEORY GAVE EVERY SAT A NUMBER. DMT GAVE BLOCK DATA A MEANING.' },
     { tag:'TIP',  text:'MINING BURNS ELECTRICITY BECAUSE GUESSING TAKES POWER.' },
-    { tag:'LORE', text:'THE \u201CSPIRIT MOLECULE\u201D NAME COMES FROM A DEA-APPROVED 1990S STUDY.' },
+    { tag:'LORE', text:'RARE SATS STARTED IT: THE FIRST SAT OF EVERY BLOCK IS AN \u201CUNCOMMON\u201D SAT.' },
     { tag:'TIP',  text:'IN REAL BITCOIN NO ONE KNOWS WHICH GUESS WINS. NEITHER DO YOU.' },
-    { tag:'LORE', text:'TOLERANCE DOESN\u2019T BUILD LIKE OTHER PSYCHEDELICS. NOVELTY EVERY TIME.' },
+    { tag:'LORE', text:'BITMAP THEORY CALLED EACH BLOCK A DISTRICT. DMT CALLS ITS PATTERNS ELEMENTS.' },
     { tag:'TIP',  text:'NONCE = THE ONE NUMBER MINERS ARE ALLOWED TO CHANGE.' },
   ],
   blinks: [
     { tag:'TIP',  text:'6 BLINKS = 6 CONFIRMATIONS. THE OG BITCOIN STANDARD.' },
-    { tag:'LORE', text:'MANY TRIP REPORTS OPEN THE SAME WAY: A WAITING ROOM, THEN THE VEIL.' },
+    { tag:'LORE', text:'A DIGITAL ELEMENT IS A REGISTERED PATTERN FOUND IN BITCOIN BLOCK DATA.' },
     { tag:'TIP',  text:'EACH CONFIRM = ANOTHER BLOCK MINED ON TOP OF YOURS.' },
-    { tag:'LORE', text:'ACROSS CULTURES, THE ENTITIES ARE DESCRIBED AS PLAYFUL AND OLDER THAN YOU.' },
+    { tag:'LORE', text:'CLAIM AN ELEMENT\u2019S NAME AND IT\u2019S YOURS FOREVER \u2014 NAMES CAN NEVER BE REUSED.' },
     { tag:'TIP',  text:'AFTER 6 CONFIRMS, A PAYMENT IS CONSIDERED FINAL.' },
-    { tag:'LORE', text:'SIX BREATHS. TEN MINUTES. THE UNIVERSE USES ROUND NUMBERS.' },
+    { tag:'LORE', text:'THE MORE WORK BEHIND A BLOCK, THE HARDER ITS MATTER IS TO FAKE.' },
     { tag:'TIP',  text:'MORE CONFIRMS = HARDER TO REVERSE. THAT\u2019S SECURITY.' },
   ],
   receipt: [
     { tag:'NAT',  text:'YOUR UNATOM\u2019S ELEMENT MAPS TO A REAL BITCOIN FIELD.' },
-    { tag:'LORE', text:'YOU DON\u2019T KEEP A TRIP. YOU KEEP WHAT THE TRIP LEAVES BEHIND.' },
+    { tag:'LORE', text:'$NAT LAUNCHED 100% FREE AND FAIR \u2014 NO PRESALE, NO TEAM ALLOCATION, NO INSIDERS.' },
     { tag:'TIP',  text:'BLOCK HEIGHT DETERMINES EVERYTHING \u2014 NO WALLET NEEDED.' },
-    { tag:'LORE', text:'OAKLAND DECRIMINALIZED NATURAL PSYCHEDELICS IN 2019. OTHERS FOLLOWED.' },
+    { tag:'LORE', text:'AS THE BLOCK SUBSIDY FADES TOWARD 2140, $NAT IS BUILT TO HELP SECURE BITCOIN.' },
     { tag:'NAT',  text:'THIS SPECIMEN IS DETERMINISTIC. SAME BLOCK = SAME FRIEND.' },
-    { tag:'LORE', text:'THE MOLECULE IS TINY. THE STORIES AROUND IT ARE HUGE.' },
+    { tag:'LORE', text:'YOU DON\u2019T KEEP THE BLOCK. YOU KEEP THE MATTER IT LEFT BEHIND.' },
     { tag:'NAT',  text:'THERE ARE EXACTLY 10,080 OF THESE. ONE PER BLOCK.' },
   ],
 };
@@ -1525,16 +1553,18 @@ function buildReceipt() {
 // ============================================================================
 
 const KIND_PREFIX = {
-  hot:     ['PYRO','EMBER','IGNI','COMBUS'],
-  cold:    ['CRYO','FROST','GLACI','HALO'],
-  fat:     ['BARY','DENSA','MASSI','HEVA'],
-  dust:    ['MOTE','SCATTR','FINA','POWDA'],
-  diamond: ['LUCID','PRISMA','CRYSTA','CLARI'],
+  hot:     ['PYRO','THERMO','IGNI','EMBER'],
+  cold:    ['CRYO','FRIGO','GLACI','FROST'],
+  fat:     ['BARY','DENSO','MASSI','PLUMBO'],
+  dust:    ['KONI','CINDER','FUMO','MOTE'],
+  diamond: ['CRYSTA','PRISMA','VITREO','CLARI'],
 };
-const CX_ROOTS = ['VANAD','GRAPHO','NEURO','AXON','LUMEN','QUARZ','FERRO','COBAL',
-  'TITANO','ZINCA','SULFA','NITRO','OXALO','CARBO','SILICO','PHOSPO','MAGNA',
-  'SODA','POTASO','MANGA','CHROMO','NICKA','CUPRO','ARGO'];
-const CX_SUFFIX = ['ITE','IUM','INE','IDE','ATE','ANE','OL','ARD'];
+// element / mineral stems — the name must read as periodic-table matter, never a substance
+const CX_ROOTS = ['VANAD','FERRO','COBALT','TITAN','ZINC','CARBON','SILIC','MAGNES',
+  'SODI','POTASS','MANGAN','CHROM','NICKEL','CUPR','ARGON','NEON','XENON','QUARTZ',
+  'LITHI','BORON','SULF','PHOSPH','CALCI','GRAPHE'];
+// mineral / element endings only (-ite -ium -ide -ate) — no drug-sounding -ine / -ol / -caine
+const CX_SUFFIX = ['ITE','IUM','IDE','ATE'];
 const KIND_SCHEME = { hot:'ember', cold:'frost', fat:'bronze', dust:'ash', diamond:'void' };
 const KIND_NATURE = { hot:'fire', cold:'ice', fat:'earth', dust:'none', diamond:'aether' };
 
