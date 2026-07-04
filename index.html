@@ -595,6 +595,39 @@
     font:600 9.5px/1.4 ui-monospace,monospace;letter-spacing:.06em;
     color:rgba(243,238,227,.5);margin:0 auto 14px;
   }
+  /* drip resume — chip + overlay */
+  .drip-resume-chip{
+    position:fixed;left:50%;bottom:18px;transform:translate(-50%,80px);
+    z-index:900;display:flex;align-items:center;gap:9px;
+    padding:11px 18px;border-radius:999px;cursor:pointer;
+    background:rgba(20,18,16,.94);border:1px solid rgba(240,150,45,.55);
+    color:#f3eee3;font:600 12px/1 ui-monospace,monospace;letter-spacing:.02em;
+    box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 18px rgba(240,150,45,.18);
+    opacity:0;transition:transform .35s cubic-bezier(.2,.9,.3,1),opacity .35s;
+    -webkit-appearance:none;appearance:none;
+  }
+  .drip-resume-chip.show{transform:translate(-50%,0);opacity:1}
+  .drip-resume-chip .drc-ic{color:var(--orange);font-size:15px}
+  .drip-resume-chip b{color:#ffb347}
+  .drip-resume-ov{
+    position:fixed;inset:0;z-index:1000;display:none;
+    align-items:flex-start;justify-content:center;overflow:auto;
+    padding:32px 16px;background:rgba(8,7,6,.86);backdrop-filter:blur(3px);
+  }
+  .drip-resume-ov.show{display:flex}
+  .drip-resume-inner{position:relative;width:100%;max-width:360px;margin:auto 0}
+  .drip-resume-close{
+    position:absolute;top:-6px;right:2px;z-index:2;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    background:rgba(20,18,16,.9);border:1px solid rgba(243,238,227,.2);
+    color:rgba(243,238,227,.7);font-size:15px;line-height:1;
+    -webkit-appearance:none;appearance:none;
+  }
+  .drip-resume-kick{
+    text-align:center;font:600 9.5px/1.4 ui-monospace,monospace;
+    letter-spacing:.14em;text-transform:uppercase;
+    color:rgba(240,150,45,.7);margin:0 0 10px;
+  }
   .cx-seal{
     position:relative;
     font:700 13px/1 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;
@@ -1888,6 +1921,7 @@ function paintReceipt(root) {
   if (r.compound) {
     const sb = $('sealBtn');
     if (sb) sb.onclick = () => shareCompound(r.compound);
+    saveDripRun(r.compound);   // cache so the earned compound survives a nat.fun round-trip
   }
 }
 
@@ -2258,8 +2292,8 @@ async function boot() {
   summon(rollSeriesBlock());
   setTimeout(() => { const b = $('boot'); if (b) b.style.display = 'none'; }, 320);
 
-  // Show drip teaser strip if campaign is active (fire-and-forget)
-  loadDripStrip();
+  // Show drip teaser strip if campaign is active, then offer to resume a saved run
+  loadDripStrip().then(maybeShowDripResume);
   wireTeaser();
 
   // periodic weather refresh in ready/feed/receipt states
@@ -2270,6 +2304,80 @@ async function boot() {
     paintWeather(w);
     if (STATE.step === 'ready') flash(chainGreeting(), traitGreeting());
   }, 60000);
+}
+
+// ── DRIP RUN PERSISTENCE ─────────────────────────────────────────────────
+// A saved run is a CONVENIENCE CACHE ONLY — never the authority. Its only job
+// is to not lose the player's earned compound when they leave to buy the ticker
+// and come back. The real earn/eligibility/amount is ALWAYS recomputed
+// server-side at claim time (Step 6/7); editing localStorage only fools your
+// own screen, never the payout.
+const DRIP_RUN_KEY = 'unatom_drip_run_v1';
+const DRIP_RUN_TTL = 72 * 3600e3;   // self-expire after 72h
+
+function saveDripRun(cx) {
+  if (!window.DRIP_LIVE || !cx) return;
+  try {
+    localStorage.setItem(DRIP_RUN_KEY, JSON.stringify({
+      v: 1, ts: Date.now(), block: STATE.block,
+      name: cx.name, decode: cx.decode, dominant: cx.dominant, secondary: cx.secondary,
+      distinct: cx.distinct, stable: cx.stable, reading: cx.reading,
+      drip: cx.drip, dripStep: cx.dripStep || 'unlock',
+    }));
+  } catch (e) { /* storage full / disabled — non-fatal */ }
+}
+
+function loadDripRun() {
+  try {
+    const raw = localStorage.getItem(DRIP_RUN_KEY);
+    if (!raw) return null;
+    const r = JSON.parse(raw);
+    if (!r || r.v !== 1 || !r.drip) return null;
+    if (Date.now() - r.ts > DRIP_RUN_TTL) { clearDripRun(); return null; } // stale
+    if (!dripWindowOpen()) { clearDripRun(); return null; }                // campaign closed
+    return r;   // shape is a superset of what compoundCardHTML() needs
+  } catch (e) { return null; }
+}
+
+function clearDripRun() { try { localStorage.removeItem(DRIP_RUN_KEY); } catch (e) {} }
+
+// On load (once DRIP_LIVE is known): auto-open on ?resume=1, else offer a chip.
+function maybeShowDripResume() {
+  if (!window.DRIP_LIVE) return;
+  const run = loadDripRun();
+  if (!run) return;
+  const params = new URLSearchParams(location.search);
+  if (params.get('resume') === '1') { openDripResume(run); return; }
+  showDripResumeChip(run);
+}
+
+function showDripResumeChip(run) {
+  if (document.getElementById('dripResumeChip')) return;
+  const chip = document.createElement('button');
+  chip.id = 'dripResumeChip';
+  chip.className = 'drip-resume-chip';
+  chip.innerHTML = '<span class="drc-ic">↩</span><span class="drc-txt">your compound · <b>' +
+    fmtNat(run.drip.nat) + ' ' + DRIP.token.symbol + '</b> waiting</span>';
+  chip.onclick = () => { haptic(12); openDripResume(run); };
+  document.body.appendChild(chip);
+  requestAnimationFrame(() => chip.classList.add('show'));
+}
+
+function openDripResume(run) {
+  let ov = document.getElementById('dripResumeOv');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'dripResumeOv'; ov.className = 'drip-resume-ov'; document.body.appendChild(ov); }
+  ov.innerHTML = '<div class="drip-resume-inner">' +
+    '<button class="drip-resume-close" id="dripResumeClose" aria-label="close">✕</button>' +
+    '<div class="drip-resume-kick">↩ you left this compound behind</div>' +
+    compoundCardHTML(run) +
+    '</div>';
+  ov.classList.add('show');
+  const sb = document.getElementById('sealBtn');
+  if (sb) sb.onclick = () => shareCompound(run);
+  const cl = document.getElementById('dripResumeClose');
+  if (cl) cl.onclick = () => ov.classList.remove('show');
+  const chip = document.getElementById('dripResumeChip');
+  if (chip) chip.remove();
 }
 
 async function loadDripStrip() {
