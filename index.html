@@ -2169,7 +2169,7 @@ function paintReceipt(root) {
     '</div>' +
     (r.compound ? compoundCardHTML(r.compound) : (window.DRIP_LIVE ? noCompoundHTML(r) : '')) +
     '<button class="pill again big" id="runAgain">RUN A NEW UNATOM</button>' +
-    '<button class="ghost" id="shareBtn">save my unatom →</button>' +
+    '<button class="ghost" id="shareBtn">share my unatom →</button>' +
     (window.DRIP_LIVE ? '<a class="ghost" href="/drip/?block=' + STATE.block + '" style="text-decoration:none;display:inline-block;color:rgba(240,150,45,.7)">✦ your element has a drip →</a>' : '') +
     '<a class="ghost" href="./catalog/" style="text-decoration:none;display:inline-block">see all 10,080 →</a>';
 
@@ -2752,18 +2752,29 @@ async function claimSubmit() {
   claimSet('queued', { btcVal: btc, test: !!res.test });
 }
 
+function shareClaim() {
+  const sym = DRIP.token.symbol || 'NAT';
+  const d = CLAIM.drip || { nat: 0 };
+  const amt = d.nat ? fmtNat(d.nat) + ' $' + sym : 'my $' + sym;
+  const text = 'just fused a UNATOM and claimed ' + amt + ' from the NATDRIP 🫡\n\ndigital matter — free & fair, while the pool lasts.\nrun a block → unatom.fun\n\n#UNATOM @takedmt';
+  const url = 'https://x.com/intent/tweet?text=' + encodeURIComponent(text);
+  try { window.open(url, '_blank', 'noopener'); } catch (e) {}
+}
+
 function claimRender() {
   const ov = document.getElementById('claimOv');
   if (!ov) return;
   const sym = DRIP.token.symbol;
+  const gate = DRIP.token.gate || 'TakeDMT';   // Solana gate token you HOLD (bought on nat.fun)
+  const gsym = DRIP.token.gateSym || 'DMT';    // its ticker → shown as $DMT
   const S = CLAIM.state;
   let body = '';
   if (S === 'intro') {
-    body = '<div class="cl-step">1 · confirm you hold ' + esc(sym) + '</div>' +
-      '<p class="cl-lead">connect your Solana wallet so we can confirm you hold <b>' + esc(sym) + '</b> on nat.fun. this only proves eligibility — no transaction, no approval.</p>' +
+    body = '<div class="cl-step">1 · confirm you hold $' + gsym + '</div>' +
+      '<p class="cl-lead">connect your Solana wallet so we can confirm you hold <b>' + gate + ' ($' + gsym + ')</b> from nat.fun. this only proves eligibility — no transaction, no approval.</p>' +
       '<button class="claim-btn" id="clConnect">CONNECT SOLANA WALLET</button>' +
       '<p class="cl-fine">you\'ll sign a message to prove the wallet is yours. gas-free.</p>' +
-      '<a class="cl-fine" style="display:inline-block;margin-top:10px;color:var(--cyan);text-decoration:none" href="' + NATFUN_TOKEN_URL + '" target="_blank" rel="noopener">✓ the only official $' + esc(sym) + ' · nat.fun ↗</a>';
+      '<a class="cl-fine" style="display:inline-block;margin-top:10px;color:var(--cyan);text-decoration:none" href="' + NATFUN_TOKEN_URL + '" target="_blank" rel="noopener">✓ the only official $' + gsym + ' · nat.fun ↗</a>';
   } else if (S === 'connecting') {
     body = '<div class="cl-spin"></div><p class="cl-lead">opening your wallet…</p>';
   } else if (S === 'signing') {
@@ -2788,9 +2799,9 @@ function claimRender() {
     }
   } else if (S === 'ineligible') {
     body = '<div class="cl-step">this wallet can\'t claim yet</div>' +
-      '<p class="cl-lead">the drip is only for <b>' + esc(sym) + '</b> holders. you need at least <b>1</b> \u2014 this wallet holds <b>' + (CLAIM.have || 0) + '</b>. grab one on <b>nat.fun</b> and you\'re in.</p>' +
-      '<p class="cl-fine">on nat.fun, each ' + esc(sym) + ' you own counts as one \u201cblock.\u201d it takes about a minute.</p>' +
-      '<a class="claim-btn" href="' + NATFUN_TOKEN_URL + '" target="_blank" rel="noopener">GET $' + esc(sym) + ' ON NAT.FUN \u2192</a>' +
+      '<p class="cl-lead">the drip is only for <b>$' + gsym + '</b> (' + gate + ') holders. you need at least <b>1</b> \u2014 this wallet holds <b>' + (CLAIM.have || 0) + '</b>. grab one on <b>nat.fun</b> and you\'re in.</p>' +
+      '<p class="cl-fine">on nat.fun, each $' + gsym + ' you own counts as one \u201cblock.\u201d it takes about a minute.</p>' +
+      '<a class="claim-btn" href="' + NATFUN_TOKEN_URL + '" target="_blank" rel="noopener">GET $' + gsym + ' ON NAT.FUN \u2192</a>' +
       '<p class="cl-fine">\u2713 official token only \u00b7 <span class="cl-mono">' + NATFUN_TOKEN_SHORT + '</span> \u00b7 use this button, don\'t search (avoid fakes)</p>' +
       '<button class="cl-ghost" id="clRetry">bought one \u2014 re-check</button>';
   } else if (S === 'eligible') {
@@ -2823,7 +2834,8 @@ function claimRender() {
       body = '<div class="cl-seal">✓</div>' +
         '<div class="cl-step">claim queued</div>' +
         '<p class="cl-lead">your <b>' + fmtNat(d.nat) + ' ' + esc(sym) + '</b> is locked to your wallet and will be inscribed to<br><span class="cl-mono">' + esc(CLAIM.btcVal || '') + '</span><br>when the drip settles. <b>you\'re all set — nothing else to do.</b> you can safely close this.</p>' +
-        '<button class="claim-btn" id="clDone">DONE</button>';
+        '<button class="claim-btn" id="clShare">SHARE ON X →</button>' +
+        '<button class="cl-ghost" id="clDone">done</button>';
     }
   } else if (S === 'closed') {
     body = '<div class="cl-step">claims aren\'t open yet</div>' +
@@ -2844,6 +2856,7 @@ function claimRender() {
   on('clConnect', claimConnect);
   on('clRetry', claimConnect);
   on('clSubmit', claimSubmit);
+  on('clShare', shareClaim);
   on('clDone', closeClaimPanel);
   const btc = document.getElementById('claimBtc');
   if (btc) btc.oninput = (e) => { CLAIM.btcVal = e.target.value; };
