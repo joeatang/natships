@@ -1798,8 +1798,8 @@ function bondSuffix(distinctCount, stable, hasDiamond) {
 const DRIP = {
   live:      false,                                    // local default (server can flip on)
   pool:      5000000000,                               // 5B NAT — HARD ceiling, cannot overspend
-  endpoint:  'https://drip.unatom.fun/api/drip/status',
-  api:       'https://drip.unatom.fun/api/drip',       // worker base: /verify, /claim
+  endpoint:  'https://natdrip.unatom.workers.dev/api/drip/status',
+  api:       'https://natdrip.unatom.workers.dev/api/drip',   // worker base: /verify, /claim
   window:    { startsAt: null, endsAt: null },         // ISO strings — the ~48h hustle
   windowHrs: 48,                                       // default duration if only startsAt is set
   // TWO tokens: you HOLD the Solana gate token (TakeDMT) to qualify; you RECEIVE

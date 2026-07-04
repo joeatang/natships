@@ -35,12 +35,12 @@ ALLOW_ORIGIN    = "*"
 [[d1_databases]]
 binding       = "DB"
 database_name = "natdrip"
-database_id   = "PASTE_D1_DATABASE_ID_HERE"
+database_id   = "6e2356ba-a5af-428b-83e2-39e18feb6cf1"
 
 # KV for per-IP rate limiting (create it, then paste the id here).
 [[kv_namespaces]]
 binding = "RL"
-id      = "PASTE_KV_NAMESPACE_ID_HERE"
+id      = "a1de181da34948ff82a743c0956d81f0"
 
 # SECRET (set via `wrangler secret put SOLANA_RPC`), never committed:
 #   SOLANA_RPC = your Solana JSON-RPC endpoint
