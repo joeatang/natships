@@ -2619,8 +2619,7 @@ function showDripResumeChip(run) {
   const chip = document.createElement('button');
   chip.id = 'dripResumeChip';
   chip.className = 'drip-resume-chip';
-  chip.innerHTML = '<span class="drc-ic">↩</span><span class="drc-txt">your compound · <b>' +
-    fmtNat(run.drip.nat) + ' ' + DRIP.token.symbol + '</b> waiting</span>';
+  chip.innerHTML = '<span class="drc-ic">↩</span><span class="drc-txt">your compound is waiting · <b>claim your ' + DRIP.token.symbol + '</b></span>';
   chip.onclick = () => { haptic(12); openDripResume(run); };
   document.body.appendChild(chip);
   requestAnimationFrame(() => chip.classList.add('show'));
@@ -2748,7 +2747,7 @@ async function claimSubmit() {
   if (res.notLive) { claimSet('closed'); return; }
   if (res.already) { claimSet('already', { drip: { nat: res.amount || (CLAIM.drip && CLAIM.drip.nat) || 0, tier: res.tier || (CLAIM.drip && CLAIM.drip.tier) } }); return; }
   if (!res.ok) { claimSet('eligible', { btcVal: btc, submitErr: res.error || 'could not queue — try again' }); return; }
-  try { const run = loadDripRun(); if (run) { run.dripStep = 'done'; localStorage.setItem(DRIP_RUN_KEY, JSON.stringify(run)); } } catch (e) {}
+  if (!res.test) clearDripRun();   // claimed for real — nothing left "waiting", so the resume chip won't nag
   claimSet('queued', { btcVal: btc, test: !!res.test });
 }
 
