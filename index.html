@@ -161,6 +161,16 @@
     margin:2px 0 4px;
     max-width:320px;
   }
+  .fuse-hint{
+    text-align:center;
+    font:600 11px/1.45 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.04em;
+    color:var(--muted);
+    margin:0 auto 12px;max-width:320px;
+  }
+  .fuse-hint b{color:var(--ink)}
+  .fuse-hint.ready{color:var(--orange)}
+  .fuse-hint.ready b{color:var(--orange)}
 
   /* === SPIN (invite players to cycle characters) === */
   .spin-chip{
@@ -1301,6 +1311,23 @@ function rollCrumbs() {
   }
 }
 
+// Live fusion coach for the feed step: tells the player exactly what it takes to
+// earn a claimable drip (3+ crumbs, mixed kinds) and how close they are. Only
+// surfaced when the drip is live so it never nags during plain play.
+function fusionHint() {
+  const sym = DRIP.token.symbol || 'NAT';
+  const n = STATE.belly.length;
+  const kinds = new Set(STATE.belly.map(c => c.kind)).size;
+  if (n === 0) return { ready: false, txt: 'pack <b>3+ crumbs</b> \u00b7 <b>mix different kinds</b> \u2192 fuse a claimable $' + sym + ' drip' };
+  const needCrumbs = Math.max(0, 3 - n);
+  const needKinds  = Math.max(0, 2 - kinds);
+  if (needCrumbs === 0 && needKinds === 0) return { ready: true, txt: '\u2713 ready to fuse \u2014 seal the block to lock your $' + sym + ' drip' };
+  const parts = [];
+  if (needCrumbs > 0) parts.push('<b>' + needCrumbs + '</b> more crumb' + (needCrumbs === 1 ? '' : 's'));
+  if (needKinds > 0)  parts.push('a <b>different</b> kind');
+  return { ready: false, txt: 'almost \u2014 add ' + parts.join(' + ') + ' to fuse your drip' };
+}
+
 function paintFeed(root) {
   const used = STATE.belly.reduce((s, c) => s + (c.kept ?? c.size), 0);
   const cap = 100;
@@ -1308,14 +1335,17 @@ function paintFeed(root) {
   const canKnock = STATE.belly.length > 0;
   // First entry shows the rule; later actions show reactions
   if (STATE.belly.length === 0 && STATE.rejected.length === 0) {
-    flash('tap a crumb to add it to the block.', 'pack until it feels right. big crumbs may bounce.');
+    if (window.DRIP_LIVE) flash('tap crumbs to pack the block.', 'pack 3+ crumbs of different kinds to fuse a claimable $' + (DRIP.token.symbol || 'NAT') + ' drip.');
+    else flash('tap a crumb to add it to the block.', 'pack until it feels right. big crumbs may bounce.');
   }
+  const fh = fusionHint();
 
   root.innerHTML =
     '<div class="cap-row">' +
       '<div class="cap-meta"><span>packing block</span><span class="num">' + STATE.belly.length + ' item' + (STATE.belly.length === 1 ? '' : 's') + '</span></div>' +
       '<div class="cap"><div class="cap-fill' + (pct >= 90 ? ' full' : '') + '" style="width:' + pct + '%"></div></div>' +
     '</div>' +
+    (window.DRIP_LIVE ? '<div class="fuse-hint' + (fh.ready ? ' ready' : '') + '">' + fh.txt + '</div>' : '') +
     '<div class="crumbs" id="crumbsRow"></div>' +
     '<button class="pill hot" id="goKnock" ' + (canKnock ? '' : 'disabled') + '>' +
       (canKnock ? 'TRY TO SEAL THE BLOCK →' : 'pick at least one crumb') +
