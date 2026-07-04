@@ -2069,6 +2069,20 @@ function compoundCardHTML(cx) {
     '</div>';
 }
 
+// Shown when a run finishes but produced NO compound while the drip is live —
+// so the player understands why there's no claim and exactly how to earn one,
+// instead of silently landing on "run a new unatom" and assuming it's broken.
+function noCompoundHTML(r) {
+  const sym = DRIP.token.symbol || 'NAT';
+  return '<div class="compound unstable" style="border-style:dashed">' +
+    '<div class="cx-kicker">⚗ the block didn\'t fuse</div>' +
+    '<div class="cx-name" style="font-size:26px">no compound this run</div>' +
+    '<div class="cx-note">a claimable <b>$' + esc(sym) + '</b> drip only drops when your inputs <b>fuse into a compound</b> — that needs <b>3+ crumbs of at least 2 different kinds</b>, settled clean. this run packed <b>' + (r.ate || 0) + '</b>.</div>' +
+    '<div class="cx-combine" style="color:var(--cyan)">pack fuller · mix 2+ kinds · run again to claim your $' + esc(sym) + '</div>' +
+    '<div class="cx-tag">no fusion · no claim · try again</div>' +
+    '</div>';
+}
+
 function diagnosis() {
   const u = STATE.unatom, w = STATE.weather;
   const lines = [];
@@ -2123,7 +2137,7 @@ function paintReceipt(root) {
       '<div class="diag">' + r.diag + '</div>' +
       '<div class="serial">§ ' + r.serial + '</div>' +
     '</div>' +
-    (r.compound ? compoundCardHTML(r.compound) : '') +
+    (r.compound ? compoundCardHTML(r.compound) : (window.DRIP_LIVE ? noCompoundHTML(r) : '')) +
     '<button class="pill again big" id="runAgain">RUN A NEW UNATOM</button>' +
     '<button class="ghost" id="shareBtn">save my unatom →</button>' +
     (window.DRIP_LIVE ? '<a class="ghost" href="/drip/?block=' + STATE.block + '" style="text-decoration:none;display:inline-block;color:rgba(240,150,45,.7)">✦ your element has a drip →</a>' : '') +
