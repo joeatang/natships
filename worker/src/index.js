@@ -178,8 +178,12 @@ export default {
 
     // ---- /status ----
     if (path.endsWith('/status') && request.method === 'GET') {
+      const active = windowOpen(env);
+      const ended = !!env.WINDOW_ENDS_AT && Date.now() > Date.parse(env.WINDOW_ENDS_AT);
+      const phase = active ? 'live' : (ended ? 'ended' : 'pre');   // pre = not launched, live = claimable, ended = over
       return json({
-        active: windowOpen(env),
+        active,
+        phase,
         window: { startsAt: env.WINDOW_STARTS_AT || null, endsAt: env.WINDOW_ENDS_AT || null },
         pool: Number(env.POOL || 0),
         symbol: env.SYMBOL || 'NAT',

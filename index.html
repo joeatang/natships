@@ -2695,14 +2695,31 @@ async function loadDripStrip() {
     const t = setTimeout(() => ctrl.abort(), 3000);
     const data = await fetch(DRIP.endpoint, {signal: ctrl.signal}).then(r => r.json());
     clearTimeout(t);
-    if (data.active === false) {
+    // phase: 'pre' (not launched — keep teaser), 'live' (claimable), 'ended' (hide)
+    const phase = data.phase || (data.active === true ? 'live' : 'pre');
+    if (phase === 'ended') {
       window.DRIP_LIVE = false;
       const strip = $('dripStrip');
       if (strip) strip.classList.add('ended');
       return;
     }
-    window.DRIP_LIVE = true;
+    if (phase === 'live') {
+      window.DRIP_LIVE = true;
+      setDripStripLive();
+      return;
+    }
+    // 'pre' — pre-launch: keep the static teaser visible, drip stays hidden
+    window.DRIP_LIVE = false;
   } catch(e) { /* silent — keep static teaser showing, honor local default */ }
+}
+
+// Swap the banner + teaser copy from "coming soon" to "it's live" during the window.
+function setDripStripLive() {
+  const sym = DRIP.token.symbol || 'NAT';
+  const t = $('dripStripTxt');
+  if (t) t.textContent = 'THE DRIP IS LIVE · RUN A BLOCK, CLAIM YOUR ' + sym;
+  const body = document.querySelector('.teaser-body');
+  if (body) body.innerHTML = 'every unatom you run is <b>digital matter</b> condensing out of a Bitcoin block. right now, running one <b>drips</b> real ' + sym + ' back to you — free, while it lasts.';
 }
 
 function wireTeaser() {
