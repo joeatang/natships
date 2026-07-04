@@ -1802,7 +1802,15 @@ const DRIP = {
   api:       'https://drip.unatom.fun/api/drip',       // worker base: /verify, /claim
   window:    { startsAt: null, endsAt: null },         // ISO strings — the ~48h hustle
   windowHrs: 48,                                       // default duration if only startsAt is set
-  token:     { symbol: 'NAT', mint: null, minHold: null }, // nat.fun Solana ticker + min-hold to unlock
+  // TWO tokens: you HOLD the Solana gate token (TakeDMT) to qualify; you RECEIVE
+  // the Bitcoin TAP token (DMT-NAT) as the drip. 'symbol' is the friendly display
+  // shorthand shown on the card ("your NAT"); 'tap' is the real settlement ticker.
+  token: {
+    symbol:  'NAT',                                              // display shorthand on the card
+    mint:    'w1YLQ6LnttB9cn7TrVtdnP3xAYYaLDHYuEHwZddVNAT',      // Solana gate token (TakeDMT) — holdings verify
+    minHold: null,                                               // min TakeDMT to unlock a claim (= "1 block") — TODO set at launch
+    tap:     'DMT-NAT',                                          // Bitcoin TAP reward ticker (what gets inscribed)
+  },
 };
 
 // Is the drip window currently open? Null bounds = always open (pre-launch/testing).
