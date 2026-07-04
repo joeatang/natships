@@ -644,6 +644,101 @@
     color:rgba(243,238,227,.3);margin-top:13px;
   }
 
+  /* === CLAIM CTA + PANEL (Step 6) === */
+  .cx-claim{
+    display:block;width:100%;margin:14px 0 0;
+    font:800 13px/1 ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;
+    color:#120d08;background:linear-gradient(180deg,#ffc45a,#f0962d);
+    border:none;border-radius:999px;padding:15px 22px;cursor:pointer;
+    box-shadow:0 6px 22px rgba(240,150,45,.32);
+    transition:transform .08s,box-shadow .15s;
+    -webkit-appearance:none;appearance:none;
+  }
+  .cx-claim:active{transform:scale(.97);box-shadow:0 3px 12px rgba(240,150,45,.28)}
+  .claim-ov{
+    position:fixed;inset:0;z-index:1100;display:none;
+    align-items:flex-start;justify-content:center;overflow:auto;
+    padding:32px 16px;background:rgba(8,7,6,.9);backdrop-filter:blur(4px);
+  }
+  .claim-ov.show{display:flex}
+  .claim-panel{
+    position:relative;width:100%;max-width:380px;margin:auto 0;
+    background:linear-gradient(180deg,#1a1613,#141110);
+    border:1px solid rgba(240,150,45,.28);border-radius:18px;
+    padding:26px 22px 24px;text-align:center;
+    box-shadow:0 24px 60px rgba(0,0,0,.55);
+  }
+  .claim-close{
+    position:absolute;top:12px;right:12px;z-index:2;
+    width:32px;height:32px;border-radius:50%;cursor:pointer;
+    background:rgba(20,18,16,.9);border:1px solid rgba(243,238,227,.2);
+    color:rgba(243,238,227,.7);font-size:14px;line-height:1;
+    -webkit-appearance:none;appearance:none;
+  }
+  .claim-hd{
+    font:700 9.5px/1.4 ui-monospace,monospace;letter-spacing:.2em;text-transform:uppercase;
+    color:rgba(240,150,45,.85);margin:0 0 16px;
+  }
+  .cl-step{
+    font:700 10px/1.4 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;
+    color:rgba(255,179,71,.9);margin:0 0 8px;
+  }
+  .cl-lead{font:400 13.5px/1.55 ui-sans-serif,system-ui,sans-serif;color:rgba(243,238,227,.82);margin:0 0 16px}
+  .cl-fine{font:400 11px/1.5 ui-monospace,monospace;color:rgba(243,238,227,.5);margin:10px 0 0}
+  .cl-mono{font:600 11.5px/1.5 ui-monospace,monospace;color:#ffb347;word-break:break-all}
+  .claim-btn{
+    display:block;width:100%;box-sizing:border-box;margin:6px 0 0;text-decoration:none;text-align:center;
+    font:800 13px/1 ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;
+    color:#120d08;background:linear-gradient(180deg,#ffc45a,#f0962d);
+    border:none;border-radius:999px;padding:15px 20px;cursor:pointer;
+    box-shadow:0 6px 22px rgba(240,150,45,.3);transition:transform .08s;
+    -webkit-appearance:none;appearance:none;
+  }
+  .claim-btn:active{transform:scale(.98)}
+  .cl-ghost{
+    display:block;width:100%;margin:12px 0 0;
+    font:600 11px/1 ui-monospace,monospace;letter-spacing:.08em;
+    background:transparent;color:rgba(243,238,227,.6);
+    border:none;cursor:pointer;text-decoration:underline;
+    -webkit-appearance:none;appearance:none;
+  }
+  .cl-amount{
+    display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+    font:700 15px/1 ui-monospace,monospace;color:rgba(243,238,227,.85);margin:6px 0 4px;
+  }
+  .cl-amount .cl-num{font-size:34px;color:#ffc45a;text-shadow:0 0 18px rgba(255,196,90,.3)}
+  .cl-input{
+    width:100%;box-sizing:border-box;margin:0 0 4px;
+    font:500 13px/1.4 ui-monospace,monospace;color:#f3eee3;
+    background:rgba(0,0,0,.3);border:1px solid rgba(243,238,227,.22);
+    border-radius:10px;padding:13px 14px;text-align:center;
+    -webkit-appearance:none;appearance:none;
+  }
+  .cl-input:focus{outline:none;border-color:rgba(240,150,45,.6)}
+  .cl-err{font:600 11px/1.4 ui-monospace,monospace;color:#ff7a6b;margin:4px 0 0}
+  .cl-warn{
+    font:500 11px/1.5 ui-sans-serif,system-ui,sans-serif;color:rgba(255,196,90,.9);
+    background:rgba(240,150,45,.08);border:1px solid rgba(240,150,45,.25);
+    border-radius:10px;padding:10px 12px;margin:10px 0 0;text-align:left;
+  }
+  .cl-warn a{color:#ffc45a}
+  .cl-check{
+    display:flex;align-items:flex-start;gap:8px;text-align:left;
+    font:500 12px/1.45 ui-sans-serif,system-ui,sans-serif;color:rgba(243,238,227,.75);
+    margin:12px 0 4px;cursor:pointer;
+  }
+  .cl-check input{margin-top:2px;accent-color:#f0962d}
+  .cl-seal{
+    font-size:40px;line-height:1;color:#7CFC9B;
+    text-shadow:0 0 22px rgba(124,252,155,.4);margin:0 0 6px;
+  }
+  .cl-spin{
+    width:34px;height:34px;margin:8px auto 16px;border-radius:50%;
+    border:3px solid rgba(240,150,45,.22);border-top-color:#f0962d;
+    animation:clspin .8s linear infinite;
+  }
+  @keyframes clspin{to{transform:rotate(360deg)}}
+
   /* === MARK === */
   .mark{
     font:600 9.5px/1 ui-monospace,monospace;
@@ -1704,6 +1799,7 @@ const DRIP = {
   live:      false,                                    // local default (server can flip on)
   pool:      5000000000,                               // 5B NAT — HARD ceiling, cannot overspend
   endpoint:  'https://drip.unatom.fun/api/drip/status',
+  api:       'https://drip.unatom.fun/api/drip',       // worker base: /verify, /claim
   window:    { startsAt: null, endsAt: null },         // ISO strings — the ~48h hustle
   windowHrs: 48,                                       // default duration if only startsAt is set
   token:     { symbol: 'NAT', mint: null, minHold: null }, // nat.fun Solana ticker + min-hold to unlock
@@ -1748,6 +1844,31 @@ function dripAmount(block) {
   const t = DRIP_TIERS[tier];
   return { tier, label: t.label, nat: t.nat };
 }
+
+// A1 — the CLAIMABLE amount is derived from the claimant's Solana wallet, NOT
+// the atom they rolled in-game (that stays illustrative). Ungrindable: a new
+// wallet means re-buying TAKEDMT. The server recomputes this identically at
+// claim time — the client value is display-only. Wallet → 1..SERIES index →
+// tier, so a lucky wallet can even land on a ceremonial/pin block.
+function walletDripIndex(pubkey) {
+  const [a] = UNATOM.cyrb128('UNATOM/DRIP/WALLET/v1/' + pubkey);
+  const size = UNATOM.SERIES_SIZE || 10080;
+  return 1 + (a >>> 0) % size;
+}
+function walletDrip(pubkey) {
+  return dripAmount(walletDripIndex(pubkey));
+}
+
+// BTC address gate for the DMT-NAT (TAP) payout. Format-validate only (v1) —
+// a wrong address only hurts the claimant, so we warn hard instead of blocking.
+function validBtcAddress(a) {
+  if (!a) return false;
+  a = a.trim();
+  if (/^bc1[a-z0-9]{25,87}$/i.test(a)) return true;              // segwit / taproot (bech32)
+  if (/^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(a)) return true;  // legacy / p2sh
+  return false;
+}
+function isTaproot(a) { return /^bc1p/i.test((a || '').trim()); }
 
 function fmtNat(n) {
   if (n >= 1e9) return (n / 1e9).toFixed(n % 1e9 ? 2 : 0) + 'B';
@@ -1850,7 +1971,8 @@ function compoundCardHTML(cx) {
       (window.DRIP_LIVE && cx.drip ?
         '<div class="cx-drip">this run earned <b>' + fmtNat(cx.drip.nat) + ' ' + DRIP.token.symbol + '</b>' +
           '<span class="cx-drip-tier ' + cx.drip.tier + '">' + cx.drip.label + '</span></div>' +
-        dripTrackerHTML(cx.dripStep || 'unlock') : '') +
+        dripTrackerHTML(cx.dripStep || 'unlock') +
+        '<button class="cx-claim" id="claimBtn">UNLOCK &amp; CLAIM →</button>' : '') +
       '<button class="cx-seal" id="sealBtn">SEAL THIS COMPOUND →</button>' +
       '<div class="cx-tag">compound · unofficial · not new supply</div>' +
     '</div>';
@@ -1921,6 +2043,7 @@ function paintReceipt(root) {
   if (r.compound) {
     const sb = $('sealBtn');
     if (sb) sb.onclick = () => shareCompound(r.compound);
+    wireClaimBtn(r.compound);  // Step 6 — UNLOCK & CLAIM opens the claim panel (DRIP_LIVE only)
     saveDripRun(r.compound);   // cache so the earned compound survives a nat.fun round-trip
   }
 }
@@ -2374,10 +2497,187 @@ function openDripResume(run) {
   ov.classList.add('show');
   const sb = document.getElementById('sealBtn');
   if (sb) sb.onclick = () => shareCompound(run);
+  wireClaimBtn(run);  // Step 6 — claim from the resumed compound too
   const cl = document.getElementById('dripResumeClose');
   if (cl) cl.onclick = () => ov.classList.remove('show');
   const chip = document.getElementById('dripResumeChip');
   if (chip) chip.remove();
+}
+
+// ============================================================================
+// CLAIM PANEL (Step 6) — Solana proves you hold TAKEDMT; DMT-NAT (TAP) pays out
+//
+// Flow: connect Solana → signMessage(nonce) → worker verifies TAKEDMT holdings
+//       → reveal THIS WALLET's drip (A1, ungrindable) → capture BTC TAP address
+//       → submit to worker (records to ledger; a separate secure signer inscribes
+//       the TAP batch — the worker NEVER holds the treasury key).
+// All amounts are display-only; the worker recomputes authoritatively at claim.
+// ============================================================================
+const CLAIM = { state: 'intro', pubkey: null, signed: null, drip: null };
+
+function claimSet(state, patch) {
+  Object.assign(CLAIM, patch || {});
+  CLAIM.state = state;
+  claimRender();
+}
+
+function openClaimPanel(cx) {
+  CLAIM.state = 'intro'; CLAIM.pubkey = null; CLAIM.signed = null; CLAIM.drip = null;
+  CLAIM.btcVal = ''; CLAIM.btcErr = null; CLAIM.confirmErr = false; CLAIM.submitErr = null; CLAIM.errMsg = null;
+  let ov = document.getElementById('claimOv');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'claimOv'; ov.className = 'claim-ov'; document.body.appendChild(ov); }
+  ov.classList.add('show');
+  claimRender();
+}
+function closeClaimPanel() { const ov = document.getElementById('claimOv'); if (ov) ov.classList.remove('show'); }
+
+async function signSolana(prov, pubkey) {
+  const nonce = 'UNATOM DRIP — claim your ' + DRIP.token.symbol + '\nwallet: ' + pubkey + '\nts: ' + Date.now();
+  const out = await prov.signMessage(new TextEncoder().encode(nonce), 'utf8');
+  const sig = out.signature || out;
+  const b64 = btoa(String.fromCharCode.apply(null, Array.from(sig)));
+  return { message: nonce, signature: b64 };
+}
+
+async function dripVerifyHoldings(pubkey, signed) {
+  try {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 6000);
+    const r = await fetch(DRIP.api + '/verify', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ pubkey, message: signed.message, signature: signed.signature }), signal: ctrl.signal,
+    });
+    clearTimeout(t);
+    if (!r.ok) return { notLive: true };
+    return await r.json();
+  } catch (e) { return { notLive: true }; }
+}
+
+async function dripSubmitClaim(payload) {
+  try {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch(DRIP.api + '/claim', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload), signal: ctrl.signal,
+    });
+    clearTimeout(t);
+    if (!r.ok) return { notLive: true };
+    return await r.json();
+  } catch (e) { return { notLive: true }; }
+}
+
+async function claimConnect() {
+  const prov = window.solana || (window.phantom && window.phantom.solana);
+  if (!prov) { claimSet('nowallet'); return; }
+  claimSet('connecting');
+  let pubkey;
+  try { const res = await prov.connect(); pubkey = res.publicKey.toString(); }
+  catch (e) { claimSet('intro'); return; }        // user dismissed
+  CLAIM.pubkey = pubkey;
+  claimSet('signing');
+  let signed;
+  try { signed = await signSolana(prov, pubkey); }
+  catch (e) { claimSet('intro'); return; }         // rejected signature
+  CLAIM.signed = signed;
+  claimSet('verifying');
+  const res = await dripVerifyHoldings(pubkey, signed);
+  if (res.notLive) { claimSet('closed'); return; }
+  if (!res.eligible) { claimSet('ineligible', { have: res.blockCount || 0, need: res.minHold || DRIP.token.minHold }); return; }
+  CLAIM.drip = walletDrip(pubkey);
+  claimSet('eligible');
+}
+
+async function claimSubmit() {
+  const btc = ((document.getElementById('claimBtc') || {}).value || '').trim();
+  const confirmed = !!(document.getElementById('claimConfirm') || {}).checked;
+  if (!validBtcAddress(btc)) { claimSet('eligible', { btcVal: btc, btcErr: 'that doesn\'t look like a Bitcoin address', confirmErr: false, submitErr: null }); return; }
+  if (!confirmed) { claimSet('eligible', { btcVal: btc, btcErr: null, confirmErr: true, submitErr: null }); return; }
+  claimSet('submitting', { btcVal: btc });
+  const res = await dripSubmitClaim({ pubkey: CLAIM.pubkey, message: CLAIM.signed.message, signature: CLAIM.signed.signature, btc: btc, index: walletDripIndex(CLAIM.pubkey) });
+  if (res.notLive) { claimSet('closed'); return; }
+  if (!res.ok) { claimSet('eligible', { btcVal: btc, submitErr: res.error || 'could not queue — try again' }); return; }
+  try { const run = loadDripRun(); if (run) { run.dripStep = 'done'; localStorage.setItem(DRIP_RUN_KEY, JSON.stringify(run)); } } catch (e) {}
+  claimSet('queued', { btcVal: btc });
+}
+
+function claimRender() {
+  const ov = document.getElementById('claimOv');
+  if (!ov) return;
+  const sym = DRIP.token.symbol;
+  const S = CLAIM.state;
+  let body = '';
+  if (S === 'intro') {
+    body = '<div class="cl-step">1 · confirm you hold ' + esc(sym) + '</div>' +
+      '<p class="cl-lead">connect your Solana wallet so we can confirm you hold <b>' + esc(sym) + '</b> on nat.fun. this only proves eligibility — no transaction, no approval.</p>' +
+      '<button class="claim-btn" id="clConnect">CONNECT SOLANA WALLET</button>' +
+      '<p class="cl-fine">you\'ll sign a message to prove the wallet is yours. gas-free.</p>';
+  } else if (S === 'connecting') {
+    body = '<div class="cl-spin"></div><p class="cl-lead">opening your wallet…</p>';
+  } else if (S === 'signing') {
+    body = '<div class="cl-spin"></div><p class="cl-lead">approve the signature in your wallet to prove it\'s yours.</p>';
+  } else if (S === 'verifying') {
+    body = '<div class="cl-spin"></div><p class="cl-lead">checking your ' + esc(sym) + ' holdings…</p>';
+  } else if (S === 'nowallet') {
+    body = '<div class="cl-step">no Solana wallet found</div>' +
+      '<p class="cl-lead">you need a Solana wallet (Phantom or Solflare) that holds your ' + esc(sym) + ' from nat.fun.</p>' +
+      '<a class="claim-btn" href="https://phantom.app/" target="_blank" rel="noopener">GET PHANTOM →</a>' +
+      '<button class="cl-ghost" id="clRetry">I have one — retry</button>';
+  } else if (S === 'ineligible') {
+    body = '<div class="cl-step">not enough ' + esc(sym) + ' yet</div>' +
+      '<p class="cl-lead">this wallet holds <b>' + (CLAIM.have || 0) + '</b> block' + ((CLAIM.have === 1) ? '' : 's') +
+        '. you need at least <b>' + (CLAIM.need || 1) + '</b> to unlock a claim.</p>' +
+      '<a class="claim-btn" href="https://nat.fun/" target="_blank" rel="noopener">GET A BLOCK ON NAT.FUN →</a>' +
+      '<button class="cl-ghost" id="clRetry">bought one — re-check</button>';
+  } else if (S === 'eligible') {
+    const d = CLAIM.drip || { nat: 0, label: '', tier: 'common' };
+    const tp = isTaproot(CLAIM.btcVal || '');
+    body = '<div class="cl-step">2 · your wallet\'s drip</div>' +
+      '<div class="cl-amount"><span class="cl-num">' + fmtNat(d.nat) + '</span> ' + esc(sym) +
+        '<span class="cx-drip-tier ' + d.tier + '">' + d.label + '</span></div>' +
+      '<p class="cl-fine">eligibility confirmed ✓ — this is your wallet\'s draw, fixed and yours alone.</p>' +
+      '<div class="cl-step" style="margin-top:16px">3 · where to send your ' + esc(sym) + '</div>' +
+      '<input class="cl-input" id="claimBtc" placeholder="your Bitcoin (TAP) wallet address" value="' + esc(CLAIM.btcVal || '') + '" autocomplete="off" spellcheck="false">' +
+      (CLAIM.btcErr ? '<div class="cl-err">' + esc(CLAIM.btcErr) + '</div>' : '') +
+      (CLAIM.btcVal && validBtcAddress(CLAIM.btcVal) && !tp ? '<div class="cl-warn">⚠ ordinals/TAP tokens prefer a <b>taproot</b> address (bc1p…). double-check this wallet supports TAP.</div>' : '') +
+      '<div class="cl-warn">⚠ use a <b>TAP / ordinals wallet</b> (e.g. UniSat) — <b>never an exchange address</b>, or your ' + esc(sym) + ' can be lost. <a href="https://unisat.io/" target="_blank" rel="noopener">get UniSat →</a></div>' +
+      '<label class="cl-check"><input type="checkbox" id="claimConfirm"' + (CLAIM.confirmErr ? '' : '') + '> this is my own TAP-compatible Bitcoin address.</label>' +
+      (CLAIM.confirmErr ? '<div class="cl-err">please confirm the address is yours.</div>' : '') +
+      (CLAIM.submitErr ? '<div class="cl-err">' + esc(CLAIM.submitErr) + '</div>' : '') +
+      '<button class="claim-btn" id="clSubmit">CLAIM ' + fmtNat(d.nat) + ' ' + esc(sym) + ' →</button>';
+  } else if (S === 'submitting') {
+    body = '<div class="cl-spin"></div><p class="cl-lead">queuing your claim…</p>';
+  } else if (S === 'queued') {
+    const d = CLAIM.drip || { nat: 0 };
+    body = '<div class="cl-seal">✓</div>' +
+      '<div class="cl-step">claim queued</div>' +
+      '<p class="cl-lead">your <b>' + fmtNat(d.nat) + ' ' + esc(sym) + '</b> is locked to your wallet and will be inscribed to<br><span class="cl-mono">' + esc(CLAIM.btcVal || '') + '</span><br>during settlement. no need to keep this open.</p>' +
+      '<button class="claim-btn" id="clDone">DONE</button>';
+  } else if (S === 'closed') {
+    body = '<div class="cl-step">claims aren\'t open yet</div>' +
+      '<p class="cl-lead">the drip claim window isn\'t live right now. your earned compound is saved — come back when it opens.</p>' +
+      '<button class="claim-btn" id="clDone">GOT IT</button>';
+  } else if (S === 'error') {
+    body = '<div class="cl-step">something hiccuped</div>' +
+      '<p class="cl-lead">' + esc(CLAIM.errMsg || 'try again in a moment.') + '</p>' +
+      '<button class="claim-btn" id="clRetry">TRY AGAIN</button>';
+  }
+  ov.innerHTML = '<div class="claim-panel">' +
+    '<button class="claim-close" id="clClose" aria-label="close">✕</button>' +
+    '<div class="claim-hd">⚗ NAT DRIP · CLAIM</div>' +
+    body + '</div>';
+  // wire
+  const on = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  on('clClose', closeClaimPanel);
+  on('clConnect', claimConnect);
+  on('clRetry', claimConnect);
+  on('clSubmit', claimSubmit);
+  on('clDone', closeClaimPanel);
+  const btc = document.getElementById('claimBtc');
+  if (btc) btc.oninput = (e) => { CLAIM.btcVal = e.target.value; };
+}
+
+function wireClaimBtn(cx) {
+  const cb = document.getElementById('claimBtn');
+  if (cb) cb.onclick = () => { haptic(18); openClaimPanel(cx); };
 }
 
 async function loadDripStrip() {
