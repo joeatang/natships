@@ -2090,8 +2090,8 @@ function compoundCardHTML(cx) {
       '<div class="cx-combine">' + cx.distinct.join(' + ') + '</div>' +
       '<div class="cx-note">' + esc(compoundNote(cx)) + '</div>' +
       (window.DRIP_LIVE && cx.drip ?
-        '<div class="cx-drip">this run earned <b>' + fmtNat(cx.drip.nat) + ' ' + DRIP.token.symbol + '</b>' +
-          '<span class="cx-drip-tier ' + cx.drip.tier + '">' + cx.drip.label + '</span></div>' +
+        '<div class="cx-drip">✦ you fused a <b>claimable ' + DRIP.token.symbol + ' drip</b>' +
+          '<span style="display:block;font-size:11px;line-height:1.4;opacity:.7;margin-top:5px;font-weight:400">your exact amount is set by your wallet — revealed when you claim</span></div>' +
         dripTrackerHTML(cx.dripStep || 'unlock') +
         '<button class="cx-claim" id="claimBtn">UNLOCK &amp; CLAIM →</button>' : '') +
       '<button class="cx-seal" id="sealBtn">SEAL THIS COMPOUND →</button>' +
@@ -2711,7 +2711,7 @@ async function dripSubmitClaim(payload) {
     let data = {};
     try { data = await r.json(); } catch (e) {}
     if (data && data.notLive) return { notLive: true };
-    if (!r.ok) return { ok: false, error: data.error || 'couldn\'t queue — try again in a moment.' };
+    if (!r.ok) return Object.assign({ ok: false, error: 'couldn\'t queue — try again in a moment.' }, data);
     return data;
   } catch (e) { return { ok: false, error: 'network hiccup — check your connection and try again.' }; }
 }
@@ -2746,6 +2746,7 @@ async function claimSubmit() {
   claimSet('submitting', { btcVal: btc });
   const res = await dripSubmitClaim({ pubkey: CLAIM.pubkey, message: CLAIM.signed.message, signature: CLAIM.signed.signature, btc: btc, index: walletDripIndex(CLAIM.pubkey), preview: window.DRIP_PREVIEW || undefined });
   if (res.notLive) { claimSet('closed'); return; }
+  if (res.already) { claimSet('already', { drip: { nat: res.amount || (CLAIM.drip && CLAIM.drip.nat) || 0, tier: res.tier || (CLAIM.drip && CLAIM.drip.tier) } }); return; }
   if (!res.ok) { claimSet('eligible', { btcVal: btc, submitErr: res.error || 'could not queue — try again' }); return; }
   try { const run = loadDripRun(); if (run) { run.dripStep = 'done'; localStorage.setItem(DRIP_RUN_KEY, JSON.stringify(run)); } } catch (e) {}
   claimSet('queued', { btcVal: btc, test: !!res.test });
@@ -2836,6 +2837,13 @@ function claimRender() {
         '<button class="claim-btn" id="clShare">SHARE ON X →</button>' +
         '<button class="cl-ghost" id="clDone">done</button>';
     }
+  } else if (S === 'already') {
+    const d = CLAIM.drip || { nat: 0 };
+    body = '<div class="cl-seal">✓</div>' +
+      '<div class="cl-step">already claimed ✓</div>' +
+      '<p class="cl-lead">this wallet already claimed its drip' + (d.nat ? ' of <b>' + fmtNat(d.nat) + ' ' + sym + '</b>' : '') + '. the drip is <b>one claim per wallet</b> — you\'re all set, nothing more to do. (run as many UNATOMs as you like for fun — the reward is one per wallet.)</p>' +
+      '<button class="claim-btn" id="clShare">SHARE ON X →</button>' +
+      '<button class="cl-ghost" id="clDone">done</button>';
   } else if (S === 'closed') {
     body = '<div class="cl-step">claims aren\'t open yet</div>' +
       '<p class="cl-lead">the drip claim window isn\'t live right now. your earned compound is saved — come back when it opens.</p>' +
