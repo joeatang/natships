@@ -198,6 +198,7 @@ export default {
     const { pubkey, message, signature } = payload || {};
     const seriesSize = Number(env.SERIES_SIZE || 10080);
     const minHold = Number(env.MIN_HOLD || 0);
+    const blockTokens = Number(env.BLOCK_TOKENS || 167.619733);   // 1 nat.fun block, in TakeDMT (UI units)
 
     // ---- /verify ----
     if (path.endsWith('/verify')) {
@@ -208,7 +209,7 @@ export default {
       catch (e) { return json({ error: 'could not check holdings — try again' }, env, 502); }
       const eligible = minHold > 0 ? balance >= minHold : balance > 0;
       const drip = walletDrip(pubkey, seriesSize);
-      return json({ eligible, balance, minHold, blockCount: Math.floor(balance), drip: eligible ? drip : null }, env);
+      return json({ eligible, balance, minHold, blockCount: Math.floor(balance / blockTokens), drip: eligible ? drip : null }, env);
     }
 
     // ---- /claim ----

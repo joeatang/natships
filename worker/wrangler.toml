@@ -23,7 +23,8 @@ compatibility_date = "2024-09-23"
 ACTIVE          = "false"
 POOL            = "5000000000"                                   # 5,000,000,000 DMT-NAT hard ceiling
 MINT            = "w1YLQ6LnttB9cn7TrVtdnP3xAYYaLDHYuEHwZddVNAT"  # TakeDMT (Solana gate token)
-MIN_HOLD        = "0"                                            # UI-unit min balance to unlock; 0 = any positive balance
+MIN_HOLD        = "167"                                          # UI-unit min balance to unlock ~= 1 nat.fun block (~$2.14); filters $0 dust wallets. 0 = any positive
+BLOCK_TOKENS    = "167.619733"                                   # 1 nat.fun block, in TakeDMT UI units (for blockCount display)
 SERIES_SIZE     = "10080"
 SYMBOL          = "NAT"
 TAP_TICKER      = "DMT-NAT"
