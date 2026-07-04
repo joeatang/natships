@@ -524,7 +524,13 @@
     font:800 clamp(24px,7.4vw,32px)/1 ui-monospace,SF Mono,Menlo,monospace;
     letter-spacing:.04em;color:var(--orange);
     text-shadow:0 0 24px rgba(240,150,45,.5);
-    margin:2px 0 12px;
+    margin:2px 0 4px;
+  }
+  .cx-decode{
+    position:relative;
+    font:600 10px/1.3 ui-monospace,SF Mono,Menlo,monospace;
+    letter-spacing:.14em;color:rgba(240,150,45,.6);
+    margin:0 0 12px;
   }
   .compound.unstable .cx-name{animation:cxFlicker 3.2s steps(1) infinite}
   @keyframes cxFlicker{0%,90%,100%{opacity:1}92%{opacity:.5}94%{opacity:1}96%{opacity:.72}}
@@ -1559,15 +1565,48 @@ const KIND_PREFIX = {
   dust:    ['KONI','CINDER','FUMO','MOTE'],
   diamond: ['CRYSTA','PRISMA','VITREO','CLARI'],
 };
-// roots = real Bitcoin block / tx fields — the SAME vocabulary the UNATOM elements map to
-// (Hash, Merkle, Nonce, Bits, Difficulty, Chainwork, Witness, Locktime, Sequence, Coinbase...)
-const CX_ROOTS = ['HASH','MERKL','NONCE','BIT','DIFF','CHAIN','WITN','LOCK','SEQ','COINB',
-  'VERS','VALUE','SCRIPT','HEADR','WEIGHT','HEIGHT','MEDIAN','STRIP','SIZE','TIME',
-  'VOUT','VIN','TXID','FEE'];
-// mineral / element endings only (-ite -ium -ide -ate) — no drug-sounding -ine / -ol / -caine
-const CX_SUFFIX = ['ITE','IUM','IDE','ATE'];
+// DMT nomenclature — NON-ARBITRARY. The compound ROOT is READ from the atom's own
+// Bitcoin field (u.sym), never rolled. The chain decides what matter you hold; the
+// name is a legible readout of it. sym -> { root: compound stem, field: human name }
+const FIELD_MATTER = {
+  // block data
+  Ha:{root:'HASH',   field:'hash'},        S: {root:'SIZE',   field:'size'},
+  Se:{root:'STRIP',  field:'stripped size'},Wt:{root:'WEIGHT', field:'weight'},
+  Ht:{root:'HEIGHT', field:'height'},      Vn:{root:'VERS',   field:'version'},
+  Vx:{root:'VHEX',   field:'version hex'}, Mt:{root:'MERKL',  field:'merkle root'},
+  T: {root:'TIME',   field:'time'},        Me:{root:'MEDIAN', field:'median time'},
+  Ne:{root:'NONCE',  field:'nonce'},       B: {root:'BITS',   field:'bits'},
+  Dy:{root:'DIFF',   field:'difficulty'},  Ck:{root:'CHAIN',  field:'chainwork'},
+  Nt:{root:'TALLY',  field:'tx count'},
+  // transaction
+  He:{root:'HEADR',  field:'header'},      Tx:{root:'TXID',   field:'txid'},
+  Hs:{root:'TXHASH', field:'tx hash'},     Si:{root:'TXSIZE', field:'tx size'},
+  Ve:{root:'TXVERS', field:'tx version'},  We:{root:'WITN',   field:'witness'},
+  Vi:{root:'VIN',    field:'v-in'},        Le:{root:'LOCK',   field:'locktime'},
+  Be:{root:'CONFIRM',field:'confirmed height'},
+  // input
+  A: {root:'ADDR',   field:'address'},     Hx:{root:'HEX',    field:'hex'},
+  Sq:{root:'SEQ',    field:'sequence'},    Ts:{root:'STAMP',  field:'timestamp'},
+  // output
+  Va:{root:'VALUE',  field:'value'},       N: {root:'VOUT',   field:'output index'},
+  As:{root:'OUTADR', field:'output address'},H:{root:'OUTHT',  field:'output height'},
+  Rs:{root:'SCRIPT', field:'scriptpubkey'},Ty:{root:'OUTTY',  field:'output type'},
+  Ws:{root:'WSCRIPT',field:'witness script'},
+  // extra
+  Bf:{root:'FEE',    field:'block fee'},   Ie:{root:'CBTAG',  field:'is-coinbase'},
+  Ce:{root:'COINB',  field:'coinbase'},
+};
 const KIND_SCHEME = { hot:'ember', cold:'frost', fat:'bronze', dust:'ash', diamond:'void' };
 const KIND_NATURE = { hot:'fire', cold:'ice', fat:'earth', dust:'none', diamond:'aether' };
+const KIND_WORD   = { hot:'hot', cold:'cold', fat:'dense', dust:'fine', diamond:'crystalline' };
+
+// bond suffix — READS the reaction outcome (stability + how many kinds fused)
+function bondSuffix(distinctCount, stable, hasDiamond) {
+  if (!stable)            return { s:'YL',  word:'radical · drifting' };
+  if (hasDiamond)         return { s:'IUM', word:'pure' };
+  if (distinctCount >= 3) return { s:'ATE', word:'complex' };
+  return { s:'IDE', word:'bonded' };
+}
 
 function deriveCompound(u, verdict) {
   const passed = verdict.startsWith('NAT made it') || verdict.startsWith('UNAT settled');
@@ -1590,18 +1629,25 @@ function deriveCompound(u, verdict) {
   const dominant = [...distinct].sort((x,y) => counts[y] - counts[x])[0];
   const secondary = distinct.find(k => k !== dominant) || dominant;
 
-  const name = pick(KIND_PREFIX[dominant] || KIND_PREFIX.hot) + pick(CX_ROOTS) + pick(CX_SUFFIX);
   const stable = STATE.leaks === 0;
+  const hasDiamond = distinct.includes('diamond');
+  // ROOT is read from the atom's own field — the chain decided it, not a dice roll
+  const matter = FIELD_MATTER[u.sym] || { root:'MATTER', field:'matter' };
+  const bond = bondSuffix(distinct.length, stable, hasDiamond);
+  const prefix = pick(KIND_PREFIX[dominant] || KIND_PREFIX.hot);
+  const name = prefix + matter.root + bond.s;
+  // human-readable decode, printed under the name so the nomenclature is legible
+  const decode = (KIND_WORD[dominant] || 'charged') + ' · ' + matter.field + ' · ' + bond.word;
 
   // the compound "reading" — recolor the base unatom (visual, reuses the engine)
   const reading = Object.assign({}, u, {
     scheme:   KIND_SCHEME[dominant] || u.scheme,
     nature:   KIND_NATURE[secondary] || u.nature,
-    thirdEye: distinct.includes('diamond') ? 'aperture' : (u.thirdEye || 'open'),
+    thirdEye: hasDiamond ? 'aperture' : (u.thirdEye || 'open'),
     mood:     stable ? 'blissed' : 'glitch',
   });
 
-  return { name, dominant, secondary, distinct: sorted, stable, reading };
+  return { name, decode, dominant, secondary, distinct: sorted, stable, reading };
 }
 
 function compoundNote(cx) {
@@ -1621,6 +1667,7 @@ function compoundCardHTML(cx) {
       '<div class="cx-kicker">⚗ the block returned a compound</div>' +
       '<div class="cx-art">' + UNATOM.svg(cx.reading) + '</div>' +
       '<div class="cx-name">' + esc(cx.name) + '</div>' +
+      '<div class="cx-decode">' + esc(cx.decode) + '</div>' +
       '<div class="cx-status ' + (cx.stable ? 'settled' : 'unstable') + '">' +
         '<span class="d"></span>' + (cx.stable ? 'settled · six blinks' : 'unstable · leaked') +
       '</div>' +
