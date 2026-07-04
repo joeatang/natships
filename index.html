@@ -2713,11 +2713,11 @@ function claimRender() {
       '<a class="claim-btn" href="https://phantom.app/" target="_blank" rel="noopener">GET PHANTOM →</a>' +
       '<button class="cl-ghost" id="clRetry">I have one — retry</button>';
   } else if (S === 'ineligible') {
-    body = '<div class="cl-step">not enough ' + esc(sym) + ' yet</div>' +
-      '<p class="cl-lead">this wallet holds <b>' + (CLAIM.have || 0) + '</b> block' + ((CLAIM.have === 1) ? '' : 's') +
-        '. you need at least <b>' + (CLAIM.need || 1) + '</b> to unlock a claim.</p>' +
-      '<a class="claim-btn" href="https://nat.fun/" target="_blank" rel="noopener">GET A BLOCK ON NAT.FUN →</a>' +
-      '<button class="cl-ghost" id="clRetry">bought one — re-check</button>';
+    body = '<div class="cl-step">this wallet can\'t claim yet</div>' +
+      '<p class="cl-lead">the drip is only for <b>' + esc(sym) + '</b> holders. you need at least <b>1</b> \u2014 this wallet holds <b>' + (CLAIM.have || 0) + '</b>. grab one on <b>nat.fun</b> and you\'re in.</p>' +
+      '<p class="cl-fine">on nat.fun, each ' + esc(sym) + ' you own counts as one \u201cblock.\u201d it takes about a minute.</p>' +
+      '<a class="claim-btn" href="https://nat.fun/" target="_blank" rel="noopener">GET ' + esc(sym) + ' ON NAT.FUN \u2192</a>' +
+      '<button class="cl-ghost" id="clRetry">bought one \u2014 re-check</button>';
   } else if (S === 'eligible') {
     const d = CLAIM.drip || { nat: 0, label: '', tier: 'common' };
     const tp = isTaproot(CLAIM.btcVal || '');
@@ -2726,6 +2726,7 @@ function claimRender() {
         '<span class="cx-drip-tier ' + d.tier + '">' + d.label + '</span></div>' +
       '<p class="cl-fine">eligibility confirmed ✓ — this is your wallet\'s draw, fixed and yours alone.</p>' +
       '<div class="cl-step" style="margin-top:16px">3 · where to send your ' + esc(sym) + '</div>' +
+      '<p class="cl-fine">your ' + esc(sym) + ' arrives on <b>Bitcoin</b> (as a TAP ordinal) — a different chain from the Solana wallet you just connected. that\'s why we need a <b>Bitcoin taproot</b> address (starts with <b>bc1p</b>) below.</p>' +
       '<input class="cl-input" id="claimBtc" placeholder="your Bitcoin (TAP) wallet address" value="' + esc(CLAIM.btcVal || '') + '" autocomplete="off" spellcheck="false">' +
       (CLAIM.btcErr ? '<div class="cl-err">' + esc(CLAIM.btcErr) + '</div>' : '') +
       (CLAIM.btcVal && validBtcAddress(CLAIM.btcVal) && !tp ? '<div class="cl-warn">⚠ ordinals/TAP tokens prefer a <b>taproot</b> address (bc1p…). double-check this wallet supports TAP.</div>' : '') +
@@ -2746,7 +2747,7 @@ function claimRender() {
     } else {
       body = '<div class="cl-seal">✓</div>' +
         '<div class="cl-step">claim queued</div>' +
-        '<p class="cl-lead">your <b>' + fmtNat(d.nat) + ' ' + esc(sym) + '</b> is locked to your wallet and will be inscribed to<br><span class="cl-mono">' + esc(CLAIM.btcVal || '') + '</span><br>during settlement. no need to keep this open.</p>' +
+        '<p class="cl-lead">your <b>' + fmtNat(d.nat) + ' ' + esc(sym) + '</b> is locked to your wallet and will be inscribed to<br><span class="cl-mono">' + esc(CLAIM.btcVal || '') + '</span><br>when the drip settles. <b>you\'re all set — nothing else to do.</b> you can safely close this.</p>' +
         '<button class="claim-btn" id="clDone">DONE</button>';
     }
   } else if (S === 'closed') {
