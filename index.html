@@ -554,6 +554,23 @@
     font:italic 13px/1.55 Georgia,serif;color:rgba(243,238,227,.64);
     max-width:280px;margin:0 auto 16px;
   }
+  .cx-drip{
+    position:relative;
+    display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+    margin:0 auto 16px;max-width:300px;padding:12px 16px;
+    border:1px solid rgba(240,150,45,.42);border-radius:14px;
+    background:rgba(240,150,45,.09);
+    font:600 13px/1.4 ui-monospace,monospace;letter-spacing:.03em;
+    color:rgba(240,150,45,.82);
+  }
+  .cx-drip b{font-size:17px;color:#ffb347;letter-spacing:.02em}
+  .cx-drip-tier{
+    font:700 8.5px/1 ui-monospace,monospace;letter-spacing:.16em;
+    padding:4px 9px;border-radius:999px;
+    border:1px solid rgba(240,150,45,.5);color:rgba(240,150,45,.9);
+  }
+  .cx-drip-tier.rare{border-color:rgba(120,200,255,.6);color:#78c8ff}
+  .cx-drip-tier.legendary{border-color:rgba(255,196,90,.75);color:#ffc45a;box-shadow:0 0 12px rgba(255,196,90,.25)}
   .cx-seal{
     position:relative;
     font:700 13px/1 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;
@@ -1608,6 +1625,54 @@ function bondSuffix(distinctCount, stable, hasDiamond) {
   return { s:'IDE', word:'bonded' };
 }
 
+// ============================================================================
+// NAT DRIP — deterministic reward READ FROM THE BLOCK
+//
+// The fusion is the KEY (you must achieve a valid compound to unlock a claim).
+// The BLOCK decides the SIZE of the prize: the same height always drips the
+// same NAT. Fully recomputable server-side from the height alone — no dice,
+// ungrindable. Pool ceiling = 5,000,000,000 NAT (hard cap, cannot overspend).
+//
+// Tier split targets ~70/22/7/1 across the 10,080 series (Monte-Carlo verified).
+// Ceremonial BLAST-OFF + the scarcest homage pins always drip LEGENDARY — the
+// treasure-hunt blocks. Any other pin drips at least RARE.
+// ============================================================================
+const DRIP_POOL = 5e9;
+const DRIP_TIERS = {
+  common:    { nat: 5e6,   label:'COMMON'    },
+  uncommon:  { nat: 15e6,  label:'UNCOMMON'  },
+  rare:      { nat: 50e6,  label:'RARE'      },
+  legendary: { nat: 200e6, label:'LEGENDARY' },
+};
+const DRIP_LEGENDARY_PINS = new Set(['SATOSHI','HAL','HERO','FROG','BLOCK_RUNNER','MEMEMOSES','PUNK']);
+
+function dripTier(block) {
+  const h = Number(block);
+  if (h === UNATOM.BLAST_OFF) return 'legendary';            // ceremonial finale
+  const pin = UNATOM.pinFor(h);
+  if (pin && DRIP_LEGENDARY_PINS.has(pin.key)) return 'legendary'; // scarce homages
+  if (pin) return 'rare';                                    // any other homage
+  const [a,b,c,d] = UNATOM.cyrb128('UNATOM/DRIP/v1/' + h);    // deterministic roll
+  const r = UNATOM.sfc32(a,b,c,d)();
+  if (r < 0.70) return 'common';
+  if (r < 0.92) return 'uncommon';
+  if (r < 0.99) return 'rare';
+  return 'legendary';
+}
+
+function dripAmount(block) {
+  const tier = dripTier(block);
+  const t = DRIP_TIERS[tier];
+  return { tier, label: t.label, nat: t.nat };
+}
+
+function fmtNat(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(n % 1e9 ? 2 : 0) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(n % 1e6 ? 1 : 0) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
+  return String(n);
+}
+
 function deriveCompound(u, verdict) {
   const passed = verdict.startsWith('NAT made it') || verdict.startsWith('UNAT settled');
   if (!passed) return null;
@@ -1647,7 +1712,7 @@ function deriveCompound(u, verdict) {
     mood:     stable ? 'blissed' : 'glitch',
   });
 
-  return { name, decode, dominant, secondary, distinct: sorted, stable, reading };
+  return { name, decode, dominant, secondary, distinct: sorted, stable, reading, drip: dripAmount(STATE.block) };
 }
 
 function compoundNote(cx) {
@@ -1673,6 +1738,9 @@ function compoundCardHTML(cx) {
       '</div>' +
       '<div class="cx-combine">' + cx.distinct.join(' + ') + '</div>' +
       '<div class="cx-note">' + esc(compoundNote(cx)) + '</div>' +
+      (window.DRIP_LIVE && cx.drip ?
+        '<div class="cx-drip">this run earned <b>' + fmtNat(cx.drip.nat) + ' NAT</b>' +
+          '<span class="cx-drip-tier ' + cx.drip.tier + '">' + cx.drip.label + '</span></div>' : '') +
       '<button class="cx-seal" id="sealBtn">SEAL THIS COMPOUND →</button>' +
       '<div class="cx-tag">compound · unofficial · not new supply</div>' +
     '</div>';
