@@ -2612,6 +2612,11 @@ function openDripResume(run) {
 // ============================================================================
 const CLAIM = { state: 'intro', pubkey: null, signed: null, drip: null };
 
+// The ONE official nat.fun page for the gate token — link straight here so
+// holders never buy a look-alike. Built from the trusted mint, never guessed.
+const NATFUN_TOKEN_URL   = 'https://nat.fun/token/' + DRIP.token.mint;
+const NATFUN_TOKEN_SHORT = DRIP.token.mint.slice(0, 6) + '\u2026' + DRIP.token.mint.slice(-4);
+
 function claimSet(state, patch) {
   Object.assign(CLAIM, patch || {});
   CLAIM.state = state;
@@ -2638,15 +2643,18 @@ async function signSolana(prov, pubkey) {
 
 async function dripVerifyHoldings(pubkey, signed) {
   try {
-    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 6000);
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
     const r = await fetch(DRIP.api + '/verify', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ pubkey, message: signed.message, signature: signed.signature, preview: window.DRIP_PREVIEW || undefined }), signal: ctrl.signal,
     });
     clearTimeout(t);
-    if (!r.ok) return { notLive: true };
-    return await r.json();
-  } catch (e) { return { notLive: true }; }
+    let data = {};
+    try { data = await r.json(); } catch (e) {}
+    if (data && data.notLive) return { notLive: true };                 // genuinely gated (worker says so)
+    if (!r.ok) return { error: data.error || 'couldn\'t reach the drip — try again in a moment.' };
+    return data;
+  } catch (e) { return { error: 'network hiccup — check your connection and tap try again.' }; }
 }
 
 async function dripSubmitClaim(payload) {
@@ -2657,9 +2665,12 @@ async function dripSubmitClaim(payload) {
       body: JSON.stringify(payload), signal: ctrl.signal,
     });
     clearTimeout(t);
-    if (!r.ok) return { notLive: true };
-    return await r.json();
-  } catch (e) { return { notLive: true }; }
+    let data = {};
+    try { data = await r.json(); } catch (e) {}
+    if (data && data.notLive) return { notLive: true };
+    if (!r.ok) return { ok: false, error: data.error || 'couldn\'t queue — try again in a moment.' };
+    return data;
+  } catch (e) { return { ok: false, error: 'network hiccup — check your connection and try again.' }; }
 }
 
 async function claimConnect() {
@@ -2678,6 +2689,7 @@ async function claimConnect() {
   claimSet('verifying');
   const res = await dripVerifyHoldings(pubkey, signed);
   if (res.notLive) { claimSet('closed'); return; }
+  if (res.error) { claimSet('error', { errMsg: res.error }); return; }
   if (!res.eligible) { claimSet('ineligible', { have: res.blockCount || 0, need: res.minHold || DRIP.token.minHold }); return; }
   CLAIM.drip = walletDrip(pubkey);
   claimSet('eligible');
@@ -2706,7 +2718,8 @@ function claimRender() {
     body = '<div class="cl-step">1 · confirm you hold ' + esc(sym) + '</div>' +
       '<p class="cl-lead">connect your Solana wallet so we can confirm you hold <b>' + esc(sym) + '</b> on nat.fun. this only proves eligibility — no transaction, no approval.</p>' +
       '<button class="claim-btn" id="clConnect">CONNECT SOLANA WALLET</button>' +
-      '<p class="cl-fine">you\'ll sign a message to prove the wallet is yours. gas-free.</p>';
+      '<p class="cl-fine">you\'ll sign a message to prove the wallet is yours. gas-free.</p>' +
+      '<a class="cl-fine" style="display:inline-block;margin-top:10px;color:var(--cyan);text-decoration:none" href="' + NATFUN_TOKEN_URL + '" target="_blank" rel="noopener">✓ the only official $' + esc(sym) + ' · nat.fun ↗</a>';
   } else if (S === 'connecting') {
     body = '<div class="cl-spin"></div><p class="cl-lead">opening your wallet…</p>';
   } else if (S === 'signing') {
@@ -2733,7 +2746,8 @@ function claimRender() {
     body = '<div class="cl-step">this wallet can\'t claim yet</div>' +
       '<p class="cl-lead">the drip is only for <b>' + esc(sym) + '</b> holders. you need at least <b>1</b> \u2014 this wallet holds <b>' + (CLAIM.have || 0) + '</b>. grab one on <b>nat.fun</b> and you\'re in.</p>' +
       '<p class="cl-fine">on nat.fun, each ' + esc(sym) + ' you own counts as one \u201cblock.\u201d it takes about a minute.</p>' +
-      '<a class="claim-btn" href="https://nat.fun/" target="_blank" rel="noopener">GET ' + esc(sym) + ' ON NAT.FUN \u2192</a>' +
+      '<a class="claim-btn" href="' + NATFUN_TOKEN_URL + '" target="_blank" rel="noopener">GET $' + esc(sym) + ' ON NAT.FUN \u2192</a>' +
+      '<p class="cl-fine">\u2713 official token only \u00b7 <span class="cl-mono">' + NATFUN_TOKEN_SHORT + '</span> \u00b7 use this button, don\'t search (avoid fakes)</p>' +
       '<button class="cl-ghost" id="clRetry">bought one \u2014 re-check</button>';
   } else if (S === 'eligible') {
     const d = CLAIM.drip || { nat: 0, label: '', tier: 'common' };
