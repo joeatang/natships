@@ -2170,7 +2170,6 @@ function paintReceipt(root) {
     (r.compound ? compoundCardHTML(r.compound) : (window.DRIP_LIVE ? noCompoundHTML(r) : '')) +
     '<button class="pill again big" id="runAgain">RUN A NEW UNATOM</button>' +
     '<button class="ghost" id="shareBtn">share my unatom →</button>' +
-    (window.DRIP_LIVE ? '<a class="ghost" href="/drip/?block=' + STATE.block + '" style="text-decoration:none;display:inline-block;color:rgba(240,150,45,.7)">✦ your element has a drip →</a>' : '') +
     '<a class="ghost" href="./catalog/" style="text-decoration:none;display:inline-block">see all 10,080 →</a>';
 
   $('runAgain').onclick = () => { haptic(28); runAgain(); };
