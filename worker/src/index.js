@@ -177,12 +177,23 @@ async function tipHeight(env) {
       const cached = await env.RL.get('btc:tip');
       if (cached) return Number(cached);
     }
-    const r = await fetch('https://mempool.space/api/blocks/tip/height');
-    if (!r.ok) return null;
-    const h = Number((await r.text()).trim());
-    if (!Number.isFinite(h)) return null;
-    if (env.RL) await env.RL.put('btc:tip', String(h), { expirationTtl: 30 });
-    return h;
+    // Try multiple sources — mempool.space sometimes rejects edge requests, so
+    // fall back to blockstream.info. Send a UA so we aren't filtered as a bot.
+    const urls = [
+      'https://mempool.space/api/blocks/tip/height',
+      'https://blockstream.info/api/blocks/tip/height',
+    ];
+    for (const u of urls) {
+      try {
+        const r = await fetch(u, { headers: { 'User-Agent': 'natdrip-worker/1.0', 'Accept': 'text/plain' } });
+        if (!r.ok) continue;
+        const h = Number((await r.text()).trim());
+        if (!Number.isFinite(h)) continue;
+        if (env.RL) await env.RL.put('btc:tip', String(h), { expirationTtl: 60 });
+        return h;
+      } catch (e) { /* try next source */ }
+    }
+    return null;
   } catch (e) { return null; }
 }
 
