@@ -10,7 +10,7 @@
 -- looks like: many wallets funneling to a few btc addresses, clustered IPs,
 -- bursts of claims in the same minute, verify spikes without matching claims.
 
--- 1) POOL STATUS — how much of the 5B ceiling is committed.
+-- 1) POOL STATUS — how much of the 5B ceiling is committed (test rows excluded).
 SELECT
   COUNT(*)                AS claims,
   COALESCE(SUM(amount),0) AS committed,
@@ -18,11 +18,11 @@ SELECT
   ROUND(100.0 * COALESCE(SUM(amount),0) / 5000000000, 2) AS pct_used,
   MIN(created_at)         AS first_claim,
   MAX(created_at)         AS last_claim
-FROM claims;
+FROM claims WHERE status != 'test';
 
 -- 2) TIER BREAKDOWN — should track ~69/22/8/1 (common/uncommon/rare/legendary).
 SELECT tier, COUNT(*) AS n, SUM(amount) AS total
-FROM claims GROUP BY tier ORDER BY total DESC;
+FROM claims WHERE status != 'test' GROUP BY tier ORDER BY total DESC;
 
 -- 3) IP CLUSTERING (sybil signal) — one IP behind many claims.
 SELECT ip, COUNT(*) AS claims_from_ip

@@ -20,7 +20,7 @@ compatibility_date = "2024-09-23"
 
 # Public, non-secret config. Flip ACTIVE to "true" to open the claim window.
 [vars]
-ACTIVE          = "false"
+ACTIVE          = "true"
 POOL            = "5000000000"                                   # 5,000,000,000 DMT-NAT hard ceiling
 MINT            = "w1YLQ6LnttB9cn7TrVtdnP3xAYYaLDHYuEHwZddVNAT"  # TakeDMT (Solana gate token)
 MIN_HOLD        = "167"                                          # UI-unit min balance to unlock ~= 1 nat.fun block (~$2.14); filters $0 dust wallets. 0 = any positive
@@ -29,7 +29,8 @@ SERIES_SIZE     = "10080"
 SYMBOL          = "NAT"
 TAP_TICKER      = "DMT-NAT"
 WINDOW_STARTS_AT = ""                                            # ISO8601, empty = open now
-WINDOW_ENDS_AT   = ""                                            # ISO8601, empty = no hard end
+WINDOW_ENDS_AT   = ""                                            # ISO8601, empty = no hard end (run-until-depleted)
+LAUNCH_BLOCK     = "956648"                                      # ARMED: ~8:00 AM ET 2026-07-04 drop. Worker reads mempool.space tip; before this height => phase 'countdown', at/after => 'live'
 ALLOW_ORIGIN    = "*"
 
 # D1 ledger (create it, then paste the id here).

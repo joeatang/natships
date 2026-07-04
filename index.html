@@ -162,6 +162,41 @@
     max-width:320px;
   }
 
+  /* === SPIN (invite players to cycle characters) === */
+  .spin-chip{
+    display:inline-flex;align-items:center;gap:9px;
+    background:linear-gradient(135deg,rgba(240,150,45,.16),rgba(93,208,227,.12));
+    color:var(--ink);
+    border:1px solid rgba(240,150,45,.4);
+    border-radius:999px;
+    padding:11px 22px;margin:-2px 0 12px;
+    font:700 12px/1 ui-monospace,monospace;letter-spacing:.2em;text-transform:uppercase;
+    cursor:pointer;
+    box-shadow:0 0 0 rgba(240,150,45,0);
+    animation:spinInvite 2.2s ease-in-out infinite;
+    transition:transform .12s ease,box-shadow .2s ease;
+  }
+  .spin-chip:active{transform:scale(.94)}
+  .spin-chip .ico{font-size:15px;display:inline-block;line-height:1}
+  .spin-chip.spinning{animation:none;box-shadow:0 0 24px rgba(240,150,45,.55)}
+  .spin-chip.spinning .ico{animation:spinIco .5s linear infinite}
+  @keyframes spinInvite{
+    0%,100%{box-shadow:0 0 0 rgba(240,150,45,0);transform:scale(1)}
+    50%{box-shadow:0 0 20px rgba(240,150,45,.4);transform:scale(1.035)}
+  }
+  @keyframes spinIco{to{transform:rotate(360deg)}}
+  .portrait-wrap.reeling{animation:reelSpin .5s ease-in-out infinite}
+  @keyframes reelSpin{
+    0%,100%{filter:drop-shadow(0 0 18px rgba(240,150,45,.5));transform:scale(1)}
+    50%{filter:drop-shadow(0 0 30px rgba(93,208,227,.6)) blur(1.2px);transform:scale(1.03)}
+  }
+  .portrait-wrap.landed{animation:landPop .55s cubic-bezier(.2,.9,.25,1)}
+  @keyframes landPop{
+    0%{transform:scale(.9);filter:drop-shadow(0 0 34px rgba(240,150,45,.85))}
+    55%{transform:scale(1.06)}
+    100%{transform:scale(1);filter:drop-shadow(0 0 0 transparent)}
+  }
+
   /* === FIRST-VISIT INTRO (new traffic hand-hold) === */
   .intro-card{
     width:100%;max-width:340px;
@@ -1037,6 +1072,51 @@ function renderPortrait() {
   $('portrait').innerHTML = UNATOM.svg(opts);
 }
 
+// SPIN — a decelerating reel that flickers through characters and LANDS on one.
+// Pure presentation over summon(); every game mechanic stays identical.
+function spinUnatom() {
+  if (STATE._spinning) return;
+  STATE._spinning = true;
+  haptic(10);
+
+  const pw = $('portraitWrap');
+  const chip = document.querySelector('.spin-chip');
+  if (chip) chip.classList.add('spinning');
+  pw.classList.remove('idle');
+  pw.classList.add('reeling');
+
+  // Build a reel of random series picks; the last one is where we land.
+  const frames = [];
+  for (let i = 0; i < 7; i++) frames.push(rollSeriesBlock());
+  const finalH = frames[frames.length - 1];
+
+  let i = 0;
+  const step = () => {
+    const h = frames[i];
+    // Lightweight preview render — no full state reset mid-reel.
+    STATE.block = h;
+    STATE.unatom = UNATOM.fromBlock(h);
+    STATE.live = {};
+    renderPortrait();
+    paintIdent();
+    haptic(6);
+    i++;
+    if (i < frames.length) {
+      setTimeout(step, 55 + i * i * 9);   // ease-out: fast, then slow
+    } else {
+      pw.classList.remove('reeling');
+      if (chip) chip.classList.remove('spinning');
+      STATE._spinning = false;
+      summon(finalH);                     // clean commit + full repaint
+      pw.classList.remove('idle');
+      pw.classList.add('landed');
+      haptic(22);
+      setTimeout(() => { pw.classList.remove('landed'); pw.classList.add('idle'); }, 560);
+    }
+  };
+  step();
+}
+
 function setLive(key, val, ms) {
   STATE.live[key] = val;
   renderPortrait();
@@ -1114,15 +1194,15 @@ function paintReady(root) {
     root.appendChild(intro);
   }
 
-  const shuf = document.createElement('button');
-  shuf.className = 'shuffle-chip';
-  shuf.innerHTML = '<span class="ico">⟳</span><span>try a different unatom</span>';
-  shuf.onclick = () => { haptic(8); summon(rollSeriesBlock()); };
-  root.appendChild(shuf);
+  const spin = document.createElement('button');
+  spin.className = 'spin-chip';
+  spin.innerHTML = '<span class="ico">⟳</span><span>spin</span>';
+  spin.onclick = spinUnatom;
+  root.appendChild(spin);
 
   const help = document.createElement('div');
   help.className = 'help-line';
-  help.textContent = 'adopt a unatom. feed the chain. keep the receipt.';
+  help.textContent = 'not the one? spin again. then run the block.';
   root.appendChild(help);
 
   const btn = document.createElement('button');
@@ -1483,6 +1563,9 @@ function crumbsPhrase(belly) {
   if (parts.length === 2) return parts.join(' and ');
   return parts.slice(0, -1).join(', ') + ', and ' + parts.slice(-1);
 }
+
+// Ask sharers to tag the project so we can find & reshare them on X.
+const SHARE_TAG = 'tag @takedmt · #UNATOM';
 
 const SHARE_TEMPLATES = [
   // MINER RESPECT
@@ -2202,7 +2285,7 @@ function compoundShareText(cx) {
   return 'fed the block. knocked the eye. six blinks later it returned this.\n\n' +
     cx.name + ' \u2697\n' +
     'a NAT Fusion — ' + cx.distinct.join(' + ') + (cx.stable ? ' · settled.' : ' · unstable.') + '\n\n' +
-    'unatom.fun · #UNATOMS #NATDrip';
+    'unatom.fun · ' + SHARE_TAG;
 }
 
 function buildCompoundCanvas(cx) {
@@ -2315,7 +2398,7 @@ function showPosterOverlay(blob, filename, shareText) {
     ov.className = 'poster-overlay';
     ov.innerHTML =
       '<img id="posterImg" alt="your unatom poster">' +
-      '<div class="hint">caption copied ✓ · tap & hold the image → <b>add to photos</b><br>then paste in X / IG and tag <b>@takedmt</b></div>' +
+      '<div class="hint">caption copied ✓ · tap & hold the image → <b>add to photos</b><br>then paste in X / IG and tag <b>@takedmt</b> · <b>#UNATOM</b></div>' +
       '<div class="row">' +
         '<a id="posterDl" class="primary">save</a>' +
         '<button id="posterCopy">copy new caption</button>' +
@@ -2356,7 +2439,7 @@ function showPosterOverlay(blob, filename, shareText) {
 
 function doShare(u, r) {
   const btn = $('shareBtn');
-  const line = pickShareText(u, STATE.block, r);
+  const line = pickShareText(u, STATE.block, r) + '\n\n' + SHARE_TAG;
   const url = 'https://unatom.fun';
   // 1) Native Share API — best path on iOS X in-app browser + modern Android Chrome
   if (navigator.share) {
@@ -2552,7 +2635,7 @@ async function dripVerifyHoldings(pubkey, signed) {
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 6000);
     const r = await fetch(DRIP.api + '/verify', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ pubkey, message: signed.message, signature: signed.signature }), signal: ctrl.signal,
+      body: JSON.stringify({ pubkey, message: signed.message, signature: signed.signature, preview: window.DRIP_PREVIEW || undefined }), signal: ctrl.signal,
     });
     clearTimeout(t);
     if (!r.ok) return { notLive: true };
@@ -2600,11 +2683,11 @@ async function claimSubmit() {
   if (!validBtcAddress(btc)) { claimSet('eligible', { btcVal: btc, btcErr: 'that doesn\'t look like a Bitcoin address', confirmErr: false, submitErr: null }); return; }
   if (!confirmed) { claimSet('eligible', { btcVal: btc, btcErr: null, confirmErr: true, submitErr: null }); return; }
   claimSet('submitting', { btcVal: btc });
-  const res = await dripSubmitClaim({ pubkey: CLAIM.pubkey, message: CLAIM.signed.message, signature: CLAIM.signed.signature, btc: btc, index: walletDripIndex(CLAIM.pubkey) });
+  const res = await dripSubmitClaim({ pubkey: CLAIM.pubkey, message: CLAIM.signed.message, signature: CLAIM.signed.signature, btc: btc, index: walletDripIndex(CLAIM.pubkey), preview: window.DRIP_PREVIEW || undefined });
   if (res.notLive) { claimSet('closed'); return; }
   if (!res.ok) { claimSet('eligible', { btcVal: btc, submitErr: res.error || 'could not queue — try again' }); return; }
   try { const run = loadDripRun(); if (run) { run.dripStep = 'done'; localStorage.setItem(DRIP_RUN_KEY, JSON.stringify(run)); } } catch (e) {}
-  claimSet('queued', { btcVal: btc });
+  claimSet('queued', { btcVal: btc, test: !!res.test });
 }
 
 function claimRender() {
@@ -2655,10 +2738,17 @@ function claimRender() {
     body = '<div class="cl-spin"></div><p class="cl-lead">queuing your claim…</p>';
   } else if (S === 'queued') {
     const d = CLAIM.drip || { nat: 0 };
-    body = '<div class="cl-seal">✓</div>' +
-      '<div class="cl-step">claim queued</div>' +
-      '<p class="cl-lead">your <b>' + fmtNat(d.nat) + ' ' + esc(sym) + '</b> is locked to your wallet and will be inscribed to<br><span class="cl-mono">' + esc(CLAIM.btcVal || '') + '</span><br>during settlement. no need to keep this open.</p>' +
-      '<button class="claim-btn" id="clDone">DONE</button>';
+    if (CLAIM.test) {
+      body = '<div class="cl-seal">✓</div>' +
+        '<div class="cl-step">test claim — mechanic works</div>' +
+        '<p class="cl-lead">preview run only. we confirmed <b>' + fmtNat(d.nat) + ' ' + esc(sym) + '</b> for<br><span class="cl-mono">' + esc(CLAIM.btcVal || '') + '</span><br>end-to-end. <b>nothing was queued for payout</b> — this row is marked <b>test</b>.</p>' +
+        '<button class="claim-btn" id="clDone">NICE</button>';
+    } else {
+      body = '<div class="cl-seal">✓</div>' +
+        '<div class="cl-step">claim queued</div>' +
+        '<p class="cl-lead">your <b>' + fmtNat(d.nat) + ' ' + esc(sym) + '</b> is locked to your wallet and will be inscribed to<br><span class="cl-mono">' + esc(CLAIM.btcVal || '') + '</span><br>during settlement. no need to keep this open.</p>' +
+        '<button class="claim-btn" id="clDone">DONE</button>';
+    }
   } else if (S === 'closed') {
     body = '<div class="cl-step">claims aren\'t open yet</div>' +
       '<p class="cl-lead">the drip claim window isn\'t live right now. your earned compound is saved — come back when it opens.</p>' +
@@ -2690,27 +2780,40 @@ function wireClaimBtn(cx) {
 
 async function loadDripStrip() {
   window.DRIP_LIVE = DRIP.live && dripWindowOpen();   // local default
+  // preview/test mode: ?preview=<key> lets the operator run the full live flow
+  // against the real worker before public launch. The key is only ever read
+  // from the URL (never hard-coded) and forwarded to the worker, which decides
+  // if it's valid and marks any resulting claim status='test' (never paid out).
+  try { window.DRIP_PREVIEW = new URLSearchParams(location.search).get('preview') || null; }
+  catch (e) { window.DRIP_PREVIEW = null; }
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 3000);
     const data = await fetch(DRIP.endpoint, {signal: ctrl.signal}).then(r => r.json());
     clearTimeout(t);
-    // phase: 'pre' (not launched — keep teaser), 'live' (claimable), 'ended' (hide)
+    // phase: 'pre' (not launched) | 'countdown' (waiting on a BTC block) | 'live' | 'ended' (flex)
     const phase = data.phase || (data.active === true ? 'live' : 'pre');
-    if (phase === 'ended') {
+    if (phase === 'ended') { window.DRIP_LIVE = false; setDripStripEnded(data.distributed); dripPoll(false); return; }
+    if (phase === 'live')  { window.DRIP_LIVE = true;  setDripStripLive(); dripPoll(false); return; }
+    if (phase === 'countdown') {
       window.DRIP_LIVE = false;
-      const strip = $('dripStrip');
-      if (strip) strip.classList.add('ended');
-      return;
-    }
-    if (phase === 'live') {
-      window.DRIP_LIVE = true;
-      setDripStripLive();
+      setDripStripCountdown(data);
+      dripPoll(true);   // keep re-checking so it auto-flips when the block lands
+      if (window.DRIP_PREVIEW) { window.DRIP_LIVE = true; setDripStripLive(); }
       return;
     }
     // 'pre' — pre-launch: keep the static teaser visible, drip stays hidden
     window.DRIP_LIVE = false;
   } catch(e) { /* silent — keep static teaser showing, honor local default */ }
+  // preview override: force the live experience for the operator only
+  if (window.DRIP_PREVIEW) { window.DRIP_LIVE = true; setDripStripLive(); }
+}
+
+// Keep a single background poll alive only while we're counting down to the
+// launch block, so the banner ticks down and flips to live on its own.
+function dripPoll(on) {
+  if (on) { if (!window.__dripPollId) window.__dripPollId = setInterval(loadDripStrip, 60000); }
+  else if (window.__dripPollId) { clearInterval(window.__dripPollId); window.__dripPollId = null; }
 }
 
 // Swap the banner + teaser copy from "coming soon" to "it's live" during the window.
@@ -2720,6 +2823,41 @@ function setDripStripLive() {
   if (t) t.textContent = 'THE DRIP IS LIVE · RUN A BLOCK, CLAIM YOUR ' + sym;
   const body = document.querySelector('.teaser-body');
   if (body) body.innerHTML = 'every unatom you run is <b>digital matter</b> condensing out of a Bitcoin block. right now, running one <b>drips</b> real ' + sym + ' back to you — free, while it lasts.';
+}
+
+// The pool ran dry — flip the banner to a flex, not a goodbye. One strong line.
+function setDripStripEnded(distributed) {
+  const tap = DRIP.token.tap || 'DMT-NAT';
+  const n = Number(distributed || 0);
+  const amt = n > 0 ? n.toLocaleString('en-US') : 'every';
+  const t = $('dripStripTxt');
+  if (t) t.textContent = 'THE NATDRIP RAN DRY · ' + amt + ' ' + tap + ' PRODUCED & GIVEN TO THE CULTURE';
+  const body = document.querySelector('.teaser-body');
+  if (body) body.innerHTML = 'non-arbitrary · free &amp; fair · for the culture. gm. 🫡';
+  const strip = $('dripStrip');
+  if (strip) strip.classList.remove('ended');   // keep it visible — it's a flex
+}
+
+// Counting down to the launch block. The Bitcoin chain IS the countdown.
+function setDripStripCountdown(data) {
+  const target = Number(data.launchBlock) || 0;
+  const left = Number(data.blocksLeft);
+  const tap = DRIP.token.tap || 'DMT-NAT';
+  let eta = '';
+  if (Number.isFinite(left) && left > 0) {
+    const mins = left * 10;
+    eta = mins >= 1440 ? '~' + Math.round(mins / 1440) + 'd'
+        : mins >= 60   ? '~' + Math.round(mins / 60) + 'h'
+        : '~' + mins + 'm';
+  }
+  const t = $('dripStripTxt');
+  if (t) t.textContent = Number.isFinite(left)
+    ? ('NATDRIP DROPS AT BLOCK ' + target + ' · ' + left + ' BLOCK' + (left === 1 ? '' : 'S') + ' TO GO' + (eta ? ' (' + eta + ')' : ''))
+    : ('NATDRIP DROPS AT BITCOIN BLOCK ' + target);
+  const body = document.querySelector('.teaser-body');
+  if (body) body.innerHTML = 'the drip unlocks at <b>Bitcoin block ' + target + '</b>. no clock — <b>the block is the countdown</b>. when the chain mines it, running a unatom starts dripping real ' + tap + '.';
+  const strip = $('dripStrip');
+  if (strip) strip.classList.remove('ended');
 }
 
 function wireTeaser() {

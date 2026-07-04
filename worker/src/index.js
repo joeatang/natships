@@ -166,6 +166,35 @@ async function rateLimited(env, ip) {
 }
 
 // ---------------------------------------------------------------------------
+// Bitcoin block-height launch gate. The drip "drops" at a chosen BTC height
+// (LAUNCH_BLOCK). We read the current tip from mempool.space and cache it in
+// KV for 30s so we don't hammer the API. If LAUNCH_BLOCK is unset, there is no
+// height gate. Fails CLOSED (not launched) if the chain can't be read.
+// ---------------------------------------------------------------------------
+async function tipHeight(env) {
+  try {
+    if (env.RL) {
+      const cached = await env.RL.get('btc:tip');
+      if (cached) return Number(cached);
+    }
+    const r = await fetch('https://mempool.space/api/blocks/tip/height');
+    if (!r.ok) return null;
+    const h = Number((await r.text()).trim());
+    if (!Number.isFinite(h)) return null;
+    if (env.RL) await env.RL.put('btc:tip', String(h), { expirationTtl: 30 });
+    return h;
+  } catch (e) { return null; }
+}
+
+async function launchReached(env) {
+  const lb = Number(env.LAUNCH_BLOCK || 0);
+  if (!lb) return true;             // no height gate configured
+  const h = await tipHeight(env);
+  if (h == null) return false;      // fail closed if the chain is unreadable
+  return h >= lb;
+}
+
+// ---------------------------------------------------------------------------
 // Router.
 // ---------------------------------------------------------------------------
 export default {
@@ -177,16 +206,47 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors(env) });
 
     // ---- /status ----
+    // Run-until-depleted: there is no fixed end time. The drip is 'live' while
+    // the window is open AND the pool still has room; it flips to 'ended' the
+    // moment the pool is fully distributed (or a WINDOW_ENDS_AT, if ever set,
+    // has passed). `distributed` powers the frontend flex banner. Test rows
+    // (operator previews) never count toward the total.
     if (path.endsWith('/status') && request.method === 'GET') {
+      const pool = Number(env.POOL || 0);
       const active = windowOpen(env);
-      const ended = !!env.WINDOW_ENDS_AT && Date.now() > Date.parse(env.WINDOW_ENDS_AT);
-      const phase = active ? 'live' : (ended ? 'ended' : 'pre');   // pre = not launched, live = claimable, ended = over
+      let distributed = 0;
+      if (env.DB) {
+        try {
+          const row = await env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS s FROM claims WHERE status != 'test'").first();
+          distributed = Number(row?.s || 0);
+        } catch (e) { /* treat as 0 */ }
+      }
+      const depleted = pool > 0 && distributed >= pool;
+      const timeEnded = !!env.WINDOW_ENDS_AT && Date.now() > Date.parse(env.WINDOW_ENDS_AT);
+      // Bitcoin block-height countdown: if a LAUNCH_BLOCK is set and the chain
+      // hasn't reached it yet, we're in 'countdown' (not live yet).
+      const launchBlock = Number(env.LAUNCH_BLOCK || 0);
+      let tip = null, blocksLeft = null;
+      if (launchBlock) {
+        tip = await tipHeight(env);
+        if (tip != null) blocksLeft = Math.max(0, launchBlock - tip);
+      }
+      const reached = !launchBlock || (tip != null && tip >= launchBlock);
+      const phase = depleted ? 'ended'
+        : (active && reached) ? 'live'
+        : (active && launchBlock && !reached) ? 'countdown'
+        : (timeEnded ? 'ended' : 'pre');
       return json({
-        active,
+        active: active && reached && !depleted,
         phase,
+        distributed,
+        launchBlock: launchBlock || null,
+        tipHeight: tip,
+        blocksLeft,
         window: { startsAt: env.WINDOW_STARTS_AT || null, endsAt: env.WINDOW_ENDS_AT || null },
-        pool: Number(env.POOL || 0),
+        pool,
         symbol: env.SYMBOL || 'NAT',
+        tap: env.TAP_TICKER || 'DMT-NAT',
       }, env);
     }
 
@@ -199,10 +259,16 @@ export default {
     const seriesSize = Number(env.SERIES_SIZE || 10080);
     const minHold = Number(env.MIN_HOLD || 0);
     const blockTokens = Number(env.BLOCK_TOKENS || 167.619733);   // 1 nat.fun block, in TakeDMT (UI units)
+    // preview/test mode: an operator-only key (set as a Worker secret) that lets
+    // us exercise the full connect->sign->verify->claim flow against the real
+    // worker BEFORE public launch. A matching key bypasses the ACTIVE gate and
+    // marks the resulting claim status='test' so it never gets paid out and
+    // never consumes the pool. Empty/unset PREVIEW_KEY => always false (safe).
+    const preview = !!env.PREVIEW_KEY && !!payload && payload.preview === env.PREVIEW_KEY;
 
     // ---- /verify ----
     if (path.endsWith('/verify')) {
-      if (!windowOpen(env)) return json({ notLive: true }, env);
+      if ((!windowOpen(env) || !(await launchReached(env))) && !preview) return json({ notLive: true }, env);
       if (!(await verifySignature(pubkey, message, signature))) return json({ error: 'bad signature' }, env, 401);
       let balance;
       try { balance = await tokenBalance(env.SOLANA_RPC, pubkey, env.MINT); }
@@ -214,7 +280,7 @@ export default {
 
     // ---- /claim ----
     if (path.endsWith('/claim')) {
-      if (!windowOpen(env)) return json({ notLive: true }, env);
+      if ((!windowOpen(env) || !(await launchReached(env))) && !preview) return json({ notLive: true }, env);
       if (!(await verifySignature(pubkey, message, signature))) return json({ ok: false, error: 'bad signature' }, env, 401);
 
       const btc = String((payload.btc || '')).trim();
@@ -232,15 +298,35 @@ export default {
 
       if (!env.DB) return json({ notLive: true }, env);
 
-      // one claim per wallet
-      const existing = await env.DB.prepare('SELECT amount, tier, btc FROM claims WHERE pubkey = ?').bind(pubkey).first();
+      // ---- TEST path (operator preview) ----
+      // Records status='test': proves the whole mechanic end-to-end but is
+      // invisible to the payout exporter, the pool ceiling and the distributed
+      // total. Idempotent — clears any prior test row for this wallet first so
+      // it can be re-run freely, and never blocks a future real claim.
+      if (preview) {
+        await env.DB.prepare("DELETE FROM claims WHERE pubkey = ? AND status = 'test'").bind(pubkey).run();
+        try {
+          await env.DB.prepare(
+            'INSERT INTO claims (pubkey, btc, idx, tier, amount, sig, status, ip, created_at) VALUES (?,?,?,?,?,?,?,?,?)'
+          ).bind(pubkey, btc, drip.idx, drip.tier, drip.amount, signature, 'test', ip, Date.now()).run();
+        } catch (e) {
+          return json({ ok: false, error: 'this wallet already has a real claim', already: true }, env, 409);
+        }
+        return json({ ok: true, queued: true, test: true, amount: drip.amount, tier: drip.tier }, env);
+      }
+
+      // one claim per wallet (test rows don't count)
+      const existing = await env.DB.prepare("SELECT amount, tier, btc FROM claims WHERE pubkey = ? AND status != 'test'").bind(pubkey).first();
       if (existing) return json({ ok: false, error: 'already claimed', already: true, amount: existing.amount, tier: existing.tier }, env, 409);
 
-      // hard pool ceiling — never commit more than POOL in total
+      // hard pool ceiling — never commit more than POOL in total (test rows excluded)
       const pool = Number(env.POOL || 0);
-      const spentRow = await env.DB.prepare('SELECT COALESCE(SUM(amount),0) AS s FROM claims').first();
+      const spentRow = await env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS s FROM claims WHERE status != 'test'").first();
       const spent = Number(spentRow?.s || 0);
       if (spent + drip.amount > pool) return json({ ok: false, error: 'the drip pool is fully claimed', exhausted: true }, env, 409);
+
+      // clear any leftover operator test row so the real INSERT can't collide on PK
+      await env.DB.prepare("DELETE FROM claims WHERE pubkey = ? AND status = 'test'").bind(pubkey).run();
 
       try {
         await env.DB.prepare(
