@@ -2136,6 +2136,12 @@ function paintReceipt(root) {
     if (sb) sb.onclick = () => shareCompound(r.compound);
     wireClaimBtn(r.compound);  // Step 6 — UNLOCK & CLAIM opens the claim panel (DRIP_LIVE only)
     saveDripRun(r.compound);   // cache so the earned compound survives a nat.fun round-trip
+    // Safety net: if the initial /status fetch failed (slow mobile network), the
+    // claim CTA would be gated off. Re-check right when it matters, and re-render
+    // the receipt if the drip is in fact live so the claim button appears.
+    if (!window.DRIP_LIVE) {
+      loadDripStrip().then(() => { if (window.DRIP_LIVE && STATE.step === 'receipt') paintAction(); });
+    }
   }
 }
 
@@ -2708,10 +2714,21 @@ function claimRender() {
   } else if (S === 'verifying') {
     body = '<div class="cl-spin"></div><p class="cl-lead">checking your ' + esc(sym) + ' holdings…</p>';
   } else if (S === 'nowallet') {
-    body = '<div class="cl-step">no Solana wallet found</div>' +
-      '<p class="cl-lead">you need a Solana wallet (Phantom or Solflare) that holds your ' + esc(sym) + ' from nat.fun.</p>' +
-      '<a class="claim-btn" href="https://phantom.app/" target="_blank" rel="noopener">GET PHANTOM →</a>' +
-      '<button class="cl-ghost" id="clRetry">I have one — retry</button>';
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+    if (isMobile) {
+      const here = encodeURIComponent(location.href.split('#')[0]);
+      const ref  = encodeURIComponent(location.origin);
+      body = '<div class="cl-step">open inside your wallet app</div>' +
+        '<p class="cl-lead">on a phone, connecting only works inside the <b>Phantom app\'s browser</b>. tap below to reopen this page there \u2014 then hit claim again.</p>' +
+        '<a class="claim-btn" href="https://phantom.app/ul/browse/' + here + '?ref=' + ref + '">OPEN IN PHANTOM \u2192</a>' +
+        '<p class="cl-fine">no Phantom yet? grab it free on the App Store / Google Play, then reopen unatom.fun inside it.</p>' +
+        '<button class="cl-ghost" id="clRetry">already in a wallet browser \u2014 retry</button>';
+    } else {
+      body = '<div class="cl-step">no Solana wallet found</div>' +
+        '<p class="cl-lead">you need a Solana wallet (Phantom or Solflare) that holds your ' + esc(sym) + ' from nat.fun.</p>' +
+        '<a class="claim-btn" href="https://phantom.app/" target="_blank" rel="noopener">GET PHANTOM \u2192</a>' +
+        '<button class="cl-ghost" id="clRetry">I have one \u2014 retry</button>';
+    }
   } else if (S === 'ineligible') {
     body = '<div class="cl-step">this wallet can\'t claim yet</div>' +
       '<p class="cl-lead">the drip is only for <b>' + esc(sym) + '</b> holders. you need at least <b>1</b> \u2014 this wallet holds <b>' + (CLAIM.have || 0) + '</b>. grab one on <b>nat.fun</b> and you\'re in.</p>' +
@@ -2780,7 +2797,9 @@ function wireClaimBtn(cx) {
 }
 
 async function loadDripStrip() {
-  window.DRIP_LIVE = DRIP.live && dripWindowOpen();   // local default
+  // Default only on the very first run — never knock a known-live session back
+  // offline just because a later status poll timed out.
+  if (typeof window.DRIP_LIVE !== 'boolean') window.DRIP_LIVE = DRIP.live && dripWindowOpen();
   // preview/test mode: ?preview=<key> lets the operator run the full live flow
   // against the real worker before public launch. The key is only ever read
   // from the URL (never hard-coded) and forwarded to the worker, which decides
@@ -2789,13 +2808,13 @@ async function loadDripStrip() {
   catch (e) { window.DRIP_PREVIEW = null; }
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 3000);
-    const data = await fetch(DRIP.endpoint, {signal: ctrl.signal}).then(r => r.json());
+    const t = setTimeout(() => ctrl.abort(), 8000);   // mobile-friendly timeout
+    const data = await fetch(DRIP.endpoint, {signal: ctrl.signal, cache: 'no-store'}).then(r => r.json());
     clearTimeout(t);
     // phase: 'pre' (not launched) | 'countdown' (waiting on a BTC block) | 'live' | 'ended' (flex)
     const phase = data.phase || (data.active === true ? 'live' : 'pre');
     if (phase === 'ended') { window.DRIP_LIVE = false; setDripStripEnded(data.distributed); dripPoll(false); return; }
-    if (phase === 'live')  { window.DRIP_LIVE = true;  setDripStripLive(); dripPoll(false); return; }
+    if (phase === 'live')  { window.DRIP_LIVE = true;  setDripStripLive(); dripPoll(true); return; }  // keep polling to catch depletion
     if (phase === 'countdown') {
       window.DRIP_LIVE = false;
       setDripStripCountdown(data);
@@ -2805,15 +2824,21 @@ async function loadDripStrip() {
     }
     // 'pre' — pre-launch: keep the static teaser visible, drip stays hidden
     window.DRIP_LIVE = false;
-  } catch(e) { /* silent — keep static teaser showing, honor local default */ }
+  } catch(e) {
+    // Network hiccup / slow mobile connection: DON'T hide a claim that's really
+    // live. Keep whatever we knew, and keep retrying in the background so a
+    // failed first fetch self-heals instead of silently killing the claim CTA.
+    dripPoll(true);
+  }
   // preview override: force the live experience for the operator only
   if (window.DRIP_PREVIEW) { window.DRIP_LIVE = true; setDripStripLive(); }
 }
 
-// Keep a single background poll alive only while we're counting down to the
-// launch block, so the banner ticks down and flips to live on its own.
+// Keep a background poll alive during countdown AND live (so the banner ticks,
+// flips to live on its own, catches pool depletion, and self-heals a failed
+// initial status fetch). Cleared once we reach a settled 'ended' state.
 function dripPoll(on) {
-  if (on) { if (!window.__dripPollId) window.__dripPollId = setInterval(loadDripStrip, 60000); }
+  if (on) { if (!window.__dripPollId) window.__dripPollId = setInterval(loadDripStrip, 45000); }
   else if (window.__dripPollId) { clearInterval(window.__dripPollId); window.__dripPollId = null; }
 }
 
