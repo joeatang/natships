@@ -1637,7 +1637,33 @@ function bondSuffix(distinctCount, stable, hasDiamond) {
 // Ceremonial BLAST-OFF + the scarcest homage pins always drip LEGENDARY — the
 // treasure-hunt blocks. Any other pin drips at least RARE.
 // ============================================================================
-const DRIP_POOL = 5e9;
+
+// ── CAMPAIGN CONFIG — single source of truth ────────────────────────────────
+// Everything the drip needs to go live lives HERE. Nulls stay dormant/safe
+// until filled. `live` is the LOCAL default; the server /status endpoint is the
+// real master switch (loadDripStrip flips window.DRIP_LIVE from it). To launch:
+// fill token.mint + token.minHold, set the window, flip the server to active.
+const DRIP = {
+  live:      false,                                    // local default (server can flip on)
+  pool:      5000000000,                               // 5B NAT — HARD ceiling, cannot overspend
+  endpoint:  'https://drip.unatom.fun/api/drip/status',
+  window:    { startsAt: null, endsAt: null },         // ISO strings — the ~48h hustle
+  windowHrs: 48,                                       // default duration if only startsAt is set
+  token:     { symbol: 'NAT', mint: null, minHold: null }, // nat.fun Solana ticker + min-hold to unlock
+};
+
+// Is the drip window currently open? Null bounds = always open (pre-launch/testing).
+function dripWindowOpen(now) {
+  const t = now || Date.now();
+  const s = DRIP.window.startsAt ? Date.parse(DRIP.window.startsAt) : null;
+  let e = DRIP.window.endsAt ? Date.parse(DRIP.window.endsAt) : null;
+  if (s && !e && DRIP.windowHrs) e = s + DRIP.windowHrs * 3600e3;
+  if (s && t < s) return false;
+  if (e && t > e) return false;
+  return true;
+}
+
+const DRIP_POOL = DRIP.pool;
 const DRIP_TIERS = {
   common:    { nat: 5e6,   label:'COMMON'    },
   uncommon:  { nat: 15e6,  label:'UNCOMMON'  },
@@ -1739,7 +1765,7 @@ function compoundCardHTML(cx) {
       '<div class="cx-combine">' + cx.distinct.join(' + ') + '</div>' +
       '<div class="cx-note">' + esc(compoundNote(cx)) + '</div>' +
       (window.DRIP_LIVE && cx.drip ?
-        '<div class="cx-drip">this run earned <b>' + fmtNat(cx.drip.nat) + ' NAT</b>' +
+        '<div class="cx-drip">this run earned <b>' + fmtNat(cx.drip.nat) + ' ' + DRIP.token.symbol + '</b>' +
           '<span class="cx-drip-tier ' + cx.drip.tier + '">' + cx.drip.label + '</span></div>' : '') +
       '<button class="cx-seal" id="sealBtn">SEAL THIS COMPOUND →</button>' +
       '<div class="cx-tag">compound · unofficial · not new supply</div>' +
@@ -2196,18 +2222,20 @@ async function boot() {
 }
 
 async function loadDripStrip() {
+  window.DRIP_LIVE = DRIP.live && dripWindowOpen();   // local default
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 3000);
-    const data = await fetch('https://drip.unatom.fun/api/drip/status', {signal: ctrl.signal}).then(r => r.json());
+    const data = await fetch(DRIP.endpoint, {signal: ctrl.signal}).then(r => r.json());
     clearTimeout(t);
     if (data.active === false) {
+      window.DRIP_LIVE = false;
       const strip = $('dripStrip');
       if (strip) strip.classList.add('ended');
       return;
     }
     window.DRIP_LIVE = true;
-  } catch(e) { /* silent — keep static teaser showing */ }
+  } catch(e) { /* silent — keep static teaser showing, honor local default */ }
 }
 
 function wireTeaser() {
