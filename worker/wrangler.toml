@@ -1,0 +1,46 @@
+# NAT DRIP claim worker — verifies TakeDMT holdings on Solana + records claims.
+# It NEVER holds the DMT-NAT (Bitcoin TAP) treasury key. A separate offline
+# signer reads the D1 ledger and inscribes the TAP payouts.
+#
+# ---- ONE-TIME SETUP (run from this worker/ folder) --------------------------
+#   npm i
+#   npx wrangler login
+#   npx wrangler d1 create natdrip                # copy the database_id it prints
+#   # paste that id into [[d1_databases]].database_id below
+#   npx wrangler d1 execute natdrip --file=./schema.sql            # local
+#   npx wrangler d1 execute natdrip --file=./schema.sql --remote   # production
+#   npx wrangler kv namespace create RL            # copy the id into [[kv_namespaces]]
+#   npx wrangler secret put SOLANA_RPC             # paste an RPC url (Helius/QuickNode/etc.)
+#   npx wrangler deploy
+# -----------------------------------------------------------------------------
+
+name = "natdrip"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+# Public, non-secret config. Flip ACTIVE to "true" to open the claim window.
+[vars]
+ACTIVE          = "false"
+POOL            = "5000000000"                                   # 5,000,000,000 DMT-NAT hard ceiling
+MINT            = "w1YLQ6LnttB9cn7TrVtdnP3xAYYaLDHYuEHwZddVNAT"  # TakeDMT (Solana gate token)
+MIN_HOLD        = "0"                                            # UI-unit min balance to unlock; 0 = any positive balance
+SERIES_SIZE     = "10080"
+SYMBOL          = "NAT"
+TAP_TICKER      = "DMT-NAT"
+WINDOW_STARTS_AT = ""                                            # ISO8601, empty = open now
+WINDOW_ENDS_AT   = ""                                            # ISO8601, empty = no hard end
+ALLOW_ORIGIN    = "*"
+
+# D1 ledger (create it, then paste the id here).
+[[d1_databases]]
+binding       = "DB"
+database_name = "natdrip"
+database_id   = "PASTE_D1_DATABASE_ID_HERE"
+
+# KV for per-IP rate limiting (create it, then paste the id here).
+[[kv_namespaces]]
+binding = "RL"
+id      = "PASTE_KV_NAMESPACE_ID_HERE"
+
+# SECRET (set via `wrangler secret put SOLANA_RPC`), never committed:
+#   SOLANA_RPC = your Solana JSON-RPC endpoint

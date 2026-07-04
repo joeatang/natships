@@ -1,0 +1,15 @@
+{
+  "name": "natdrip-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "schema": "wrangler d1 execute natdrip --file=./schema.sql",
+    "schema:remote": "wrangler d1 execute natdrip --file=./schema.sql --remote"
+  },
+  "devDependencies": {
+    "wrangler": "^3.78.0"
+  }
+}
