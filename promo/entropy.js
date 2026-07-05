@@ -479,4 +479,71 @@
       </div>`;
   };
 
+  // ============================================================================
+  // NATDRIP · FLEX — 'how much has dripped' FOMO poster (never reveals the pool)
+  // ============================================================================
+  CARDS['natdrip_flex'] = (root) => {
+    const t = U().fromBlock(103481);
+    const drips = Array.from({length:11}, (_,i) => {
+      const x = 372 + i*34;
+      const len = 40 + ((i*37) % 120);
+      const op  = 0.20 + ((i*29) % 50) / 100;
+      return `<line x1="${x}" y1="620" x2="${x}" y2="${620+len}" stroke="#f0962d" stroke-width="2" opacity="${op}" stroke-linecap="round"/>`;
+    }).join('');
+    root.innerHTML = `
+      <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 40%, #18110a 0%, #08070c 62%);color:#f3eee3;overflow:hidden">
+        <svg style="position:absolute;inset:0;pointer-events:none" viewBox="0 0 1080 1080">
+          ${starfield(110, .5)}
+          ${drips}
+        </svg>
+
+        <div style="position:absolute;top:58px;left:50%;transform:translateX(-50%);
+          display:flex;align-items:center;gap:12px;
+          background:rgba(240,150,45,.12);border:1px solid rgba(240,150,45,.5);
+          padding:11px 26px;border-radius:999px;
+          font:800 16px ${F_MONO};letter-spacing:.4em;color:#f0962d;text-transform:uppercase">
+          <span style="width:10px;height:10px;border-radius:50%;background:#f0962d;box-shadow:0 0 16px #f0962d"></span>
+          the drip is flowing
+        </div>
+
+        <div style="position:absolute;top:146px;left:0;right:0;text-align:center;
+          font:900 118px/0.9 ${F_IMPACT};letter-spacing:-.02em;color:#f0962d;
+          text-shadow:0 0 55px rgba(240,150,45,.5)">
+          275,000,000
+        </div>
+        <div style="position:absolute;top:282px;left:0;right:0;text-align:center;
+          font:700 20px ${F_MONO};letter-spacing:.32em;color:#f3eee3;text-transform:uppercase">
+          DMT-NAT dripped so far
+        </div>
+
+        <div style="position:absolute;top:342px;left:50%;transform:translateX(-50%);
+          width:280px;height:280px;
+          filter:drop-shadow(0 0 60px rgba(240,150,45,.55)) drop-shadow(0 0 22px rgba(93,208,227,.3))">
+          ${unatomBox(t, 280)}
+        </div>
+
+        <div style="position:absolute;bottom:250px;left:0;right:0;text-align:center;
+          font:900 52px/1.0 ${F_IMPACT};letter-spacing:.01em;color:#f3eee3">
+          the pool\u2019s still flowing.<br/><span style="color:#5dd0e3">are you nat ready?</span>
+        </div>
+
+        <div style="position:absolute;bottom:172px;left:50%;transform:translateX(-50%);
+          border:2px solid #5dd0e3;border-radius:14px;padding:15px 32px;
+          background:rgba(93,208,227,.06);
+          font:800 30px ${F_MONO};letter-spacing:.06em;color:#5dd0e3;white-space:nowrap">
+          RUN A BLOCK \u2192 CLAIM YOURS
+        </div>
+
+        <div style="position:absolute;bottom:112px;left:0;right:0;text-align:center;
+          font:italic 500 22px ${F_SERIF};color:rgba(243,238,227,.72)">
+          free &amp; fair \u00b7 while it lasts \u00b7 first come
+        </div>
+
+        <div style="position:absolute;bottom:56px;left:0;right:0;text-align:center;
+          font:800 20px ${F_MONO};letter-spacing:.42em;color:#f3eee3;text-transform:uppercase">
+          UNATOM.FUN
+        </div>
+      </div>`;
+  };
+
 })();

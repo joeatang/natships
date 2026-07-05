@@ -72,11 +72,26 @@ function cmdExport() {
   mkdirSync(BATCH_DIR, { recursive: true });
 
   const total = clean.reduce((s, r) => s + Number(r.amount), 0);
-  const csv = 'address,amount\n' + clean.map(r => `${r.btc},${r.amount}`).join('\n') + '\n';
-  const txt = clean.map(r => `${r.btc} ${r.amount}`).join('\n') + '\n';
+
+  // Aggregate by BTC address — one send per address (a single person can have
+  // several claims from different wallets pointing at the same address). The
+  // ledger still tracks EVERY claim by pubkey; only the payout files are merged.
+  const byAddr = new Map();
+  for (const r of clean) {
+    const cur = byAddr.get(r.btc) || { amount: 0, claims: 0 };
+    cur.amount += Number(r.amount); cur.claims += 1;
+    byAddr.set(r.btc, cur);
+  }
+  const payouts = [...byAddr.entries()]
+    .map(([btc, v]) => ({ btc, amount: v.amount, claims: v.claims }))
+    .sort((a, b) => b.amount - a.amount);
+
+  const csv = 'address,amount\n' + payouts.map(p => `${p.btc},${p.amount}`).join('\n') + '\n';
+  const txt = payouts.map(p => `${p.btc} ${p.amount}`).join('\n') + '\n';
   const manifest = {
-    batchId, createdAt: Date.now(), count: clean.length, totalAmount: total,
+    batchId, createdAt: Date.now(), claims: clean.length, addresses: payouts.length, totalAmount: total,
     pubkeys: clean.map(r => r.pubkey),
+    payouts,
     rows: clean.map(r => ({ pubkey: r.pubkey, btc: r.btc, amount: Number(r.amount), tier: r.tier })),
   };
 
@@ -89,10 +104,10 @@ function cmdExport() {
   const inList = clean.map(r => `'${r.pubkey}'`).join(',');
   sql(`UPDATE claims SET status = 'sent' WHERE status = 'queued' AND pubkey IN (${inList})`);
 
-  console.log(`\n✅ Batch ${batchId} — ${clean.length} payouts, ${money(total)} NAT total`);
-  console.log(`   CSV : batches/${batchId}.csv   (address,amount)`);
+  console.log(`\n✅ Batch ${batchId} — ${payouts.length} payouts (${clean.length} claims), ${money(total)} NAT total`);
+  console.log(`   CSV : batches/${batchId}.csv   (address,amount — one row per address)`);
   console.log(`   TXT : batches/${batchId}.txt   (address amount per line)`);
-  console.log(`   These rows are now marked 'sent'.`);
+  console.log(`   ${clean.length} claims now marked 'sent'.`);
   console.log(`\n   Next: paste one of those files into Tap Wallet's bulk/batch send, sign, broadcast.`);
   console.log(`   Then run:  node payout.mjs paid batches/${batchId}.manifest.json <txid>`);
   console.log(`   (double-check the token's decimals in Tap Wallet — amounts above are whole NAT units)\n`);
