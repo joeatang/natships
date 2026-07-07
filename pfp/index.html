@@ -96,7 +96,12 @@
     ['mouth',    t.mouthKind === 'noMouth' ? 'sealed' : t.mouthKind],
     ['drip',     t.drip === 'noDrip' ? '—' : t.drip],
     ['glasses',  t.glasses === 'none' ? '—' : t.glasses],
-    ['vibe',     t.blazedBluntie ? (String(block).includes('420') ? 'blazed bluntie · 420 block' : 'blazed bluntie') : '—'],
+    ['vibe',     (function(){
+                    const vibes = [];
+                    if (t.blazedBluntie) vibes.push(String(block).includes('420') ? 'blazed bluntie · 420 block' : 'blazed bluntie');
+                    if (t.flameborn)     vibes.push(String(block).includes('666') ? 'flameborn · 666 block' : 'flameborn');
+                    return vibes.length ? vibes.join(' + ') : '—';
+                  })()],
     ['pin',      t.pin ? (t.pinLabel + ' · 1 of ' + (UNATOM.PINS[t.pin] && UNATOM.PINS[t.pin].target || '?') + ' in series') : '—'],
     ['border',   t.border],
     ['eco',      t.eco],

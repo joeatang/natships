@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>flameborn preview</title>
+<style>
+  body{margin:0;background:#0a0a0c;color:#f3eee3;font-family:ui-sans-serif,system-ui,sans-serif;padding:32px}
+  h1{font-size:34px;margin:0 0 6px;letter-spacing:-.01em}
+  .lede{color:rgba(243,238,227,.55);margin:0 0 28px;font:500 14px ui-monospace,Menlo,monospace;letter-spacing:.08em}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;max-width:1500px}
+  .cell{background:#111319;border:1px solid #2a2c36;border-radius:14px;padding:12px}
+  .cell svg{width:100%;height:auto;display:block;border-radius:10px}
+  .cap{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:.16em}
+  .cap .blk{color:#f04771}
+  .cap .badge{color:#5dd0e3}
+  .sub{font:500 11px ui-monospace,Menlo,monospace;color:rgba(243,238,227,.5);margin-top:4px;letter-spacing:.06em}
+</style></head><body>
+<h1>Flameborn preview</h1>
+<p class="lede">117 OF 10,080 · 1.16% · ALL BLOCKS CONTAINING "666" AUTO-INHERIT</p>
+<div class="grid" id="g"></div>
+<script src="../unatom-render.js"></script>
+<script>
+  // pick a spread: 666 anchor + a few more of varying moods/schemes
+  const blocks = [666, 6666, 1666, 6669, 69, 151, 878, 1052, 1274, 4666, 9666, 5666];
+  const g = document.getElementById('g');
+  for (const b of blocks) {
+    const t = UNATOM.fromBlock(b);
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.innerHTML = UNATOM.svg(t) +
+      '<div class="cap"><span class="blk">#' + b.toLocaleString() + '</span>' +
+      '<span class="badge">' + (t.flameborn ? 'FLAMEBORN' : '—') + '</span></div>' +
+      '<div class="sub">' + t.scheme + ' · ' + t.mood + ' · ' + t.thirdEye +
+      (t.blazedBluntie ? ' · +BLAZED' : '') + '</div>';
+    g.appendChild(cell);
+  }
+</script>
+</body></html>

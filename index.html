@@ -161,16 +161,6 @@
     margin:2px 0 4px;
     max-width:320px;
   }
-  .fuse-hint{
-    text-align:center;
-    font:600 11px/1.45 ui-monospace,SF Mono,Menlo,monospace;
-    letter-spacing:.04em;
-    color:var(--muted);
-    margin:0 auto 12px;max-width:320px;
-  }
-  .fuse-hint b{color:var(--ink)}
-  .fuse-hint.ready{color:var(--orange)}
-  .fuse-hint.ready b{color:var(--orange)}
 
   /* === SPIN (invite players to cycle characters) === */
   .spin-chip{
@@ -1252,6 +1242,8 @@ function traitGreeting() {
   if (u.pin === 'WOJAK')   return "feels heavy today.";
   if (u.pin === 'BLOCK_RUNNER') return "I'm the block runner. two moves out.";
   if (u.pin === 'MEMEMOSES')    return "I'm mememoses. tablets in hand. they're jpegs now.";
+  if (u.flameborn && u.blazedBluntie) return "blazed and flameborn. eyes stay lit, mind stays low.";
+  if (u.flameborn)                return "I'm flameborn. the eyes stay lit.";
   if (u.blazedBluntie)            return "I'm a blazed bluntie. take your time. no rush.";
   if (u.thirdEye === 'diamond')   return "I'm a diamond. I find blocks fast.";
   if (u.thirdEye === 'burn')      return "I run hot. feed me orange ones.";
@@ -1311,23 +1303,6 @@ function rollCrumbs() {
   }
 }
 
-// Live fusion coach for the feed step: tells the player exactly what it takes to
-// earn a claimable drip (3+ crumbs, mixed kinds) and how close they are. Only
-// surfaced when the drip is live so it never nags during plain play.
-function fusionHint() {
-  const sym = DRIP.token.symbol || 'NAT';
-  const n = STATE.belly.length;
-  const kinds = new Set(STATE.belly.map(c => c.kind)).size;
-  if (n === 0) return { ready: false, txt: 'pack <b>3+ crumbs</b> \u00b7 <b>mix different kinds</b> \u2192 fuse a claimable $' + sym + ' drip' };
-  const needCrumbs = Math.max(0, 3 - n);
-  const needKinds  = Math.max(0, 2 - kinds);
-  if (needCrumbs === 0 && needKinds === 0) return { ready: true, txt: '\u2713 ready to fuse \u2014 seal the block to lock your $' + sym + ' drip' };
-  const parts = [];
-  if (needCrumbs > 0) parts.push('<b>' + needCrumbs + '</b> more crumb' + (needCrumbs === 1 ? '' : 's'));
-  if (needKinds > 0)  parts.push('a <b>different</b> kind');
-  return { ready: false, txt: 'almost \u2014 add ' + parts.join(' + ') + ' to fuse your drip' };
-}
-
 function paintFeed(root) {
   const used = STATE.belly.reduce((s, c) => s + (c.kept ?? c.size), 0);
   const cap = 100;
@@ -1335,17 +1310,14 @@ function paintFeed(root) {
   const canKnock = STATE.belly.length > 0;
   // First entry shows the rule; later actions show reactions
   if (STATE.belly.length === 0 && STATE.rejected.length === 0) {
-    if (window.DRIP_LIVE) flash('tap crumbs to pack the block.', 'pack 3+ crumbs of different kinds to fuse a claimable $' + (DRIP.token.symbol || 'NAT') + ' drip.');
-    else flash('tap a crumb to add it to the block.', 'pack until it feels right. big crumbs may bounce.');
+    flash('tap a crumb to add it to the block.', 'pack until it feels right. big crumbs may bounce.');
   }
-  const fh = fusionHint();
 
   root.innerHTML =
     '<div class="cap-row">' +
       '<div class="cap-meta"><span>packing block</span><span class="num">' + STATE.belly.length + ' item' + (STATE.belly.length === 1 ? '' : 's') + '</span></div>' +
       '<div class="cap"><div class="cap-fill' + (pct >= 90 ? ' full' : '') + '" style="width:' + pct + '%"></div></div>' +
     '</div>' +
-    (window.DRIP_LIVE ? '<div class="fuse-hint' + (fh.ready ? ' ready' : '') + '">' + fh.txt + '</div>' : '') +
     '<div class="crumbs" id="crumbsRow"></div>' +
     '<button class="pill hot" id="goKnock" ' + (canKnock ? '' : 'disabled') + '>' +
       (canKnock ? 'TRY TO SEAL THE BLOCK →' : 'pick at least one crumb') +
@@ -2090,26 +2062,12 @@ function compoundCardHTML(cx) {
       '<div class="cx-combine">' + cx.distinct.join(' + ') + '</div>' +
       '<div class="cx-note">' + esc(compoundNote(cx)) + '</div>' +
       (window.DRIP_LIVE && cx.drip ?
-        '<div class="cx-drip">✦ you fused a <b>claimable ' + DRIP.token.symbol + ' drip</b>' +
-          '<span style="display:block;font-size:11px;line-height:1.4;opacity:.7;margin-top:5px;font-weight:400">your exact amount is set by your wallet — revealed when you claim</span></div>' +
+        '<div class="cx-drip">this run earned <b>' + fmtNat(cx.drip.nat) + ' ' + DRIP.token.symbol + '</b>' +
+          '<span class="cx-drip-tier ' + cx.drip.tier + '">' + cx.drip.label + '</span></div>' +
         dripTrackerHTML(cx.dripStep || 'unlock') +
         '<button class="cx-claim" id="claimBtn">UNLOCK &amp; CLAIM →</button>' : '') +
       '<button class="cx-seal" id="sealBtn">SEAL THIS COMPOUND →</button>' +
       '<div class="cx-tag">compound · unofficial · not new supply</div>' +
-    '</div>';
-}
-
-// Shown when a run finishes but produced NO compound while the drip is live —
-// so the player understands why there's no claim and exactly how to earn one,
-// instead of silently landing on "run a new unatom" and assuming it's broken.
-function noCompoundHTML(r) {
-  const sym = DRIP.token.symbol || 'NAT';
-  return '<div class="compound unstable" style="border-style:dashed">' +
-    '<div class="cx-kicker">⚗ the block didn\'t fuse</div>' +
-    '<div class="cx-name" style="font-size:26px">no compound this run</div>' +
-    '<div class="cx-note">a claimable <b>$' + esc(sym) + '</b> drip only drops when your inputs <b>fuse into a compound</b> — that needs <b>3+ crumbs of at least 2 different kinds</b>, settled clean. this run packed <b>' + (r.ate || 0) + '</b>.</div>' +
-    '<div class="cx-combine" style="color:var(--cyan)">pack fuller · mix 2+ kinds · run again to claim your $' + esc(sym) + '</div>' +
-    '<div class="cx-tag">no fusion · no claim · try again</div>' +
     '</div>';
 }
 
@@ -2167,9 +2125,10 @@ function paintReceipt(root) {
       '<div class="diag">' + r.diag + '</div>' +
       '<div class="serial">§ ' + r.serial + '</div>' +
     '</div>' +
-    (r.compound ? compoundCardHTML(r.compound) : (window.DRIP_LIVE ? noCompoundHTML(r) : '')) +
+    (r.compound ? compoundCardHTML(r.compound) : '') +
     '<button class="pill again big" id="runAgain">RUN A NEW UNATOM</button>' +
-    '<button class="ghost" id="shareBtn">share my unatom →</button>' +
+    '<button class="ghost" id="shareBtn">save my unatom →</button>' +
+    (window.DRIP_LIVE ? '<a class="ghost" href="/drip/?block=' + STATE.block + '" style="text-decoration:none;display:inline-block;color:rgba(240,150,45,.7)">✦ your element has a drip →</a>' : '') +
     '<a class="ghost" href="./catalog/" style="text-decoration:none;display:inline-block">see all 10,080 →</a>';
 
   $('runAgain').onclick = () => { haptic(28); runAgain(); };
@@ -2179,12 +2138,6 @@ function paintReceipt(root) {
     if (sb) sb.onclick = () => shareCompound(r.compound);
     wireClaimBtn(r.compound);  // Step 6 — UNLOCK & CLAIM opens the claim panel (DRIP_LIVE only)
     saveDripRun(r.compound);   // cache so the earned compound survives a nat.fun round-trip
-    // Safety net: if the initial /status fetch failed (slow mobile network), the
-    // claim CTA would be gated off. Re-check right when it matters, and re-render
-    // the receipt if the drip is in fact live so the claim button appears.
-    if (!window.DRIP_LIVE) {
-      loadDripStrip().then(() => { if (window.DRIP_LIVE && STATE.step === 'receipt') paintAction(); });
-    }
   }
 }
 
@@ -2619,7 +2572,8 @@ function showDripResumeChip(run) {
   const chip = document.createElement('button');
   chip.id = 'dripResumeChip';
   chip.className = 'drip-resume-chip';
-  chip.innerHTML = '<span class="drc-ic">↩</span><span class="drc-txt">your compound is waiting · <b>claim your ' + DRIP.token.symbol + '</b></span>';
+  chip.innerHTML = '<span class="drc-ic">↩</span><span class="drc-txt">your compound · <b>' +
+    fmtNat(run.drip.nat) + ' ' + DRIP.token.symbol + '</b> waiting</span>';
   chip.onclick = () => { haptic(12); openDripResume(run); };
   document.body.appendChild(chip);
   requestAnimationFrame(() => chip.classList.add('show'));
@@ -2654,11 +2608,6 @@ function openDripResume(run) {
 // ============================================================================
 const CLAIM = { state: 'intro', pubkey: null, signed: null, drip: null };
 
-// The ONE official nat.fun page for the gate token — link straight here so
-// holders never buy a look-alike. Built from the trusted mint, never guessed.
-const NATFUN_TOKEN_URL   = 'https://nat.fun/token/' + DRIP.token.mint;
-const NATFUN_TOKEN_SHORT = DRIP.token.mint.slice(0, 6) + '\u2026' + DRIP.token.mint.slice(-4);
-
 function claimSet(state, patch) {
   Object.assign(CLAIM, patch || {});
   CLAIM.state = state;
@@ -2685,18 +2634,15 @@ async function signSolana(prov, pubkey) {
 
 async function dripVerifyHoldings(pubkey, signed) {
   try {
-    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 6000);
     const r = await fetch(DRIP.api + '/verify', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ pubkey, message: signed.message, signature: signed.signature, preview: window.DRIP_PREVIEW || undefined }), signal: ctrl.signal,
     });
     clearTimeout(t);
-    let data = {};
-    try { data = await r.json(); } catch (e) {}
-    if (data && data.notLive) return { notLive: true };                 // genuinely gated (worker says so)
-    if (!r.ok) return { error: data.error || 'couldn\'t reach the drip — try again in a moment.' };
-    return data;
-  } catch (e) { return { error: 'network hiccup — check your connection and tap try again.' }; }
+    if (!r.ok) return { notLive: true };
+    return await r.json();
+  } catch (e) { return { notLive: true }; }
 }
 
 async function dripSubmitClaim(payload) {
@@ -2707,12 +2653,9 @@ async function dripSubmitClaim(payload) {
       body: JSON.stringify(payload), signal: ctrl.signal,
     });
     clearTimeout(t);
-    let data = {};
-    try { data = await r.json(); } catch (e) {}
-    if (data && data.notLive) return { notLive: true };
-    if (!r.ok) return Object.assign({ ok: false, error: 'couldn\'t queue — try again in a moment.' }, data);
-    return data;
-  } catch (e) { return { ok: false, error: 'network hiccup — check your connection and try again.' }; }
+    if (!r.ok) return { notLive: true };
+    return await r.json();
+  } catch (e) { return { notLive: true }; }
 }
 
 async function claimConnect() {
@@ -2731,7 +2674,6 @@ async function claimConnect() {
   claimSet('verifying');
   const res = await dripVerifyHoldings(pubkey, signed);
   if (res.notLive) { claimSet('closed'); return; }
-  if (res.error) { claimSet('error', { errMsg: res.error }); return; }
   if (!res.eligible) { claimSet('ineligible', { have: res.blockCount || 0, need: res.minHold || DRIP.token.minHold }); return; }
   CLAIM.drip = walletDrip(pubkey);
   claimSet('eligible');
@@ -2745,35 +2687,22 @@ async function claimSubmit() {
   claimSet('submitting', { btcVal: btc });
   const res = await dripSubmitClaim({ pubkey: CLAIM.pubkey, message: CLAIM.signed.message, signature: CLAIM.signed.signature, btc: btc, index: walletDripIndex(CLAIM.pubkey), preview: window.DRIP_PREVIEW || undefined });
   if (res.notLive) { claimSet('closed'); return; }
-  if (res.already) { claimSet('already', { drip: { nat: res.amount || (CLAIM.drip && CLAIM.drip.nat) || 0, tier: res.tier || (CLAIM.drip && CLAIM.drip.tier) } }); return; }
   if (!res.ok) { claimSet('eligible', { btcVal: btc, submitErr: res.error || 'could not queue — try again' }); return; }
-  if (!res.test) clearDripRun();   // claimed for real — nothing left "waiting", so the resume chip won't nag
+  try { const run = loadDripRun(); if (run) { run.dripStep = 'done'; localStorage.setItem(DRIP_RUN_KEY, JSON.stringify(run)); } } catch (e) {}
   claimSet('queued', { btcVal: btc, test: !!res.test });
-}
-
-function shareClaim() {
-  const sym = DRIP.token.symbol || 'NAT';
-  const d = CLAIM.drip || { nat: 0 };
-  const amt = d.nat ? fmtNat(d.nat) + ' $' + sym : 'my $' + sym;
-  const text = 'just fused a UNATOM and claimed ' + amt + ' from the NATDRIP 🫡\n\ndigital matter — free & fair, while the pool lasts.\nrun a block → unatom.fun\n\n#UNATOM @takedmt';
-  const url = 'https://x.com/intent/tweet?text=' + encodeURIComponent(text);
-  try { window.open(url, '_blank', 'noopener'); } catch (e) {}
 }
 
 function claimRender() {
   const ov = document.getElementById('claimOv');
   if (!ov) return;
   const sym = DRIP.token.symbol;
-  const gate = DRIP.token.gate || 'TakeDMT';   // Solana gate token you HOLD (bought on nat.fun)
-  const gsym = DRIP.token.gateSym || 'DMT';    // its ticker → shown as $DMT
   const S = CLAIM.state;
   let body = '';
   if (S === 'intro') {
-    body = '<div class="cl-step">1 · confirm you hold $' + gsym + '</div>' +
-      '<p class="cl-lead">connect your Solana wallet so we can confirm you hold <b>' + gate + ' ($' + gsym + ')</b> from nat.fun. this only proves eligibility — no transaction, no approval.</p>' +
+    body = '<div class="cl-step">1 · confirm you hold ' + esc(sym) + '</div>' +
+      '<p class="cl-lead">connect your Solana wallet so we can confirm you hold <b>' + esc(sym) + '</b> on nat.fun. this only proves eligibility — no transaction, no approval.</p>' +
       '<button class="claim-btn" id="clConnect">CONNECT SOLANA WALLET</button>' +
-      '<p class="cl-fine">you\'ll sign a message to prove the wallet is yours. gas-free.</p>' +
-      '<a class="cl-fine" style="display:inline-block;margin-top:10px;color:var(--cyan);text-decoration:none" href="' + NATFUN_TOKEN_URL + '" target="_blank" rel="noopener">✓ the only official $' + gsym + ' · nat.fun ↗</a>';
+      '<p class="cl-fine">you\'ll sign a message to prove the wallet is yours. gas-free.</p>';
   } else if (S === 'connecting') {
     body = '<div class="cl-spin"></div><p class="cl-lead">opening your wallet…</p>';
   } else if (S === 'signing') {
@@ -2781,28 +2710,16 @@ function claimRender() {
   } else if (S === 'verifying') {
     body = '<div class="cl-spin"></div><p class="cl-lead">checking your ' + esc(sym) + ' holdings…</p>';
   } else if (S === 'nowallet') {
-    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
-    if (isMobile) {
-      const here = encodeURIComponent(location.href.split('#')[0]);
-      const ref  = encodeURIComponent(location.origin);
-      body = '<div class="cl-step">open inside your wallet app</div>' +
-        '<p class="cl-lead">on a phone, connecting only works inside the <b>Phantom app\'s browser</b>. tap below to reopen this page there \u2014 then hit claim again.</p>' +
-        '<a class="claim-btn" href="https://phantom.app/ul/browse/' + here + '?ref=' + ref + '">OPEN IN PHANTOM \u2192</a>' +
-        '<p class="cl-fine">no Phantom yet? grab it free on the App Store / Google Play, then reopen unatom.fun inside it.</p>' +
-        '<button class="cl-ghost" id="clRetry">already in a wallet browser \u2014 retry</button>';
-    } else {
-      body = '<div class="cl-step">no Solana wallet found</div>' +
-        '<p class="cl-lead">you need a Solana wallet (Phantom or Solflare) that holds your ' + esc(sym) + ' from nat.fun.</p>' +
-        '<a class="claim-btn" href="https://phantom.app/" target="_blank" rel="noopener">GET PHANTOM \u2192</a>' +
-        '<button class="cl-ghost" id="clRetry">I have one \u2014 retry</button>';
-    }
+    body = '<div class="cl-step">no Solana wallet found</div>' +
+      '<p class="cl-lead">you need a Solana wallet (Phantom or Solflare) that holds your ' + esc(sym) + ' from nat.fun.</p>' +
+      '<a class="claim-btn" href="https://phantom.app/" target="_blank" rel="noopener">GET PHANTOM →</a>' +
+      '<button class="cl-ghost" id="clRetry">I have one — retry</button>';
   } else if (S === 'ineligible') {
-    body = '<div class="cl-step">this wallet can\'t claim yet</div>' +
-      '<p class="cl-lead">the drip is only for <b>$' + gsym + '</b> (' + gate + ') holders. you need at least <b>1</b> \u2014 this wallet holds <b>' + (CLAIM.have || 0) + '</b>. grab one on <b>nat.fun</b> and you\'re in.</p>' +
-      '<p class="cl-fine">on nat.fun, each $' + gsym + ' you own counts as one \u201cblock.\u201d it takes about a minute.</p>' +
-      '<a class="claim-btn" href="' + NATFUN_TOKEN_URL + '" target="_blank" rel="noopener">GET $' + gsym + ' ON NAT.FUN \u2192</a>' +
-      '<p class="cl-fine">\u2713 official token only \u00b7 <span class="cl-mono">' + NATFUN_TOKEN_SHORT + '</span> \u00b7 use this button, don\'t search (avoid fakes)</p>' +
-      '<button class="cl-ghost" id="clRetry">bought one \u2014 re-check</button>';
+    body = '<div class="cl-step">not enough ' + esc(sym) + ' yet</div>' +
+      '<p class="cl-lead">this wallet holds <b>' + (CLAIM.have || 0) + '</b> block' + ((CLAIM.have === 1) ? '' : 's') +
+        '. you need at least <b>' + (CLAIM.need || 1) + '</b> to unlock a claim.</p>' +
+      '<a class="claim-btn" href="https://nat.fun/" target="_blank" rel="noopener">GET A BLOCK ON NAT.FUN →</a>' +
+      '<button class="cl-ghost" id="clRetry">bought one — re-check</button>';
   } else if (S === 'eligible') {
     const d = CLAIM.drip || { nat: 0, label: '', tier: 'common' };
     const tp = isTaproot(CLAIM.btcVal || '');
@@ -2811,7 +2728,6 @@ function claimRender() {
         '<span class="cx-drip-tier ' + d.tier + '">' + d.label + '</span></div>' +
       '<p class="cl-fine">eligibility confirmed ✓ — this is your wallet\'s draw, fixed and yours alone.</p>' +
       '<div class="cl-step" style="margin-top:16px">3 · where to send your ' + esc(sym) + '</div>' +
-      '<p class="cl-fine">your ' + esc(sym) + ' arrives on <b>Bitcoin</b> (as a TAP ordinal) — a different chain from the Solana wallet you just connected. that\'s why we need a <b>Bitcoin taproot</b> address (starts with <b>bc1p</b>) below.</p>' +
       '<input class="cl-input" id="claimBtc" placeholder="your Bitcoin (TAP) wallet address" value="' + esc(CLAIM.btcVal || '') + '" autocomplete="off" spellcheck="false">' +
       (CLAIM.btcErr ? '<div class="cl-err">' + esc(CLAIM.btcErr) + '</div>' : '') +
       (CLAIM.btcVal && validBtcAddress(CLAIM.btcVal) && !tp ? '<div class="cl-warn">⚠ ordinals/TAP tokens prefer a <b>taproot</b> address (bc1p…). double-check this wallet supports TAP.</div>' : '') +
@@ -2832,17 +2748,9 @@ function claimRender() {
     } else {
       body = '<div class="cl-seal">✓</div>' +
         '<div class="cl-step">claim queued</div>' +
-        '<p class="cl-lead">your <b>' + fmtNat(d.nat) + ' ' + esc(sym) + '</b> is locked to your wallet and will be inscribed to<br><span class="cl-mono">' + esc(CLAIM.btcVal || '') + '</span><br>when the drip settles. <b>you\'re all set — nothing else to do.</b> you can safely close this.</p>' +
-        '<button class="claim-btn" id="clShare">SHARE ON X →</button>' +
-        '<button class="cl-ghost" id="clDone">done</button>';
+        '<p class="cl-lead">your <b>' + fmtNat(d.nat) + ' ' + esc(sym) + '</b> is locked to your wallet and will be inscribed to<br><span class="cl-mono">' + esc(CLAIM.btcVal || '') + '</span><br>during settlement. no need to keep this open.</p>' +
+        '<button class="claim-btn" id="clDone">DONE</button>';
     }
-  } else if (S === 'already') {
-    const d = CLAIM.drip || { nat: 0 };
-    body = '<div class="cl-seal">✓</div>' +
-      '<div class="cl-step">already claimed ✓</div>' +
-      '<p class="cl-lead">this wallet already claimed its drip' + (d.nat ? ' of <b>' + fmtNat(d.nat) + ' ' + sym + '</b>' : '') + '. the drip is <b>one claim per wallet</b> — you\'re all set, nothing more to do. (run as many UNATOMs as you like for fun — the reward is one per wallet.)</p>' +
-      '<button class="claim-btn" id="clShare">SHARE ON X →</button>' +
-      '<button class="cl-ghost" id="clDone">done</button>';
   } else if (S === 'closed') {
     body = '<div class="cl-step">claims aren\'t open yet</div>' +
       '<p class="cl-lead">the drip claim window isn\'t live right now. your earned compound is saved — come back when it opens.</p>' +
@@ -2862,7 +2770,6 @@ function claimRender() {
   on('clConnect', claimConnect);
   on('clRetry', claimConnect);
   on('clSubmit', claimSubmit);
-  on('clShare', shareClaim);
   on('clDone', closeClaimPanel);
   const btc = document.getElementById('claimBtc');
   if (btc) btc.oninput = (e) => { CLAIM.btcVal = e.target.value; };
@@ -2874,9 +2781,7 @@ function wireClaimBtn(cx) {
 }
 
 async function loadDripStrip() {
-  // Default only on the very first run — never knock a known-live session back
-  // offline just because a later status poll timed out.
-  if (typeof window.DRIP_LIVE !== 'boolean') window.DRIP_LIVE = DRIP.live && dripWindowOpen();
+  window.DRIP_LIVE = DRIP.live && dripWindowOpen();   // local default
   // preview/test mode: ?preview=<key> lets the operator run the full live flow
   // against the real worker before public launch. The key is only ever read
   // from the URL (never hard-coded) and forwarded to the worker, which decides
@@ -2885,13 +2790,13 @@ async function loadDripStrip() {
   catch (e) { window.DRIP_PREVIEW = null; }
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 8000);   // mobile-friendly timeout
-    const data = await fetch(DRIP.endpoint, {signal: ctrl.signal, cache: 'no-store'}).then(r => r.json());
+    const t = setTimeout(() => ctrl.abort(), 3000);
+    const data = await fetch(DRIP.endpoint, {signal: ctrl.signal}).then(r => r.json());
     clearTimeout(t);
     // phase: 'pre' (not launched) | 'countdown' (waiting on a BTC block) | 'live' | 'ended' (flex)
     const phase = data.phase || (data.active === true ? 'live' : 'pre');
     if (phase === 'ended') { window.DRIP_LIVE = false; setDripStripEnded(data.distributed); dripPoll(false); return; }
-    if (phase === 'live')  { window.DRIP_LIVE = true;  setDripStripLive(); dripPoll(true); return; }  // keep polling to catch depletion
+    if (phase === 'live')  { window.DRIP_LIVE = true;  setDripStripLive(); dripPoll(false); return; }
     if (phase === 'countdown') {
       window.DRIP_LIVE = false;
       setDripStripCountdown(data);
@@ -2901,21 +2806,15 @@ async function loadDripStrip() {
     }
     // 'pre' — pre-launch: keep the static teaser visible, drip stays hidden
     window.DRIP_LIVE = false;
-  } catch(e) {
-    // Network hiccup / slow mobile connection: DON'T hide a claim that's really
-    // live. Keep whatever we knew, and keep retrying in the background so a
-    // failed first fetch self-heals instead of silently killing the claim CTA.
-    dripPoll(true);
-  }
+  } catch(e) { /* silent — keep static teaser showing, honor local default */ }
   // preview override: force the live experience for the operator only
   if (window.DRIP_PREVIEW) { window.DRIP_LIVE = true; setDripStripLive(); }
 }
 
-// Keep a background poll alive during countdown AND live (so the banner ticks,
-// flips to live on its own, catches pool depletion, and self-heals a failed
-// initial status fetch). Cleared once we reach a settled 'ended' state.
+// Keep a single background poll alive only while we're counting down to the
+// launch block, so the banner ticks down and flips to live on its own.
 function dripPoll(on) {
-  if (on) { if (!window.__dripPollId) window.__dripPollId = setInterval(loadDripStrip, 45000); }
+  if (on) { if (!window.__dripPollId) window.__dripPollId = setInterval(loadDripStrip, 60000); }
   else if (window.__dripPollId) { clearInterval(window.__dripPollId); window.__dripPollId = null; }
 }
 

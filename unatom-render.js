@@ -347,6 +347,116 @@ function blazedOverlay(sch, mood) {
 }
 
 // -----------------------------------------------------------------------------
+// Flameborn — pink flame halos wrap each visible eye + a fanged slit mouth.
+// Overrides the base mouth by painting a tile-coloured mask, then drawing
+// the fanged slit on top. Third-eye halo is skipped when the eye is sealed
+// (no cavity to wrap around).
+// -----------------------------------------------------------------------------
+function flamebornOverlay(sch, mood, thirdEyeKind) {
+  const flameFill  = '#f04771';
+  const flameEdge  = '#a02040';
+  const flameCore  = '#ffd0b8';
+
+  // 8 tongues, top tallest → bottom shortest, ordered so top draws last (on top)
+  // [angle_from_east(radians), length_multiplier]
+  const TONGUES = [
+    [ Math.PI/2,      0.55],  // bottom
+    [ Math.PI/2 - Math.PI/4, 0.68],  // bottom-right
+    [ Math.PI/2 + Math.PI/4, 0.68],  // bottom-left
+    [ 0,              0.82],  // right
+    [ Math.PI,        0.82],  // left
+    [-Math.PI/2 - Math.PI/4, 1.00],  // upper-left
+    [-Math.PI/2 + Math.PI/4, 1.00],  // upper-right
+    [-Math.PI/2,      1.20],  // top (tallest)
+  ];
+
+  function flameRing(cx, cy, r) {
+    let out = '';
+    const baseW = r * 0.34;
+    for (const [a, lenMul] of TONGUES) {
+      const len = r * lenMul;
+      const cos = Math.cos(a), sin = Math.sin(a);
+      // perpendicular unit
+      const px = -sin, py = cos;
+      // base anchors on rim
+      const rimX = cx + r * cos;
+      const rimY = cy + r * sin;
+      const bxL = rimX + (-baseW/2) * px;
+      const byL = rimY + (-baseW/2) * py;
+      const bxR = rimX + ( baseW/2) * px;
+      const byR = rimY + ( baseW/2) * py;
+      // tip
+      const tx = cx + (r + len) * cos;
+      const ty = cy + (r + len) * sin;
+      // side control points that bulge outward
+      const ctlLX = rimX + (len*0.55) * cos + (-baseW*0.75) * px;
+      const ctlLY = rimY + (len*0.55) * sin + (-baseW*0.75) * py;
+      const ctlRX = rimX + (len*0.55) * cos + ( baseW*0.75) * px;
+      const ctlRY = rimY + (len*0.55) * sin + ( baseW*0.75) * py;
+      // outer flame body
+      out += `<path d="M ${bxL.toFixed(1)} ${byL.toFixed(1)}
+        Q ${ctlLX.toFixed(1)} ${ctlLY.toFixed(1)}, ${tx.toFixed(1)} ${ty.toFixed(1)}
+        Q ${ctlRX.toFixed(1)} ${ctlRY.toFixed(1)}, ${bxR.toFixed(1)} ${byR.toFixed(1)} Z"
+        fill="${flameFill}" stroke="${flameEdge}" stroke-width="5" stroke-linejoin="round"/>`;
+      // hot inner streak (2/3 of the tongue length, thinner)
+      const innerLen = len * 0.65;
+      const innerBaseW = baseW * 0.35;
+      const iBxL = rimX + (-innerBaseW/2) * px;
+      const iByL = rimY + (-innerBaseW/2) * py;
+      const iBxR = rimX + ( innerBaseW/2) * px;
+      const iByR = rimY + ( innerBaseW/2) * py;
+      const iTx = cx + (r + innerLen) * cos;
+      const iTy = cy + (r + innerLen) * sin;
+      out += `<path d="M ${iBxL.toFixed(1)} ${iByL.toFixed(1)}
+        Q ${(iBxL+iBxR)/2 - baseW*0.15*px} ${(iByL+iByR)/2 - baseW*0.15*py}, ${iTx.toFixed(1)} ${iTy.toFixed(1)}
+        Q ${(iBxL+iBxR)/2 + baseW*0.15*px} ${(iByL+iByR)/2 + baseW*0.15*py}, ${iBxR.toFixed(1)} ${iByR.toFixed(1)} Z"
+        fill="${flameCore}" opacity="0.35"/>`;
+    }
+    return out;
+  }
+
+  // fanged slit — tile-coloured cover-up, then a small vertical rectangle mouth
+  // with pointy teeth (2 top, 2 bottom) pointing INTO the slit.
+  function fangedSlit() {
+    const w = 44;
+    const h = 96;
+    const x = CX - w/2;
+    const y = MOUTH_CY - h/2 + 6;  // nudge down a hair
+    // Cover-up (paints over any base mouth already drawn)
+    const mask = `<rect x="${CX - 90}" y="${MOUTH_CY - 30}" width="180" height="70" fill="${sch.tile}"/>`;
+    // Slit body
+    const slit = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6"
+      fill="#f4eedf" stroke="${flameEdge}" stroke-width="5"/>`;
+    // Teeth: 2 top pointing DOWN, 2 bottom pointing UP
+    const tw = 10, th = 14;
+    const tooth = (px, py, dir) => {
+      // dir = -1 (points up) or +1 (points down)
+      const tip = py + dir * th;
+      return `<path d="M ${px - tw/2} ${py} L ${px + tw/2} ${py} L ${px} ${tip} Z"
+        fill="#1a1a1a"/>`;
+    };
+    const teeth =
+      tooth(x + w * 0.30, y + 4, +1) +
+      tooth(x + w * 0.70, y + 4, +1) +
+      tooth(x + w * 0.30, y + h - 4, -1) +
+      tooth(x + w * 0.70, y + h - 4, -1);
+    return mask + slit + teeth;
+  }
+
+  const cfg = MOODS[mood] || MOODS.calm;
+  let out = '';
+  // Left + right main eye halos
+  out += flameRing(CX - LOWER_EYE_DX, LOWER_EYE_CY, LOWER_EYE_R);
+  out += flameRing(CX + LOWER_EYE_DX, LOWER_EYE_CY, LOWER_EYE_R);
+  // Third eye halo — skip if eye is sealed (no visible orb to crown)
+  if (thirdEyeKind && thirdEyeKind !== 'sealed') {
+    out += flameRing(CX, THIRD_EYE_CY, THIRD_EYE_R);
+  }
+  out += fangedSlit();
+  return out;
+}
+
+// -----------------------------------------------------------------------------
 // Brows — three strokes above each eye. Single highest-impact personality dial.
 // Rendered between lower eyes and third eye, drawn UNDER glasses for stacking.
 // -----------------------------------------------------------------------------
@@ -1602,9 +1712,14 @@ function unatomFromBlock(height) {
   // otherwise a rare (~3%) roll. Roll is APPENDED so existing per-block traits stay stable.
   const blazedBluntie = String(height).includes('420') || rng() < 0.03;
 
+  // Flameborn — pink flame-halo eyes + fanged slit mouth. Guaranteed on any
+  // block whose height contains "666", otherwise a rare (~1%) roll. Appended
+  // AFTER blazedBluntie so prior trait values stay stable across the series.
+  const flameborn = String(height).includes('666') || rng() < 0.01;
+
   return { sym, blk: height, scheme, border, thirdEye: tEye, mood,
     mouthKind, drip, glasses: glassesKind, brows: browKind, nature, swagKind, eco,
-    blazedBluntie };
+    blazedBluntie, flameborn };
 }
 
 // -----------------------------------------------------------------------------
@@ -1619,6 +1734,7 @@ function unatomSVG(opts = {}) {
     thirdEye:   thirdEyeKind = 'open',
     mood        = 'calm',
     blazedBluntie = false,
+    flameborn   = false,
     pin         = null,
     mouthKind   = 'signalSmile',
     drip        = 'seedDrip',
@@ -1651,6 +1767,7 @@ function unatomSVG(opts = {}) {
     ${brows(sch, browsKind)}
     ${glasses(sch, glassesKind)}
     ${mouth(CX, MOUTH_CY, 130, mouthKind, sch)}
+    ${flameborn ? flamebornOverlay(sch, mood, thirdEyeKind) : ''}
     ${showSymbol ? chestSymbol(sym, sch) : ''}
     ${natureMark(sch, natureKind)}
     ${bodySwag}
