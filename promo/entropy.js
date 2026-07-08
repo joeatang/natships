@@ -411,136 +411,50 @@
   };
 
   // ============================================================================
-  // NATDRIP · LIVE — announcement poster (void palette, FOMO, low text)
+  // NATDRIP · FREE \u2014 image-forward FOMO ('claim free DMT-NAT', miner-backed)
+  // One word does the work (FREE); the UNATOM art + gold drip carry the rest.
   // ============================================================================
-  CARDS['natdrip_live'] = (root) => {
+  CARDS['natdrip_free'] = (root) => {
     const t = U().fromBlock(103481);
-    // faux "drip" streaks falling from the hero unatom
-    const drips = Array.from({length:11}, (_,i) => {
-      const x = 372 + i*34;
-      const len = 46 + ((i*37) % 120);
-      const op  = 0.22 + ((i*29) % 50) / 100;
-      return `<line x1="${x}" y1="474" x2="${x}" y2="${474+len}" stroke="#f0962d" stroke-width="2" opacity="${op}" stroke-linecap="round"/>`;
+    const drips = Array.from({length:13}, (_,i) => {
+      const x = 356 + i*30;
+      const len = 44 + ((i*41) % 150);
+      const op  = 0.22 + ((i*29) % 55) / 100;
+      return `<line x1="${x}" y1="472" x2="${x}" y2="${472+len}" stroke="#f0962d" stroke-width="2.2" opacity="${op}" stroke-linecap="round"/>`;
     }).join('');
     root.innerHTML = `
-      <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 39%, #18110a 0%, #08070c 62%);color:#f3eee3;overflow:hidden">
+      <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 38%, #1c1206 0%, #060509 64%);color:#f3eee3;overflow:hidden">
         <svg style="position:absolute;inset:0;pointer-events:none" viewBox="0 0 1080 1080">
-          ${starfield(110, .5)}
+          ${starfield(120, .5)}
           ${drips}
         </svg>
 
-        <!-- NOW LIVE pill -->
-        <div style="position:absolute;top:62px;left:50%;transform:translateX(-50%);
-          display:flex;align-items:center;gap:13px;
-          background:rgba(240,150,45,.12);border:1px solid rgba(240,150,45,.5);
-          padding:12px 28px;border-radius:999px;
-          font:800 18px ${F_MONO};letter-spacing:.42em;color:#f0962d;text-transform:uppercase">
-          <span style="width:11px;height:11px;border-radius:50%;background:#f0962d;box-shadow:0 0 16px #f0962d"></span>
-          NOW LIVE
+        <div style="position:absolute;inset:26px;border:1px solid rgba(243,238,227,.12);border-radius:6px;pointer-events:none"></div>
+
+        <div style="position:absolute;top:64px;left:0;right:0;text-align:center;
+          font:700 15px ${F_MONO};letter-spacing:.3em;color:#5dd0e3;text-transform:uppercase">
+          \u26cf\ufe0f  backed by the top Bitcoin miners
         </div>
 
-        <!-- hero unatom, heavy glow -->
-        <div style="position:absolute;top:150px;left:50%;transform:translateX(-50%);
-          width:330px;height:330px;
-          filter:drop-shadow(0 0 72px rgba(240,150,45,.6)) drop-shadow(0 0 26px rgba(93,208,227,.35))">
-          ${unatomBox(t, 330)}
+        <div style="position:absolute;top:126px;left:50%;transform:translateX(-50%);
+          width:346px;height:346px;
+          filter:drop-shadow(0 0 82px rgba(240,150,45,.6)) drop-shadow(0 0 30px rgba(93,208,227,.32))">
+          ${unatomBox(t, 346)}
         </div>
 
-        <!-- hero shout -->
-        <div style="position:absolute;top:500px;left:0;right:0;text-align:center;
-          font:900 158px/0.84 ${F_IMPACT};letter-spacing:-.02em;color:#f3eee3;
-          text-shadow:0 0 50px rgba(240,150,45,.25)">
-          NAT DRIP<br/><span style="color:#f0962d">IS LIVE.</span>
+        <div style="position:absolute;bottom:252px;left:0;right:0;text-align:center;
+          font:900 132px/0.82 ${F_IMPACT};letter-spacing:-.02em;color:#f3eee3;
+          text-shadow:0 0 45px rgba(240,150,45,.25)">
+          CLAIM <span style="color:#f0962d">FREE</span><br/>$DMT-NAT
         </div>
 
-        <!-- CTA -->
-        <div style="position:absolute;bottom:224px;left:50%;transform:translateX(-50%);
-          border:2px solid #5dd0e3;border-radius:14px;padding:16px 36px;
-          background:rgba(93,208,227,.06);
-          font:800 34px ${F_MONO};letter-spacing:.06em;color:#5dd0e3;white-space:nowrap">
-          RUN A BLOCK \u2192 CLAIM $DMT-NAT
+        <div style="position:absolute;bottom:172px;left:0;right:0;text-align:center;
+          font:italic 500 25px ${F_SERIF};color:rgba(243,238,227,.72)">
+          run a block. keep the change. no catch.
         </div>
 
-        <!-- FOMO whisper -->
-        <div style="position:absolute;bottom:150px;left:0;right:0;text-align:center;
-          font:italic 500 24px ${F_SERIF};color:rgba(243,238,227,.72)">
-          free &amp; fair \u00b7 while the pool lasts \u00b7 first blocks drip first
-        </div>
-
-        <!-- url -->
-        <div style="position:absolute;bottom:66px;left:0;right:0;text-align:center;
-          font:800 22px ${F_MONO};letter-spacing:.42em;color:#f3eee3;text-transform:uppercase">
-          UNATOM.FUN
-        </div>
-
-        <!-- corner stamps -->
-        <div style="position:absolute;top:74px;left:62px;font:700 12px ${F_MONO};letter-spacing:.28em;color:rgba(243,238,227,.45)">SERIES 0</div>
-        <div style="position:absolute;top:74px;right:62px;font:700 12px ${F_MONO};letter-spacing:.28em;color:rgba(243,238,227,.45)">10,080 BLOCKS</div>
-      </div>`;
-  };
-
-  // ============================================================================
-  // NATDRIP · FLEX — 'how much has dripped' FOMO poster (never reveals the pool)
-  // ============================================================================
-  CARDS['natdrip_flex'] = (root) => {
-    const t = U().fromBlock(103481);
-    const drips = Array.from({length:11}, (_,i) => {
-      const x = 372 + i*34;
-      const len = 40 + ((i*37) % 120);
-      const op  = 0.20 + ((i*29) % 50) / 100;
-      return `<line x1="${x}" y1="620" x2="${x}" y2="${620+len}" stroke="#f0962d" stroke-width="2" opacity="${op}" stroke-linecap="round"/>`;
-    }).join('');
-    root.innerHTML = `
-      <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 40%, #18110a 0%, #08070c 62%);color:#f3eee3;overflow:hidden">
-        <svg style="position:absolute;inset:0;pointer-events:none" viewBox="0 0 1080 1080">
-          ${starfield(110, .5)}
-          ${drips}
-        </svg>
-
-        <div style="position:absolute;top:58px;left:50%;transform:translateX(-50%);
-          display:flex;align-items:center;gap:12px;
-          background:rgba(240,150,45,.12);border:1px solid rgba(240,150,45,.5);
-          padding:11px 26px;border-radius:999px;
-          font:800 16px ${F_MONO};letter-spacing:.4em;color:#f0962d;text-transform:uppercase">
-          <span style="width:10px;height:10px;border-radius:50%;background:#f0962d;box-shadow:0 0 16px #f0962d"></span>
-          the drip is flowing
-        </div>
-
-        <div style="position:absolute;top:146px;left:0;right:0;text-align:center;
-          font:900 118px/0.9 ${F_IMPACT};letter-spacing:-.02em;color:#f0962d;
-          text-shadow:0 0 55px rgba(240,150,45,.5)">
-          275,000,000
-        </div>
-        <div style="position:absolute;top:282px;left:0;right:0;text-align:center;
-          font:700 20px ${F_MONO};letter-spacing:.32em;color:#f3eee3;text-transform:uppercase">
-          DMT-NAT dripped so far
-        </div>
-
-        <div style="position:absolute;top:342px;left:50%;transform:translateX(-50%);
-          width:280px;height:280px;
-          filter:drop-shadow(0 0 60px rgba(240,150,45,.55)) drop-shadow(0 0 22px rgba(93,208,227,.3))">
-          ${unatomBox(t, 280)}
-        </div>
-
-        <div style="position:absolute;bottom:250px;left:0;right:0;text-align:center;
-          font:900 52px/1.0 ${F_IMPACT};letter-spacing:.01em;color:#f3eee3">
-          the pool\u2019s still flowing.<br/><span style="color:#5dd0e3">are you nat ready?</span>
-        </div>
-
-        <div style="position:absolute;bottom:172px;left:50%;transform:translateX(-50%);
-          border:2px solid #5dd0e3;border-radius:14px;padding:15px 32px;
-          background:rgba(93,208,227,.06);
-          font:800 30px ${F_MONO};letter-spacing:.06em;color:#5dd0e3;white-space:nowrap">
-          RUN A BLOCK \u2192 CLAIM YOURS
-        </div>
-
-        <div style="position:absolute;bottom:112px;left:0;right:0;text-align:center;
-          font:italic 500 22px ${F_SERIF};color:rgba(243,238,227,.72)">
-          free &amp; fair \u00b7 while it lasts \u00b7 first come
-        </div>
-
-        <div style="position:absolute;bottom:56px;left:0;right:0;text-align:center;
-          font:800 20px ${F_MONO};letter-spacing:.42em;color:#f3eee3;text-transform:uppercase">
+        <div style="position:absolute;bottom:82px;left:0;right:0;text-align:center;
+          font:800 26px ${F_MONO};letter-spacing:.4em;color:#f0962d;text-transform:uppercase">
           UNATOM.FUN
         </div>
       </div>`;
