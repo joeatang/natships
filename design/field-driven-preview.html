@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UNATOMS · field-driven preview (Series 0 v2)</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:#0a0b10; color:#f0ebde; font-family: system-ui, -apple-system, sans-serif; }
+  header { padding: 24px 24px 8px; max-width: 1600px; margin: 0 auto; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  .sub { color:#7a7060; font-size: 13px; margin: 0 0 4px; }
+  section { max-width: 1600px; margin: 0 auto; padding: 0 24px 24px; }
+  h2 { margin: 24px 0 12px; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color:#f7931a; font-weight: 700; }
+  .controls { display:flex; gap:10px; flex-wrap:wrap; padding: 12px 0 20px; align-items:center; }
+  button { background:#1e1f28; color:#f0ebde; border:1px solid #2a2b34; border-radius:6px; padding:8px 14px; font: inherit; font-size:12px; cursor:pointer; }
+  button:hover { background:#2a2b34; }
+  button.active { background:#f7931a; color:#0a0b10; border-color:#f7931a; font-weight:600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .tile { background:#12131b; border:1px solid #1e1f28; border-radius:8px; overflow:hidden; position:relative; }
+  .tile svg { display:block; width:100%; height:auto; background:#0a0b10; }
+  .tile .label { padding: 6px 8px; font-size: 10px; color:#9a938b; font-family: ui-monospace, monospace; display:flex; justify-content: space-between; gap: 4px; }
+  .tile .label .h { color:#f4eedf; font-weight:600; }
+  .tile .label .flags { display:flex; gap:2px; flex-wrap:wrap; }
+  .tile .label .flags span { font-size:9px; padding:1px 4px; border-radius:100px; background:#1e1f28; }
+  .tile .label .flags .nat { background:#F07E1B; color:#0a0b10; font-weight:700; }
+  .tile .label .flags .flame { background:#ff4d86; color:#0a0b10; font-weight:700; }
+  .tile .label .flags .blaze { background:#7dcf5b; color:#0a0b10; font-weight:700; }
+  .tile .label .flags .echo { background:#36d6ee; color:#0a0b10; font-weight:700; }
+  .tile .label .flags .hi { background:#F07E1B; color:#0a0b10; font-weight:700; border:1px solid #fff7e6; }
+  .tile .label .flags .ceremonial { background:#7a4cb6; color:#f0ebde; font-weight:700; }
+  .stat { font-size: 11px; color:#7a7060; text-transform:uppercase; letter-spacing:0.08em; margin-left: auto; }
+  #status { padding: 40px; text-align:center; color:#7a7060; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>UNATOMS · field-driven preview (Series 0 v2)</h1>
+  <p class="sub">every UNATOM rendered via <code style="background:#1e1f28;padding:1px 4px;border-radius:3px">UNATOM.fromHeader(realBlockHeader)</code> — zero PRNG, all traits derived from actual Bitcoin bytes.</p>
+</header>
+
+<section id="status">loading headers…</section>
+
+<script src="/unatom-render.js"></script>
+<script>
+async function boot() {
+  const status = document.getElementById('status');
+  const res = await fetch('/design/series0-headers.json');
+  if (!res.ok) { status.textContent = 'failed to load headers: HTTP ' + res.status; return; }
+  const HEADERS = await res.json();
+  status.remove();
+  render(HEADERS);
+}
+
+function tileHTML(traits) {
+  const svg = UNATOM.svg(traits);
+  const flags = [
+    traits.ceremonial ? `<span class="ceremonial">${traits.ceremonial}</span>` : '',
+    traits.hi         ? `<span class="hi">Hi</span>` : '',
+    traits.natSigil   ? `<span class="nat">NAT</span>` : '',
+    traits.echo       ? `<span class="echo">Echo</span>` : '',
+    traits.flameborn  ? `<span class="flame">666</span>` : '',
+    traits.blazedBluntie ? `<span class="blaze">420</span>` : '',
+    traits.pin        ? `<span>${traits.pin}</span>` : '',
+  ].filter(Boolean).join('');
+  return `<div class="tile" data-blk="${traits.blk}" data-nat="${traits.natSigil?1:0}" data-flame="${traits.flameborn?1:0}" data-blaze="${traits.blazedBluntie?1:0}" data-echo="${traits.echo?1:0}" data-hi="${traits.hi?1:0}">
+    ${svg}
+    <div class="label"><span class="h">#${traits.blk}</span> <span>${traits.sym}·${traits.scheme}</span> <span class="flags">${flags}</span></div>
+  </div>`;
+}
+
+function render(HEADERS) {
+  const root = document.createElement('div');
+  document.body.appendChild(root);
+
+  // Compute all traits once
+  const all = HEADERS.map(h => UNATOM.fromHeader(h));
+
+  // Filter groups
+  const ceremonials = all.filter(t => t.ceremonial);
+  const withHi      = all.filter(t => t.hi);
+  const withNat     = all.filter(t => t.natSigil);
+  const withEcho    = all.filter(t => t.echo);
+  const withFlame   = all.filter(t => t.flameborn);
+  const withBlaze   = all.filter(t => t.blazedBluntie);
+
+  // Multi-overlay stack — anything with 2+ overlays active
+  const stacked = all.filter(t => {
+    let n = 0;
+    if (t.natSigil) n++;
+    if (t.echo) n++;
+    if (t.hi) n++;
+    if (t.flameborn) n++;
+    if (t.blazedBluntie) n++;
+    return n >= 2;
+  });
+
+  // Baseline sample (deterministic, spread across the range)
+  const baseline = [];
+  for (let i = 0; i < HEADERS.length; i += Math.floor(HEADERS.length / 60)) {
+    if (all[i] && !all[i].ceremonial && !all[i].natSigil && !all[i].hi) {
+      baseline.push(all[i]);
+    }
+  }
+
+  root.innerHTML = `
+    <section>
+      <div class="controls">
+        <span class="stat">${all.length} total · ${ceremonials.length} ceremonial · ${withHi.length} Hi · ${withNat.length} NAT SIGIL · ${withEcho.length} Echo · ${withFlame.length} flameborn · ${withBlaze.length} blazed · ${stacked.length} stacked</span>
+      </div>
+
+      <h2>Ceremonial anchors (${ceremonials.length})</h2>
+      <div class="grid">${ceremonials.map(tileHTML).join('')}</div>
+
+      <h2>Hi element — the 9 "handshake" UNATOMs (deep-zero merkle root)</h2>
+      <div class="grid">${withHi.map(tileHTML).join('')}</div>
+
+      <h2>NAT SIGIL — third-eye override (${withNat.length} pieces)</h2>
+      <div class="grid">${withNat.slice(0, 30).map(tileHTML).join('')}</div>
+      ${withNat.length > 30 ? `<p class="sub">showing first 30 of ${withNat.length}</p>` : ''}
+
+      <h2>Echo — chevron badge (${withEcho.length} pieces)</h2>
+      <div class="grid">${withEcho.slice(0, 30).map(tileHTML).join('')}</div>
+      ${withEcho.length > 30 ? `<p class="sub">showing first 30 of ${withEcho.length}</p>` : ''}
+
+      <h2>Flameborn (${withFlame.length} pieces)</h2>
+      <div class="grid">${withFlame.slice(0, 20).map(tileHTML).join('')}</div>
+
+      <h2>Blazed Bluntie (${withBlaze.length} pieces)</h2>
+      <div class="grid">${withBlaze.slice(0, 20).map(tileHTML).join('')}</div>
+
+      <h2>Multi-overlay stacked (${stacked.length} pieces — the composability specimens)</h2>
+      <div class="grid">${stacked.slice(0, 30).map(tileHTML).join('')}</div>
+
+      <h2>Baseline — 60 UNATOMs spread across Series 0</h2>
+      <div class="grid">${baseline.map(tileHTML).join('')}</div>
+    </section>
+  `;
+}
+
+boot();
+</script>
+
+</body>
+</html>

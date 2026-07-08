@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UNATOMS · coherence stress test (500 random combos)</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:#0a0b10; color:#f0ebde; font-family: system-ui, -apple-system, sans-serif; }
+  header { padding:24px 24px 8px; max-width: 1600px; margin: 0 auto; }
+  h1 { margin: 0 0 4px; font-size: 20px; }
+  .sub { color:#7a7060; font-size: 12px; margin: 0 0 8px; }
+  section { max-width: 1600px; margin: 0 auto; padding: 0 24px 24px; }
+  .controls { display:flex; gap:12px; flex-wrap:wrap; align-items:center; padding: 12px 0 20px; }
+  button, select { background:#1e1f28; color:#f0ebde; border:1px solid #2a2b34; border-radius:6px; padding:8px 14px; font: inherit; font-size:12px; cursor:pointer; }
+  button:hover { background:#2a2b34; }
+  button.primary { background:#f7931a; color:#0a0b10; border-color:#f7931a; font-weight:600; }
+  .stat { font-size:11px; color:#7a7060; margin-left: auto; text-transform:uppercase; letter-spacing:0.08em; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; }
+  .tile { background:#12131b; border:1px solid #1e1f28; border-radius:6px; overflow:hidden; position:relative; }
+  .tile svg { display:block; width:100%; height:auto; }
+  .tile .tag { position:absolute; top:2px; left:2px; display:flex; gap:2px; flex-wrap:wrap; }
+  .tile .tag span { font-size:8px; padding:1px 4px; border-radius:100px; background: rgba(10,11,16,0.7); border:1px solid rgba(255,255,255,0.15); text-transform:uppercase; letter-spacing:0.04em; font-weight:600; color:#f0ebde; }
+  .tile .tag span.nat { background:#F07E1B; color:#0a0b10; border-color:#F07E1B; }
+  .tile .tag span.flame { background:#ff4d86; color:#0a0b10; border-color:#ff4d86; }
+  .tile .tag span.blaze { background:#7dcf5b; color:#0a0b10; border-color:#7dcf5b; }
+  .tile .tag span.hi { background:#36d6ee; color:#0a0b10; border-color:#36d6ee; }
+  .status { padding: 40px; text-align:center; color:#7a7060; }
+  .note { background:#12131b; border:1px solid #1e1f28; border-radius:8px; padding:14px 18px; font-size:12px; color:#c5bfb4; line-height:1.55; margin-top: 20px; }
+  .note strong { color:#f7931a; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>UNATOMS · coherence stress test</h1>
+  <p class="sub">500 fully random trait combinations. Any tile that doesn't look great = a bug in the composer or a missing guard. Eyeball the whole grid.</p>
+</header>
+
+<section>
+  <div class="controls">
+    <button id="reroll" class="primary">↻ reroll 500 new combos</button>
+    <label>Overlay filter:
+      <select id="filter">
+        <option value="all">show everything</option>
+        <option value="natSigil">only NAT SIGIL</option>
+        <option value="flameborn">only flameborn</option>
+        <option value="blazedBluntie">only blazedBluntie</option>
+        <option value="both">flameborn + NAT SIGIL combo</option>
+        <option value="clean">no overlays (base only)</option>
+      </select>
+    </label>
+    <span class="stat" id="stat">rendering…</span>
+  </div>
+
+  <div id="grid" class="grid"></div>
+
+  <div class="note">
+    <strong>How to read this</strong> — each tile is a fully-random UNATOM synthesized from random values across every trait dial. Overlays (NAT SIGIL / flameborn / blazedBluntie / Hi) are forced onto ~15% of tiles each so composability is stress-tested too. Real production combos will look CLEANER than these because they follow byte-derived distributions, not pure random. If it looks great here, it'll look great in the wild.
+    <br><br>
+    <strong>What to look for:</strong> clashing colors, invisible strokes (border color matching disc color), swag+border collision, glasses+brow overlap, ecoMark clipping. Anything that looks broken → we add a compat guard in the composer.
+  </div>
+</section>
+
+<script src="/unatom-render.js"></script>
+<script>
+const toList = v => Array.isArray(v) ? v : Object.keys(v || {});
+const SCHEMES  = Object.keys(UNATOM.SCHEMES);
+const MOODS    = toList(UNATOM.MOODS);
+const THIRD    = toList(UNATOM.THIRD_EYES);
+const DRIPS    = toList(UNATOM.DRIPS);
+const SWAGS    = toList(UNATOM.SWAGS);
+const MOUTHS   = toList(UNATOM.MOUTHS);
+const BROWS    = toList(UNATOM.BROWS);
+const GLASSES  = toList(UNATOM.GLASSES);
+const NATURES  = toList(UNATOM.NATURES);
+const BORDERS  = ['clean','heavy','thin','doubleLine','stitched','burntEdge','frostEdge','sealed','offset','notched','rivet','brokenCorner'];
+const ECOS     = ['orbit','diamond','threeDot','btc'];
+
+// Sample element symbols across all categories
+const SYMS = UNATOM.CATEGORIES.flatMap(c => c.els);
+
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+// NAT SIGIL overlay (same code as in the preview) — used by injecting a
+// black disc + hex nodes over the existing third-eye position.
+const NAT_ORANGE = '#F07E1B';
+function isDark(hex) {
+  const h = hex.replace('#',''); const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+  return (0.2126*r + 0.7152*g + 0.0722*b)/255 < 0.45;
+}
+function natSigilSvg(cx, cy, r, sch) {
+  const nodeR = r * 0.66, dotR = r * 0.13, coreR = r * 0.19;
+  const ink = isDark(sch.border) ? UNATOM.BASE.white : sch.border;
+  const halo = `<path d="M ${cx-r*1.2} ${cy-r*1.05} A ${r*1.2} ${r*0.5} 0 0 1 ${cx+r*1.2} ${cy-r*1.05}" fill="none" stroke="${sch.a}" stroke-width="6" stroke-linecap="round"/>`;
+  const disc = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${UNATOM.BASE.pupil}" stroke="${sch.border}" stroke-width="8"/>`;
+  const pos = [];
+  for (let i=0; i<6; i++) { const a=(i*60-90)*Math.PI/180; pos.push([cx+nodeR*Math.cos(a), cy+nodeR*Math.sin(a)]); }
+  let spokes='', ring='', nodes='';
+  for (const [nx,ny] of pos) spokes += `<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="${ink}" stroke-width="2.5" stroke-linecap="round" opacity="0.92"/>`;
+  for (let i=0; i<6; i++) { const [x1,y1]=pos[i], [x2,y2]=pos[(i+1)%6]; ring += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${ink}" stroke-width="2.5" stroke-linecap="round" opacity="0.92"/>`; }
+  for (const [nx,ny] of pos) nodes += `<circle cx="${nx}" cy="${ny}" r="${dotR}" fill="${ink}" stroke="${UNATOM.BASE.pupil}" stroke-width="1.5"/>`;
+  const core = `<circle cx="${cx}" cy="${cy}" r="${coreR}" fill="${NAT_ORANGE}" stroke="${UNATOM.BASE.pupil}" stroke-width="2"/>`;
+  return halo + disc + spokes + ring + nodes + core;
+}
+
+function randomTraits() {
+  const scheme = pick(SCHEMES);
+  return {
+    sym:           pick(SYMS),
+    blk:           Math.floor(Math.random() * 10080) + 1,
+    scheme,
+    border:        pick(BORDERS),
+    thirdEye:      pick(THIRD),
+    mood:          pick(MOODS),
+    mouthKind:     pick(MOUTHS),
+    drip:          pick(DRIPS),
+    swagKind:      pick(SWAGS),
+    eco:           pick(ECOS),
+    glasses:       pick(GLASSES),
+    brows:         pick(BROWS),
+    nature:        pick(NATURES),
+    flameborn:     Math.random() < 0.15,
+    blazedBluntie: Math.random() < 0.15,
+    // Overlays applied via post-processing
+    _natSigil:     Math.random() < 0.15,
+    _hi:           Math.random() < 0.15,
+  };
+}
+
+function renderTile(traits) {
+  // Force thirdEye to 'void' when natSigil is on, so the overlay lands cleanly
+  const forced = { ...traits };
+  if (forced._natSigil) forced.thirdEye = 'void';
+  let svg = UNATOM.svg(forced);
+
+  const sch = UNATOM.SCHEMES[traits.scheme];
+
+  // Inject NAT SIGIL overlay
+  if (traits._natSigil) {
+    const overlay = natSigilSvg(UNATOM.CX, UNATOM.THIRD_EYE_CY, UNATOM.THIRD_EYE_R, sch);
+    svg = svg.replace('</svg>', overlay + '</svg>');
+  }
+
+  // Inject Hi element badge (top-right chevron)
+  if (traits._hi) {
+    const badge = `
+      <g transform="translate(880, 130) scale(1.4)">
+        <path d="M -12 -10 L 0 0 L -12 10" fill="none" stroke="${sch.a}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M -4 -10 L 8 0 L -4 10" fill="none" stroke="${sch.a}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>`;
+    svg = svg.replace('</svg>', badge + '</svg>');
+  }
+
+  return svg;
+}
+
+let currentTraits = [];
+
+function reroll() {
+  const grid = document.getElementById('grid');
+  const stat = document.getElementById('stat');
+  grid.innerHTML = '';
+  currentTraits = [];
+
+  const t0 = performance.now();
+  const CHUNK = 50;
+  const TOTAL = 500;
+  let done = 0;
+
+  function chunk() {
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < CHUNK && done < TOTAL; i++, done++) {
+      const traits = randomTraits();
+      currentTraits.push(traits);
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      tile.dataset.nat  = traits._natSigil ? '1' : '0';
+      tile.dataset.flame = traits.flameborn ? '1' : '0';
+      tile.dataset.blaze = traits.blazedBluntie ? '1' : '0';
+      tile.dataset.hi    = traits._hi ? '1' : '0';
+      tile.innerHTML = renderTile(traits) + `
+        <div class="tag">
+          ${traits._natSigil ? '<span class="nat">NAT</span>' : ''}
+          ${traits.flameborn ? '<span class="flame">666</span>' : ''}
+          ${traits.blazedBluntie ? '<span class="blaze">420</span>' : ''}
+          ${traits._hi ? '<span class="hi">Hi</span>' : ''}
+        </div>`;
+      frag.appendChild(tile);
+    }
+    grid.appendChild(frag);
+    stat.textContent = `rendered ${done}/${TOTAL} · ${((performance.now()-t0)/1000).toFixed(1)}s`;
+    if (done < TOTAL) requestAnimationFrame(chunk);
+    else applyFilter();
+  }
+  chunk();
+}
+
+function applyFilter() {
+  const v = document.getElementById('filter').value;
+  const tiles = document.querySelectorAll('.tile');
+  tiles.forEach(t => {
+    const nat   = t.dataset.nat  === '1';
+    const flame = t.dataset.flame === '1';
+    const blaze = t.dataset.blaze === '1';
+    let show = true;
+    if (v === 'natSigil')       show = nat;
+    else if (v === 'flameborn') show = flame;
+    else if (v === 'blazedBluntie') show = blaze;
+    else if (v === 'both')      show = flame && nat;
+    else if (v === 'clean')     show = !nat && !flame && !blaze;
+    t.style.display = show ? '' : 'none';
+  });
+}
+
+document.getElementById('reroll').addEventListener('click', reroll);
+document.getElementById('filter').addEventListener('change', applyFilter);
+
+reroll();
+</script>
+
+</body>
+</html>

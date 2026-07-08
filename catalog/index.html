@@ -299,6 +299,8 @@
   footer a { color: var(--orange); text-decoration: none; }
   footer a:hover { text-decoration: underline; }
 </style>
+<link rel="stylesheet" href="/natdrip-pulse.css">
+<script src="/natdrip-pulse.js" defer></script>
 </head>
 <body>
 
@@ -306,7 +308,6 @@
   <a class="brand" href="/">UNATOM.FUN</a>
   <ul>
     <li><a href="/">Lab</a></li>
-    <li><a href="/showcase/">The Nineteen</a></li>
     <li><a href="/catalog/" aria-current="page">Catalog</a></li>
     <li><a href="/pfp/?block=10080">PFP</a></li>
     <li><a href="https://x.com/takedmt" target="_blank" rel="noopener">@takedmt</a></li>
@@ -314,13 +315,442 @@
 </nav>
 
 <header class="page wrap">
-  <div class="eyebrow">Field Guide · v0.6 · Blast-Off Series</div>
+  <div class="eyebrow">Series 0 · Field-Driven · 10,080 UNATOMs</div>
   <h1>UN<span>ATOMS</span> &middot; Catalog</h1>
-  <p class="hero-lede">Living elemental units of non-arbitrary digital matter, discovered inside Bitcoin block data.
-     Every face has a pulse. 39 elements. 158 trait variants. One live Block Oracle.</p>
+  <p class="hero-lede">Living elemental units of non-arbitrary digital matter, painted from the first 10,080 blocks
+     of Bitcoin — Satoshi's mining era, Jan 9 → Apr 6, 2009. Every trait is decided by real block bytes:
+     the nonce becomes the face, the merkle root paints the shell, the timestamp sets the mood.
+     Now with the rare <strong style="color:var(--orange)">NAT SIGIL</strong> crown,
+     the <strong style="color:var(--orange)">Hi</strong> handshake element, and the
+     <strong style="color:var(--cyan)">Echo</strong> outer-symmetry badge.</p>
 </header>
 
 <div class="hero" id="hero"></div>
+
+<!-- ========================================================================
+     Browse Series 0 · reference tool
+     Powered by the shared field-driven renderer (UNATOM.fromHeader)
+     ======================================================================== -->
+<section id="browse-series0">
+  <h2>Browse Series 0 · The Reference Tool</h2>
+  <p class="lede">Search any block, filter by rarity, or scroll the natural distribution.
+     Every tile below is rendered from real Bitcoin header bytes — this is exactly what will exist post-mint.
+     Click any UNATOM to see its full trait card at <code>/pfp/?block=N</code>.</p>
+
+  <div class="browse-controls" role="search">
+    <input type="number" id="browse-search" min="1" max="10080" placeholder="Jump to block (1 – 10,080)" />
+    <div class="browse-filters" role="group" aria-label="Rarity filters">
+      <button class="chip" data-filter="all" aria-pressed="true">all</button>
+      <button class="chip" data-filter="ceremonial">ceremonial</button>
+      <button class="chip nat" data-filter="natSigil">NAT SIGIL</button>
+      <button class="chip hi" data-filter="hi">Hi</button>
+      <button class="chip echo" data-filter="echo">Echo</button>
+      <button class="chip flame" data-filter="flameborn">flameborn</button>
+      <button class="chip blaze" data-filter="blazedBluntie">blazed</button>
+      <button class="chip pin" data-filter="pin">pins</button>
+      <button class="chip stacked" data-filter="stacked">stacked</button>
+    </div>
+    <div class="browse-stat" id="browse-stat" aria-live="polite">loading real block data…</div>
+  </div>
+
+  <div class="browse-grid" id="browse-grid"></div>
+
+  <div class="browse-more" id="browse-more-wrap" style="display:none">
+    <button id="browse-more">show 60 more →</button>
+  </div>
+</section>
+
+<style>
+  /* Browse Series 0 · reference tool styles */
+  #browse-series0 .browse-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 12px 0 20px;
+    padding: 16px;
+    background: rgba(20,20,26,0.5);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+  @media (min-width: 700px) {
+    #browse-series0 .browse-controls {
+      grid-template-columns: 240px 1fr auto;
+      align-items: center;
+    }
+  }
+  #browse-search {
+    background: rgba(0,0,0,0.35);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font: 13px/1 ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: 0.04em;
+  }
+  #browse-search:focus {
+    outline: none;
+    border-color: var(--orange);
+    background: rgba(0,0,0,0.55);
+  }
+  .browse-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .browse-filters .chip {
+    background: rgba(243,238,227,0.06);
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    padding: 6px 12px;
+    font: 600 10px/1.2 ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 200ms, color 200ms, border-color 200ms;
+  }
+  .browse-filters .chip:hover {
+    color: var(--ink);
+    border-color: rgba(243,238,227,0.3);
+  }
+  .browse-filters .chip[aria-pressed="true"] {
+    background: var(--orange);
+    color: var(--bg);
+    border-color: var(--orange);
+  }
+  .browse-filters .chip.nat[aria-pressed="true"]   { background:#F07E1B; border-color:#F07E1B; color:#0a0a0c }
+  .browse-filters .chip.hi[aria-pressed="true"]    { background:#F07E1B; border-color:#fff7e6; color:#0a0a0c }
+  .browse-filters .chip.echo[aria-pressed="true"]  { background:#5dd0e3; border-color:#5dd0e3; color:#0a0a0c }
+  .browse-filters .chip.flame[aria-pressed="true"] { background:#f17d8e; border-color:#f17d8e; color:#0a0a0c }
+  .browse-filters .chip.blaze[aria-pressed="true"] { background:#7dcf5b; border-color:#7dcf5b; color:#0a0a0c }
+  .browse-filters .chip.pin[aria-pressed="true"]   { background:#b388f0; border-color:#b388f0; color:#0a0a0c }
+  .browse-filters .chip.stacked[aria-pressed="true"]{ background:#f7c948; border-color:#f7c948; color:#0a0a0c }
+  .browse-stat {
+    font: 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .browse-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .browse-grid a.b-tile {
+    display: block;
+    background: rgba(20,20,26,0.4);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+    position: relative;
+  }
+  .browse-grid a.b-tile:hover {
+    transform: translateY(-2px);
+    border-color: rgba(243,238,227,0.25);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.5);
+  }
+  .browse-grid a.b-tile svg { display: block; width: 100%; height: auto; background: var(--bg-2); }
+  .browse-grid a.b-tile .b-meta {
+    padding: 6px 8px 8px;
+    font: 10px/1.3 ui-monospace, "SF Mono", Menlo, monospace;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .browse-grid a.b-tile .b-meta .h { color: var(--ink); font-weight: 700; letter-spacing: 0.04em; }
+  .browse-grid a.b-tile .b-flags {
+    position: absolute; top: 4px; left: 4px;
+    display: flex; gap: 2px; flex-wrap: wrap;
+  }
+  .browse-grid a.b-tile .b-flags span {
+    font-size: 8px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 2px 5px; border-radius: 100px;
+    background: rgba(10,10,12,0.7); border: 1px solid rgba(255,255,255,0.15); color:#f0ebde;
+  }
+  .browse-grid a.b-tile .b-flags .nat   { background:#F07E1B; color:#0a0a0c; border-color:#F07E1B }
+  .browse-grid a.b-tile .b-flags .hi    { background:#F07E1B; color:#0a0a0c; border-color:#fff7e6 }
+  .browse-grid a.b-tile .b-flags .echo  { background:#5dd0e3; color:#0a0a0c; border-color:#5dd0e3 }
+  .browse-grid a.b-tile .b-flags .flame { background:#f17d8e; color:#0a0a0c; border-color:#f17d8e }
+  .browse-grid a.b-tile .b-flags .blaze { background:#7dcf5b; color:#0a0a0c; border-color:#7dcf5b }
+  .browse-grid a.b-tile .b-flags .cer   { background:#b388f0; color:#0a0a0c; border-color:#b388f0 }
+  .browse-more { text-align: center; margin-top: 20px; }
+  #browse-more {
+    background: rgba(243,238,227,0.06);
+    color: var(--ink);
+    border: 1px solid rgba(243,238,227,0.2);
+    border-radius: 100px;
+    padding: 12px 24px;
+    font: 700 12px/1 ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  #browse-more:hover { border-color: var(--orange); color: var(--orange); }
+
+  /* Rarity Sheet · real counts */
+  #rarity-sheet .rs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+  }
+  #rarity-sheet .rs-card {
+    background: rgba(20,20,26,0.4);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  #rarity-sheet .rs-card h3 {
+    margin: 0 0 8px;
+    font: 700 12px/1.2 ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--orange);
+  }
+  #rarity-sheet .rs-row {
+    display: grid; grid-template-columns: 1fr auto auto;
+    gap: 8px; align-items: center;
+    font: 12px/1.4 ui-monospace, "SF Mono", Menlo, monospace;
+    padding: 3px 0;
+    border-bottom: 1px dashed rgba(243,238,227,0.08);
+  }
+  #rarity-sheet .rs-row:last-child { border-bottom: none; }
+  #rarity-sheet .rs-row .rs-name  { color: var(--ink); }
+  #rarity-sheet .rs-row .rs-count { color: var(--muted); font-variant-numeric: tabular-nums; }
+  #rarity-sheet .rs-row .rs-pct   { color: var(--dim); font-size: 10px; font-variant-numeric: tabular-nums; }
+  #rarity-sheet .rs-overlays {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px; margin-top: 6px;
+  }
+  #rarity-sheet .rs-ovl {
+    background: rgba(10,10,12,0.6);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+  #rarity-sheet .rs-ovl .rs-num {
+    font: 700 22px/1.1 "Space Grotesk", ui-sans-serif, sans-serif;
+    letter-spacing: -0.02em;
+  }
+  #rarity-sheet .rs-ovl .rs-lbl {
+    font: 10px/1 ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  #rarity-sheet .rs-ovl.nat   { border-color: rgba(240,126,27,0.5); }
+  #rarity-sheet .rs-ovl.nat   .rs-num { color: #F07E1B; }
+  #rarity-sheet .rs-ovl.hi    { border-color: rgba(240,126,27,0.5); }
+  #rarity-sheet .rs-ovl.hi    .rs-num { color: #F07E1B; }
+  #rarity-sheet .rs-ovl.echo  { border-color: rgba(93,208,227,0.5); }
+  #rarity-sheet .rs-ovl.echo  .rs-num { color: #5dd0e3; }
+  #rarity-sheet .rs-ovl.flame { border-color: rgba(241,125,142,0.5); }
+  #rarity-sheet .rs-ovl.flame .rs-num { color: #f17d8e; }
+  #rarity-sheet .rs-ovl.blaze { border-color: rgba(125,207,91,0.5); }
+  #rarity-sheet .rs-ovl.blaze .rs-num { color: #7dcf5b; }
+</style>
+
+<!-- ========================================================================
+     Rarity Sheet · real trait counts from real Bitcoin data
+     ======================================================================== -->
+<section id="rarity-sheet">
+  <h2>Rarity Sheet · Bitcoin Decided</h2>
+  <p class="lede">These aren't authored numbers. Every count below was computed by running the field-driven engine
+     against the first 10,080 real Bitcoin block headers. Trac Core-indexable, offline-verifiable,
+     reproducible by anyone with the header data.</p>
+
+  <div class="rs-overlays" id="rs-overlays">
+    <div class="rs-ovl nat"><div class="rs-num" id="rs-natSigil">–</div><div class="rs-lbl">NAT SIGIL</div></div>
+    <div class="rs-ovl hi"><div class="rs-num" id="rs-hi">–</div><div class="rs-lbl">Hi element</div></div>
+    <div class="rs-ovl echo"><div class="rs-num" id="rs-echo">–</div><div class="rs-lbl">Echo badge</div></div>
+    <div class="rs-ovl flame"><div class="rs-num" id="rs-flameborn">–</div><div class="rs-lbl">Flameborn</div></div>
+    <div class="rs-ovl blaze"><div class="rs-num" id="rs-blazedBluntie">–</div><div class="rs-lbl">Blazed</div></div>
+    <div class="rs-ovl"><div class="rs-num" id="rs-stacked">–</div><div class="rs-lbl">Stacked (2+)</div></div>
+  </div>
+
+  <div class="rs-grid" id="rs-grid" style="margin-top:24px"></div>
+</section>
+
+<script src="/unatom-render.js"></script>
+<script>
+  // -----------------------------------------------------------------------
+  // Browse Series 0 · reference tool logic
+  // Loads real headers + renders field-driven UNATOMs via UNATOM.fromHeader
+  // -----------------------------------------------------------------------
+  (async () => {
+    const stat = document.getElementById('browse-stat');
+    const grid = document.getElementById('browse-grid');
+    const moreWrap = document.getElementById('browse-more-wrap');
+    const moreBtn  = document.getElementById('browse-more');
+    const search   = document.getElementById('browse-search');
+    const chips    = document.querySelectorAll('.browse-filters .chip');
+
+    let headers = null;
+    let traits  = null;   // parallel array of trait objects
+    let activeFilter = 'all';
+    let searchHeight = null;
+    let renderedCount = 0;
+    const PAGE = 60;
+
+    try {
+      stat.textContent = 'loading 10,080 real block headers…';
+      const res = await fetch('/design/series0-headers.json');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      headers = await res.json();
+      // Pre-compute trait objects once — cheap, no DOM
+      traits = headers.map(h => UNATOM.fromHeader(h));
+    } catch (err) {
+      stat.textContent = 'field-driven headers unavailable — falling back to height-only preview';
+      // Fallback: build synthetic traits from height alone
+      headers = [];
+      for (let h = 1; h <= 10080; h++) headers.push({ h });
+      traits = headers.map(({h}) => UNATOM.fromBlock(h));
+    }
+
+    // -------- helpers --------
+    function matches(t) {
+      if (searchHeight != null) return t.blk === searchHeight;
+      if (activeFilter === 'all') return true;
+      if (activeFilter === 'ceremonial') return !!t.ceremonial;
+      if (activeFilter === 'pin') return !!t.pin;
+      if (activeFilter === 'stacked') {
+        let n = 0;
+        if (t.natSigil) n++;
+        if (t.hi) n++;
+        if (t.echo) n++;
+        if (t.flameborn) n++;
+        if (t.blazedBluntie) n++;
+        return n >= 2;
+      }
+      return !!t[activeFilter];
+    }
+
+    function tileHTML(t) {
+      const flags = [
+        t.ceremonial ? '<span class="cer">1of1</span>' : '',
+        t.hi         ? '<span class="hi">Hi</span>' : '',
+        t.natSigil   ? '<span class="nat">NAT</span>' : '',
+        t.echo       ? '<span class="echo">Echo</span>' : '',
+        t.flameborn  ? '<span class="flame">666</span>' : '',
+        t.blazedBluntie ? '<span class="blaze">420</span>' : '',
+        t.pin        ? `<span>${t.pin}</span>` : '',
+      ].filter(Boolean).join('');
+      return `<a class="b-tile" href="/pfp/?block=${t.blk}" aria-label="UNATOM ${t.blk} — ${t.sym} on ${t.scheme}">
+        ${UNATOM.svg(t)}
+        <div class="b-flags">${flags}</div>
+        <div class="b-meta"><span class="h">#${t.blk}</span> <span>${t.sym} · ${t.scheme}</span></div>
+      </a>`;
+    }
+
+    function refresh() {
+      const filtered = traits.filter(matches);
+      renderedCount = Math.min(PAGE, filtered.length);
+      grid.innerHTML = filtered.slice(0, renderedCount).map(tileHTML).join('') || '<div style="grid-column:1/-1;padding:32px;text-align:center;color:var(--muted)">no matches</div>';
+
+      // stat line
+      const total = filtered.length;
+      const showing = renderedCount;
+      let msg;
+      if (searchHeight != null) {
+        msg = filtered.length ? `block ${searchHeight} · UNATOM found` : `no UNATOM at height ${searchHeight} · try 1 – 10,080`;
+      } else if (activeFilter === 'all') {
+        msg = `showing ${showing} of ${total.toLocaleString()} · sorted by height`;
+      } else {
+        msg = `${total} match "${activeFilter}" · showing first ${showing}`;
+      }
+      stat.textContent = msg;
+      moreWrap.style.display = (showing < total) ? 'block' : 'none';
+    }
+
+    function showMore() {
+      const filtered = traits.filter(matches);
+      const next = Math.min(renderedCount + PAGE, filtered.length);
+      const chunk = filtered.slice(renderedCount, next).map(tileHTML).join('');
+      grid.insertAdjacentHTML('beforeend', chunk);
+      renderedCount = next;
+      const total = filtered.length;
+      stat.textContent = `showing ${renderedCount} of ${total.toLocaleString()}`;
+      moreWrap.style.display = (renderedCount < total) ? 'block' : 'none';
+    }
+
+    // -------- events --------
+    chips.forEach(c => c.addEventListener('click', () => {
+      chips.forEach(x => x.setAttribute('aria-pressed', 'false'));
+      c.setAttribute('aria-pressed', 'true');
+      activeFilter = c.dataset.filter;
+      searchHeight = null;
+      search.value = '';
+      refresh();
+    }));
+
+    let searchTimer;
+    search.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        const v = parseInt(search.value, 10);
+        searchHeight = (Number.isFinite(v) && v >= 1 && v <= 10080) ? v : null;
+        if (searchHeight != null) {
+          chips.forEach(x => x.setAttribute('aria-pressed', x.dataset.filter === 'all' ? 'true' : 'false'));
+          activeFilter = 'all';
+        }
+        refresh();
+      }, 180);
+    });
+
+    moreBtn.addEventListener('click', showMore);
+
+    // -------- Rarity Sheet · real counts --------
+    const overlayIds = ['natSigil','hi','echo','flameborn','blazedBluntie'];
+    const overlayCounts = {};
+    for (const k of overlayIds) {
+      overlayCounts[k] = traits.filter(t => !!t[k]).length;
+    }
+    const stackedCount = traits.filter(t => {
+      let n = 0;
+      if (t.natSigil) n++;
+      if (t.hi) n++;
+      if (t.echo) n++;
+      if (t.flameborn) n++;
+      if (t.blazedBluntie) n++;
+      return n >= 2;
+    }).length;
+    for (const k of overlayIds) {
+      const el = document.getElementById('rs-' + k);
+      if (el) el.textContent = overlayCounts[k];
+    }
+    document.getElementById('rs-stacked').textContent = stackedCount;
+
+    // Per-dial counts
+    const dials = ['scheme','mood','thirdEye','drip','swagKind','mouthKind','brows','glasses','border','nature','eco'];
+    const dialLabels = { scheme:'Scheme (shell material)', mood:'Mood (lower eyes)', thirdEye:'Third Eye', drip:'Matter Wick (drip)', swagKind:'Swag', mouthKind:'Mouth', brows:'Brows', glasses:'Glasses', border:'Border', nature:'Elemental Nature', eco:'Eco Mark' };
+    const rsGrid = document.getElementById('rs-grid');
+    const total = traits.length;
+
+    for (const dial of dials) {
+      const counts = {};
+      for (const t of traits) {
+        const v = t[dial] || 'none';
+        counts[v] = (counts[v] || 0) + 1;
+      }
+      const rows = Object.entries(counts)
+        .sort((a,b) => b[1] - a[1])
+        .map(([name, n]) => `<div class="rs-row"><span class="rs-name">${name}</span><span class="rs-count">${n}</span><span class="rs-pct">${(n/total*100).toFixed(1)}%</span></div>`)
+        .join('');
+      const card = document.createElement('div');
+      card.className = 'rs-card';
+      card.innerHTML = `<h3>${dialLabels[dial] || dial}</h3>${rows}`;
+      rsGrid.appendChild(card);
+    }
+
+    refresh();
+  })();
+</script>
 
 <section>
   <h2>The Third Eye · DMT Awareness System</h2>

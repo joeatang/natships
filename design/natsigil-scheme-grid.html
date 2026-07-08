@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NAT SIGIL trait preview · UNATOMS</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; padding: 0; background:#0a0b10; color:#f0ebde; font-family: system-ui, -apple-system, "Helvetica Neue", sans-serif; }
+  header { padding: 32px 24px 12px; max-width: 1100px; margin: 0 auto; }
+  h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: 0.02em; }
+  .sub { color:#9a938b; font-size: 13px; margin: 0 0 4px; }
+  .divider { height:1px; background:#1e1f28; margin: 24px auto; max-width:1100px; }
+  section { max-width: 1100px; margin: 0 auto; padding: 0 24px 32px; }
+  h2 { margin: 20px 0 12px; font-size: 15px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color:#f7931a; }
+  .row { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .cell { display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .cell svg { display:block; border-radius: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+  .cell .label { font-size: 12px; color:#9a938b; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:20px; }
+  .ref-strip { display:flex; gap:32px; align-items:center; padding:24px; background:#12131b; border-radius: 18px; border:1px solid #1e1f28; }
+  .ref-strip .cell svg { border-radius:12px; }
+  .ref-note { flex:1; min-width:260px; font-size:14px; line-height:1.55; color:#c5bfb4; }
+  .ref-note code { background:#1e1f28; padding:2px 6px; border-radius: 4px; font-size:12px; }
+  .spec { background:#12131b; border-radius:14px; padding:20px 24px; border:1px solid #1e1f28; font-size:14px; line-height:1.55; }
+  .spec ul { margin:6px 0; padding-left:20px; }
+  .spec li { margin:4px 0; color:#c5bfb4; }
+  .spec strong { color:#f7931a; }
+  .cx-tile { padding:12px; }
+  footer { padding: 24px; text-align:center; color:#5a5852; font-size:12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>NAT SIGIL — proposed rare third-eye trait</h1>
+  <p class="sub">rendered against all 13 UNATOM schemes. review before we wire it into the shared renderer.</p>
+</header>
+
+<section>
+  <h2>1. Reference vs proposed rendering</h2>
+  <div class="ref-strip">
+    <div class="cell">
+      <svg id="ref-natlogo" width="180" height="180" viewBox="0 0 200 200"></svg>
+      <span class="label">NAT logo (reference)</span>
+    </div>
+    <div class="cell">
+      <svg id="ref-natsigil" width="180" height="180" viewBox="0 0 200 200"></svg>
+      <span class="label">NAT SIGIL eye (proposed)</span>
+    </div>
+    <div class="ref-note">
+      <strong style="color:#f7931a">Design intent</strong> — the NAT SIGIL eye is a stylized adaptation of the NAT logo, sized to fit the UNATOM's crown position (radius 60 in the 1024×1024 canvas). Six outer nodes in hexagonal formation around one central orange node, with lines connecting center→node and node→node forming the hex ring. Above sits a subtle halo arc (matching the existing <code>halo</code> and <code>oracle</code> eye variants) so it reads as sacred, not just technical.
+      <br><br>
+      <strong style="color:#f7931a">Palette rule</strong> — outer nodes + lines use the active scheme's <code>border</code> color for guaranteed visibility on every shell. The central core is <em>always true NAT orange</em> (<code>#F07E1B</code>) regardless of scheme — that's the identity override. The disc uses the scheme's darkest ink for depth.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <h2>2. NAT SIGIL eye across all 13 schemes</h2>
+  <p class="sub">each tile shows just the crown zone with NAT SIGIL painted in. this is what the third-eye will look like on every possible scheme it can land on.</p>
+  <div class="grid" id="scheme-grid"></div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <h2>3. Spec (locked pending your review)</h2>
+  <div class="spec">
+    <ul>
+      <li><strong>Type</strong> — third-eye override (not a 17th slot). When trigger fires, third-eye becomes <code>natSigil</code> regardless of nonce_byte3.</li>
+      <li><strong>Trigger</strong> — height contains "111" (19 blocks: 111, 1110–1119, 2111..9111) OR <code>merkleroot[0] === nonce_byte0</code> (~39 additional blocks)</li>
+      <li><strong>Expected count</strong> — ~55 pieces across 10,080 (~0.55% — rarer than crosshair which is 1/16 = 6.25%)</li>
+      <li><strong>Palette</strong> — nodes + connectors use <code>sch.border</code> normally, but flip to white when <code>sch.border</code> is dark (luminance &lt; 0.45) so they always pop on the dark disc. Core is always <code>#F07E1B</code>; disc uses <code>BASE.pupil</code>.</li>
+      <li><strong>Halo</strong> — thin arc above in <code>sch.a</code> (matches <code>halo</code>/<code>oracle</code> family)</li>
+      <li><strong>Composability</strong> — stacks with <code>flameborn</code> (flame ring wraps hex), <code>blazedBluntie</code>, <code>Hi</code> element badge</li>
+      <li><strong>Guards</strong> — if base thirdEye was <code>sealed</code>, override still wins (natSigil takes precedence)</li>
+    </ul>
+  </div>
+</section>
+
+<footer>preview only · no live renderer changes · commit only after your GO</footer>
+
+<script>
+// Base palette (mirror of unatom-render.js BASE)
+const BASE = {
+  pupil:  '#0a0b10',
+  ink:    '#13141b',
+  white:  '#fafaf6',
+  orange: '#f7931a',
+  cyan:   '#36d6ee',
+  purple: '#7a4cb6',
+  blood:  '#c43a1f',
+};
+
+// True NAT orange — identity override for the core dot, never scheme-tinted
+const NAT_ORANGE = '#F07E1B';
+
+// luminance guard — if a scheme's border is dark, we can't use it on the dark
+// eye disc (it disappears). Flip to white so nodes/connectors always pop.
+function isDark(hex) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return lum < 0.45;
+}
+function inkFor(sch) {
+  // color to use for nodes/connectors when painted on the BASE.pupil disc
+  return isDark(sch.border) ? BASE.white : sch.border;
+}
+
+// Full SCHEMES table (mirror of unatom-render.js SCHEMES)
+const SCHEMES = {
+  graphite: { tile:'#1d1f29', border:'#f4eedf', sym:'#f4eedf', a:'#f7931a', b:'#36d6ee', name:'Graphite' },
+  bone:     { tile:'#efe6d0', border:'#2a2620', sym:'#2a2620', a:'#b8651f', b:'#5a8a8a', name:'Bone' },
+  ember:    { tile:'#f7931a', border:'#fff7e6', sym:'#241008', a:'#fff7e6', b:'#c43a1f', name:'Ember' },
+  frost:    { tile:'#dceff5', border:'#3a4a5c', sym:'#1a2a3c', a:'#36d6ee', b:'#7a4cb6', name:'Frost' },
+  jade:     { tile:'#2d6b58', border:'#e6f0d8', sym:'#e6f0d8', a:'#f7931a', b:'#a3d977', name:'Jade' },
+  bronze:   { tile:'#8a5a2e', border:'#fff0d8', sym:'#fff0d8', a:'#ffb84d', b:'#36d6ee', name:'Bronze' },
+  void:     { tile:'#0a0b10', border:'#7a4cb6', sym:'#cfb8e8', a:'#b388f0', b:'#7a4cb6', name:'Void' },
+  obsidian: { tile:'#16161a', border:'#d9d9e0', sym:'#f4eedf', a:'#f7931a', b:'#36d6ee', name:'Obsidian' },
+  ash:      { tile:'#5c5a55', border:'#d8d2c4', sym:'#d8d2c4', a:'#d77a3a', b:'#3a4a5c', name:'Ash' },
+  signal:   { tile:'#1d3a5c', border:'#36d6ee', sym:'#f4eedf', a:'#36d6ee', b:'#f7931a', name:'Signal' },
+  chalk:    { tile:'#f0ebde', border:'#3a3a3a', sym:'#3a3a3a', a:'#7a7060', b:'#9eb39e', name:'Chalk' },
+  rust:     { tile:'#7a3a1e', border:'#e8d0a8', sym:'#e8d0a8', a:'#ffb84d', b:'#3a4a3a', name:'Rust' },
+  aqua:     { tile:'#0f5d6e', border:'#dcf5f5', sym:'#dcf5f5', a:'#36d6ee', b:'#a8e6f0', name:'Aqua' },
+};
+
+// -----------------------------------------------------------------------------
+// natSigil renderer — the PROPOSED third-eye SVG. This is exactly what will get
+// dropped into unatom-render.js::thirdEye() as case 'natSigil' after you approve.
+// -----------------------------------------------------------------------------
+function natSigilEye(cx, cy, r, sch, opts = {}) {
+  const includeHalo = opts.halo !== false;
+  const includeDisc = opts.disc !== false;
+
+  const nodeRingR = r * 0.66;       // radius at which the 6 outer nodes sit
+  const dotR      = r * 0.13;       // outer node size
+  const coreR     = r * 0.19;       // center orange dot size
+  const ink       = inkFor(sch);    // luminance-aware node color
+
+  // halo arc above (matches halo/oracle family)
+  const halo = includeHalo
+    ? `<path d="M ${cx-r*1.2} ${cy-r*1.05} A ${r*1.2} ${r*0.5} 0 0 1 ${cx+r*1.2} ${cy-r*1.05}"
+        fill="none" stroke="${sch.a}" stroke-width="6" stroke-linecap="round"/>`
+    : '';
+
+  // background disc — dark, framed in scheme border
+  const disc = includeDisc
+    ? `<circle cx="${cx}" cy="${cy}" r="${r}"
+        fill="${BASE.pupil}" stroke="${sch.border}" stroke-width="8"/>`
+    : '';
+
+  // compute hex node positions (start at top, go clockwise)
+  const positions = [];
+  for (let i = 0; i < 6; i++) {
+    const angle = (i * 60 - 90) * Math.PI / 180;
+    positions.push([
+      cx + nodeRingR * Math.cos(angle),
+      cy + nodeRingR * Math.sin(angle),
+    ]);
+  }
+
+  // spokes (center → each outer node)
+  let spokes = '';
+  for (const [nx, ny] of positions) {
+    spokes += `<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}"
+      stroke="${ink}" stroke-width="2.5" stroke-linecap="round" opacity="0.92"/>`;
+  }
+
+  // hex ring (adjacent node → node)
+  let ring = '';
+  for (let i = 0; i < 6; i++) {
+    const [x1, y1] = positions[i];
+    const [x2, y2] = positions[(i + 1) % 6];
+    ring += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+      stroke="${ink}" stroke-width="2.5" stroke-linecap="round" opacity="0.92"/>`;
+  }
+
+  // outer nodes
+  let nodes = '';
+  for (const [nx, ny] of positions) {
+    nodes += `<circle cx="${nx}" cy="${ny}" r="${dotR}"
+      fill="${ink}" stroke="${BASE.pupil}" stroke-width="1.5"/>`;
+  }
+
+  // center orange core — ALWAYS NAT orange, never scheme-tinted
+  const core = `<circle cx="${cx}" cy="${cy}" r="${coreR}"
+    fill="${NAT_ORANGE}" stroke="${BASE.pupil}" stroke-width="2"/>`;
+
+  return halo + disc + spokes + ring + nodes + core;
+}
+
+// -----------------------------------------------------------------------------
+// Reference NAT logo (for side-by-side compare) — matches the attached image:
+// black bg, white ring, 6 hex nodes + orange center, white spokes + hex ring
+// -----------------------------------------------------------------------------
+function refNatLogo() {
+  const cx = 100, cy = 100, r = 88;
+  const nodeRingR = r * 0.66;
+  const dotR = 10;
+  const coreR = 15;
+
+  // outer black disc + white ring
+  let s = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${BASE.pupil}" stroke="${BASE.white}" stroke-width="5"/>`;
+
+  const positions = [];
+  for (let i = 0; i < 6; i++) {
+    const angle = (i * 60 - 90) * Math.PI / 180;
+    positions.push([cx + nodeRingR * Math.cos(angle), cy + nodeRingR * Math.sin(angle)]);
+  }
+  // spokes
+  for (const [nx, ny] of positions) {
+    s += `<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="${BASE.white}" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  // hex ring
+  for (let i = 0; i < 6; i++) {
+    const [x1, y1] = positions[i];
+    const [x2, y2] = positions[(i + 1) % 6];
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${BASE.white}" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  // nodes
+  for (const [nx, ny] of positions) {
+    s += `<circle cx="${nx}" cy="${ny}" r="${dotR}" fill="${BASE.white}"/>`;
+  }
+  // orange core
+  s += `<circle cx="${cx}" cy="${cy}" r="${coreR}" fill="${NAT_ORANGE}"/>`;
+  return s;
+}
+
+// Render reference NAT logo (left)
+document.getElementById('ref-natlogo').innerHTML = refNatLogo();
+
+// Render proposed natSigil eye (right) — on obsidian scheme for maximum contrast
+document.getElementById('ref-natsigil').innerHTML =
+  natSigilEye(100, 100, 88, SCHEMES.obsidian);
+
+// -----------------------------------------------------------------------------
+// Scheme grid — one tile per scheme, showing natSigil centered in the crown zone
+// -----------------------------------------------------------------------------
+function schemeTile(schKey) {
+  const sch = SCHEMES[schKey];
+  const size = 220;
+  const cx = size / 2, cy = size / 2;
+  const r = 68;
+
+  // tile background matches the scheme's tile color, framed in border color
+  const bg = `<rect x="4" y="4" width="${size-8}" height="${size-8}" rx="26"
+    fill="${sch.tile}" stroke="${sch.border}" stroke-width="4"/>`;
+
+  const eye = natSigilEye(cx, cy, r, sch);
+
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${bg}${eye}</svg>`;
+}
+
+const grid = document.getElementById('scheme-grid');
+Object.keys(SCHEMES).forEach(key => {
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+  cell.innerHTML = schemeTile(key) +
+    `<span class="label">${SCHEMES[key].name}</span>`;
+  grid.appendChild(cell);
+});
+</script>
+
+</body>
+</html>

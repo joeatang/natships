@@ -226,10 +226,17 @@ export default {
       const pool = Number(env.POOL || 0);
       const active = windowOpen(env);
       let distributed = 0;
+      let recentClaims = 0;
       if (env.DB) {
         try {
           const row = await env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS s FROM claims WHERE status != 'test'").first();
           distributed = Number(row?.s || 0);
+        } catch (e) { /* treat as 0 */ }
+        try {
+          // recent activity in the last 60 minutes (excludes test rows)
+          const cutoffMs = Date.now() - 3600 * 1000;
+          const rc = await env.DB.prepare("SELECT COUNT(*) AS n FROM claims WHERE status != 'test' AND created_at >= ?").bind(cutoffMs).first();
+          recentClaims = Number(rc?.n || 0);
         } catch (e) { /* treat as 0 */ }
       }
       const depleted = pool > 0 && distributed >= pool;
@@ -247,6 +254,17 @@ export default {
         : (active && reached) ? 'live'
         : (active && launchBlock && !reached) ? 'countdown'
         : (timeEnded ? 'ended' : 'pre');
+
+      // Heatmap-friendly percent + level word (used by the pulse ribbon —
+      // never exposes raw amounts to the client because the client can
+      // choose to consume ONLY these two fields).
+      const percentRemaining = pool > 0 ? Math.max(0, Math.min(1, 1 - (distributed / pool))) : 1;
+      const level = percentRemaining >= 0.75 ? 'flowing full'
+        : percentRemaining >= 0.50 ? 'flowing warm'
+        : percentRemaining >= 0.25 ? 'warming up'
+        : percentRemaining >= 0.10 ? 'getting hot'
+        : 'running dry';
+
       return json({
         active: active && reached && !depleted,
         phase,
@@ -256,6 +274,10 @@ export default {
         blocksLeft,
         window: { startsAt: env.WINDOW_STARTS_AT || null, endsAt: env.WINDOW_ENDS_AT || null },
         pool,
+        // heatmap fields — safe to consume without leaking amounts
+        percentRemaining,
+        level,
+        recentClaims,
         symbol: env.SYMBOL || 'NAT',
         tap: env.TAP_TICKER || 'DMT-NAT',
       }, env);

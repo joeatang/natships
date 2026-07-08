@@ -1,0 +1,126 @@
+/* -----------------------------------------------------------------------------
+ * NATDRIP pulse ribbon — universal drop-in
+ *
+ * Include on any page:
+ *   <link rel="stylesheet" href="/natdrip-pulse.css">
+ *   <script src="/natdrip-pulse.js" defer></script>
+ *
+ * The script self-injects a fixed ribbon at the top of <body> and polls the
+ * drip worker's /status endpoint every 30s. The ribbon color heat-maps the
+ * remaining pool percentage; tapping/hovering reveals a vague level word +
+ * recent activity. Never exposes raw amounts.
+ * -------------------------------------------------------------------------- */
+
+.natdrip-ribbon {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 9999;
+  height: 3px;
+  pointer-events: auto;
+  background: linear-gradient(90deg,
+    var(--ndp-color, #5dd0e3) 0%,
+    var(--ndp-color, #5dd0e3) var(--ndp-fill, 100%),
+    rgba(20,20,24,0.4) var(--ndp-fill, 100%),
+    rgba(20,20,24,0.4) 100%);
+  transition: background 800ms ease, height 200ms ease;
+  cursor: pointer;
+  animation: ndp-idle 3.2s ease-in-out infinite;
+}
+
+@media (min-width: 700px) {
+  .natdrip-ribbon { height: 5px; }
+}
+
+.natdrip-ribbon.ndp-active-flash {
+  animation: ndp-heartbeat 0.7s ease-out 1;
+}
+
+.natdrip-ribbon.ndp-dry {
+  animation: ndp-urgent 1.4s ease-in-out infinite;
+}
+
+.natdrip-ribbon.ndp-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 400ms ease;
+}
+
+@keyframes ndp-idle {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1;    }
+}
+
+@keyframes ndp-heartbeat {
+  0%   { transform: scaleY(1);    filter: brightness(1);   }
+  30%  { transform: scaleY(1.8);  filter: brightness(1.7); }
+  60%  { transform: scaleY(1);    filter: brightness(1);   }
+  100% { transform: scaleY(1);    filter: brightness(1);   }
+}
+
+@keyframes ndp-urgent {
+  0%, 100% { opacity: 0.7;  filter: brightness(1);   }
+  50%      { opacity: 1;    filter: brightness(1.6); }
+}
+
+/* Tooltip */
+.natdrip-tip {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  z-index: 10000;
+  padding: 10px 16px;
+  background: #12131b;
+  color: #f0ebde;
+  border: 1px solid rgba(243,238,227,0.15);
+  border-radius: 10px;
+  font: 12px/1.4 ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 200ms ease;
+  white-space: nowrap;
+  max-width: 90vw;
+}
+
+.natdrip-tip.ndp-show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(4px);
+  pointer-events: auto;
+}
+
+.natdrip-tip .ndp-level {
+  color: var(--ndp-color, #5dd0e3);
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.natdrip-tip .ndp-activity {
+  color: rgba(243,238,227,0.55);
+  font-size: 11px;
+  margin-left: 2px;
+}
+
+.natdrip-tip a.ndp-link {
+  display: block;
+  margin-top: 6px;
+  color: #f0962d;
+  text-decoration: none;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.natdrip-tip a.ndp-link:hover {
+  text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .natdrip-ribbon,
+  .natdrip-ribbon.ndp-active-flash,
+  .natdrip-ribbon.ndp-dry {
+    animation: none;
+    opacity: 0.9;
+  }
+}

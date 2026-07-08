@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NAT SIGIL — full UNATOM preview</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin:0; padding:0; background:#0a0b10; color:#f0ebde; font-family: system-ui, -apple-system, "Helvetica Neue", sans-serif; }
+  header { padding: 32px 24px 12px; max-width: 1200px; margin: 0 auto; }
+  h1 { margin: 0 0 6px; font-size: 24px; letter-spacing: 0.02em; }
+  .sub { color:#9a938b; font-size:13px; margin: 0 0 4px; }
+  section { max-width: 1200px; margin: 0 auto; padding: 0 24px 32px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 28px; margin-top: 20px; }
+  .card { background:#12131b; border:1px solid #1e1f28; border-radius:20px; overflow:hidden; }
+  .card svg { display:block; width:100%; height:auto; background:#0a0b10; }
+  .card .meta { padding: 14px 18px 16px; }
+  .card .name { font-size:15px; font-weight:600; letter-spacing:0.04em; color:#f7931a; margin: 0 0 6px; text-transform:uppercase; }
+  .card .info { font-size:12px; color:#9a938b; line-height:1.55; }
+  .card .info code { background:#1e1f28; padding:1px 5px; border-radius:3px; }
+  .card .badges { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .badge { font-size:10px; padding:3px 8px; border-radius:100px; background:#1e1f28; color:#c5bfb4; border:1px solid #2a2b34; letter-spacing:0.06em; text-transform:uppercase; font-weight:600; }
+  .badge.nat { background:#F07E1B22; color:#F07E1B; border-color:#F07E1B55; }
+  .badge.flame { background:#ff4d8622; color:#ff6b95; border-color:#ff4d8655; }
+  .badge.blaze { background:#7dcf5b22; color:#a8e075; border-color:#7dcf5b55; }
+  .divider { height:1px; background:#1e1f28; margin: 32px auto; max-width:1200px; }
+  .note { background:#12131b; border:1px solid #1e1f28; border-radius:14px; padding:18px 22px; font-size:13px; line-height:1.6; color:#c5bfb4; }
+  .note strong { color:#f7931a; }
+  .note code { background:#1e1f28; padding:2px 6px; border-radius:4px; font-size:12px; }
+  footer { padding:32px 24px; text-align:center; color:#5a5852; font-size:12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>NAT SIGIL — full UNATOM preview</h1>
+  <p class="sub">6 full UNATOMs with the new rare third-eye applied. base trait roll from the real block, only the third-eye is overridden — so you see the sigil in a real-world composition with real schemes, swags, drips, moods, borders, etc.</p>
+</header>
+
+<section>
+  <div id="grid" class="grid"></div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <div class="note">
+    <strong>How this is composed:</strong> each card calls <code>UNATOM.fromBlock(N)</code> to get that block's natural trait roll, then forces the base third-eye to <code>'void'</code> (a solid dark disc) so the NAT SIGIL overlay lands on a clean crown zone. In production, the trait roller will just set <code>thirdEye = 'natSigil'</code> directly when the rare trigger fires — no overlay hack needed. Visual result is identical.<br><br>
+    <strong>What to look for:</strong> does the sigil sit naturally with the rest of the composition? Does the orange NAT core still read as the identity anchor when the UNATOM has strong scheme colors, swag artifacts, lower eyes and mouth around it? Does it fight with anything?
+  </div>
+</section>
+
+<footer>preview only · no live renderer changes · commit after your GO</footer>
+
+<script src="/unatom-render.js"></script>
+<script>
+// ---------- NAT SIGIL (final proposed rendering) ----------
+const NAT_ORANGE = '#F07E1B';
+
+function isDark(hex) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.45;
+}
+function inkFor(sch) {
+  return isDark(sch.border) ? UNATOM.BASE.white : sch.border;
+}
+
+// Renders the NAT SIGIL third-eye at (cx, cy) with radius r on scheme `sch`.
+// This is exactly what will drop into unatom-render.js as case 'natSigil'.
+function natSigilEye(cx, cy, r, sch, includeHalo = true) {
+  const nodeRingR = r * 0.66;
+  const dotR      = r * 0.13;
+  const coreR     = r * 0.19;
+  const ink       = inkFor(sch);
+  const BASE      = UNATOM.BASE;
+
+  const halo = includeHalo
+    ? `<path d="M ${cx - r*1.2} ${cy - r*1.05} A ${r*1.2} ${r*0.5} 0 0 1 ${cx + r*1.2} ${cy - r*1.05}"
+        fill="none" stroke="${sch.a}" stroke-width="6" stroke-linecap="round"/>`
+    : '';
+  const disc = `<circle cx="${cx}" cy="${cy}" r="${r}"
+    fill="${BASE.pupil}" stroke="${sch.border}" stroke-width="8"/>`;
+
+  const positions = [];
+  for (let i = 0; i < 6; i++) {
+    const a = (i * 60 - 90) * Math.PI / 180;
+    positions.push([cx + nodeRingR * Math.cos(a), cy + nodeRingR * Math.sin(a)]);
+  }
+
+  let spokes = '';
+  for (const [nx, ny] of positions) {
+    spokes += `<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}"
+      stroke="${ink}" stroke-width="2.5" stroke-linecap="round" opacity="0.92"/>`;
+  }
+  let ring = '';
+  for (let i = 0; i < 6; i++) {
+    const [x1, y1] = positions[i];
+    const [x2, y2] = positions[(i + 1) % 6];
+    ring += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+      stroke="${ink}" stroke-width="2.5" stroke-linecap="round" opacity="0.92"/>`;
+  }
+  let nodes = '';
+  for (const [nx, ny] of positions) {
+    nodes += `<circle cx="${nx}" cy="${ny}" r="${dotR}"
+      fill="${ink}" stroke="${BASE.pupil}" stroke-width="1.5"/>`;
+  }
+  const core = `<circle cx="${cx}" cy="${cy}" r="${coreR}"
+    fill="${NAT_ORANGE}" stroke="${BASE.pupil}" stroke-width="2"/>`;
+
+  return halo + disc + spokes + ring + nodes + core;
+}
+
+// ---------- Preview cards ----------
+// Force thirdEye='void' to make room for our overlay, then paint natSigil at
+// the exact crown coordinates (CX, THIRD_EYE_CY, THIRD_EYE_R).
+function renderCardSvg(traits) {
+  const forced = { ...traits, thirdEye: 'void' };
+  let raw = UNATOM.svg(forced);
+  const sch = UNATOM.SCHEMES[traits.scheme];
+  const overlay = natSigilEye(UNATOM.CX, UNATOM.THIRD_EYE_CY, UNATOM.THIRD_EYE_R, sch);
+  // Inject overlay just before </svg> so it renders on top of the void disc
+  return raw.replace('</svg>', overlay + '</svg>');
+}
+
+// Curated block picks — deliberate variety across schemes, moods, swags, natures
+const BLOCKS = [
+  { blk: 111,  note: 'height contains "111" — the natural anchor block.' },
+  { blk: 1111, note: 'height "1111" — quad-1 palindrome, natural natSigil anchor.' },
+  { blk: 666,  note: 'flameborn override composed with natSigil — flame ring wraps hex.', force:['flameborn'] },
+  { blk: 8562, note: 'showcase pick: aqua scheme. sigil against cool blues.' },
+  { blk: 3113, note: 'showcase pick: ember scheme. sigil in the warmth.' },
+  { blk: 8542, note: 'showcase pick: rust scheme. sigil on darker earthy tones.' },
+];
+
+const grid = document.getElementById('grid');
+
+BLOCKS.forEach(({ blk, note, force = [] }) => {
+  const traits = UNATOM.fromBlock(blk);
+  // If we force flameborn, set the flag; renderer will paint the flame overlay
+  if (force.includes('flameborn')) traits.flameborn = true;
+  if (force.includes('blazedBluntie')) traits.blazedBluntie = true;
+
+  const svg = renderCardSvg(traits);
+  const sch = UNATOM.SCHEMES[traits.scheme];
+
+  const badges = [
+    `<span class="badge nat">NAT SIGIL</span>`,
+    traits.flameborn ? `<span class="badge flame">FLAMEBORN</span>` : '',
+    traits.blazedBluntie ? `<span class="badge blaze">BLAZED</span>` : '',
+    `<span class="badge">#${blk}</span>`,
+  ].filter(Boolean).join(' ');
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    ${svg}
+    <div class="meta">
+      <div class="name">${sch.name} · UNATOM #${blk}</div>
+      <div class="info">
+        scheme: <code>${traits.scheme}</code> · mood: <code>${traits.mood}</code> · drip: <code>${traits.drip}</code> · nature: <code>${traits.nature || 'none'}</code>
+        <br>${note}
+      </div>
+      <div class="badges">${badges}</div>
+    </div>`;
+  grid.appendChild(card);
+});
+</script>
+
+</body>
+</html>

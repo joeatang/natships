@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UNATOMS · Series 0 rarity predictor</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:#0a0b10; color:#f0ebde; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; line-height:1.4; }
+  header { padding:24px 24px 8px; max-width: 1400px; margin: 0 auto; }
+  h1 { margin: 0 0 4px; font-size: 20px; font-family: system-ui, -apple-system, sans-serif; }
+  h2 { margin: 20px 0 10px; font-size: 12px; font-weight:700; letter-spacing: 0.15em; text-transform: uppercase; color:#f7931a; font-family: system-ui, sans-serif; }
+  .sub { color:#7a7060; font-size: 12px; margin: 0 0 4px; }
+  section { max-width: 1400px; margin: 0 auto; padding: 0 24px 24px; }
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 12px 0; }
+  .stat { background:#12131b; border:1px solid #1e1f28; border-radius:10px; padding:12px 14px; }
+  .stat .val { font-size: 20px; color:#f4eedf; font-weight:600; letter-spacing: -0.02em; }
+  .stat .lbl { font-size:10px; color:#7a7060; text-transform:uppercase; letter-spacing:0.08em; margin-top:2px; }
+  .card { background:#12131b; border:1px solid #1e1f28; border-radius:12px; padding:16px 20px; margin: 12px 0; }
+  .dial { margin: 18px 0 10px; }
+  .dial-hdr { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; font-family:system-ui, sans-serif; }
+  .dial-hdr .name { font-size: 14px; font-weight:600; color:#f4eedf; }
+  .dial-hdr .meta { font-size: 11px; color:#7a7060; }
+  .dial-hdr code { background:#1e1f28; color:#c5bfb4; padding:2px 6px; border-radius:3px; font-size:10px; }
+  .bar-row { display:grid; grid-template-columns: 140px 60px 1fr 50px; align-items:center; gap:8px; margin:2px 0; font-size:11px; }
+  .bar-row .lbl { color:#c5bfb4; text-align:right; padding-right:4px; }
+  .bar-row .n { color:#7a7060; text-align:right; font-variant-numeric: tabular-nums; }
+  .bar-row .track { background:#1e1f28; height: 14px; border-radius:2px; position:relative; overflow:hidden; }
+  .bar-row .fill { background: linear-gradient(90deg, #f7931a 0%, #e8811a 100%); height:100%; border-radius:2px; }
+  .bar-row .pct { color:#7a7060; text-align:left; font-variant-numeric: tabular-nums; padding-left:4px; }
+  .bar-row.hot .fill { background: linear-gradient(90deg, #f0ebde 0%, #d8d2c4 100%); }
+  .bar-row.rare .fill { background: linear-gradient(90deg, #7a4cb6 0%, #5a3a8a 100%); }
+  .overlay-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .ovl { background:#12131b; border:1px solid #1e1f28; border-radius:10px; padding:14px 16px; }
+  .ovl .title { font-size: 13px; font-weight:600; margin-bottom:6px; font-family:system-ui, sans-serif; }
+  .ovl .big { font-size: 24px; color:#f4eedf; font-weight:700; font-family:system-ui, sans-serif; letter-spacing:-0.02em; }
+  .ovl .breakdown { font-size:11px; color:#7a7060; margin-top:6px; }
+  .ovl.nat { border-color: #f7931a55; }
+  .ovl.nat .big { color: #F07E1B; }
+  .ovl.flame { border-color: #ff4d8655; }
+  .ovl.flame .big { color: #ff6b95; }
+  .ovl.blaze { border-color: #7dcf5b55; }
+  .ovl.blaze .big { color: #a8e075; }
+  .ovl.hi { border-color: #36d6ee55; }
+  .ovl.hi .big { color: #36d6ee; }
+  footer { padding:32px 24px; text-align:center; color:#5a5852; font-size:11px; }
+  .warn { background: #3a2a1a; border-color: #f7931a; }
+  .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+  @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+  #status { padding: 40px; text-align:center; color:#7a7060; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>UNATOMS · Series 0 rarity predictor</h1>
+  <p class="sub">real distribution from the 10,080 pulled block headers · zero PRNG · zero authoring</p>
+</header>
+
+<section id="status">loading headers…</section>
+
+<script src="/unatom-render.js"></script>
+<script>
+// ---------- LOAD REAL HEADER DATA ----------
+async function boot() {
+  const status = document.getElementById('status');
+  const res = await fetch('/design/series0-headers.json');
+  if (!res.ok) { status.textContent = 'failed to load headers: HTTP ' + res.status; return; }
+  const HEADERS = await res.json();
+  if (HEADERS.length !== 10080) {
+    status.textContent = `warning: expected 10080 headers, got ${HEADERS.length}`;
+  }
+  status.remove();
+  render(HEADERS);
+}
+
+// ---------- HELPERS ----------
+const byte = (hex, idx) => parseInt(hex.slice(idx*2, idx*2+2), 16);
+const nb   = (nonce, idx) => (nonce >>> (24 - idx*8)) & 0xff; // 0=high, 3=low
+
+// ---------- TRAIT LISTS (from UNATOM globals) ----------
+// Some UNATOM exports are arrays; MOODS is a keyed object. Normalize to array of names.
+const toList = v => Array.isArray(v) ? v : Object.keys(v || {});
+const SCHEMES  = Object.keys(UNATOM.SCHEMES);           // 13
+const MOODS    = toList(UNATOM.MOODS);                   // 18 (per actual renderer)
+const THIRD    = toList(UNATOM.THIRD_EYES);              // 16
+const DRIPS    = toList(UNATOM.DRIPS);                   // 16
+const SWAGS    = toList(UNATOM.SWAGS);                   // 21
+const MOUTHS   = toList(UNATOM.MOUTHS);                  // 15
+const BROWS    = toList(UNATOM.BROWS);                   // 9
+const GLASSES  = toList(UNATOM.GLASSES);                 // 9
+const NATURES  = toList(UNATOM.NATURES);                 // 7
+const BORDERS  = ['clean','heavy','thin','doubleLine','stitched','burntEdge','frostEdge','sealed','offset','notched','rivet','brokenCorner']; // 12
+const ECOS     = ['orbit','diamond','threeDot','btc'];   // 4
+
+// ---------- MAPPING (LOCKED — matches design doc §3) ----------
+// Only one thing we author: which byte drives which dial. Everything else is arithmetic.
+const MAPPING = {
+  scheme:   { list: SCHEMES,  driver: 'merkleroot[0]',    fn: h => SCHEMES[byte(h.mr, 0) % SCHEMES.length] },
+  mood:     { list: MOODS,    driver: 'nonce byte 0',     fn: h => MOODS[nb(h.n, 0) % MOODS.length] },
+  thirdEye: { list: THIRD,    driver: 'nonce byte 3',     fn: h => THIRD[nb(h.n, 3) % THIRD.length] },
+  drip:     { list: DRIPS,    driver: 'merkleroot[1]',    fn: h => DRIPS[byte(h.mr, 1) % DRIPS.length] },
+  swag:     { list: SWAGS,    driver: 'merkleroot[2]',    fn: h => SWAGS[byte(h.mr, 2) % SWAGS.length] },
+  mouth:    { list: MOUTHS,   driver: 'nonce byte 1',     fn: h => MOUTHS[nb(h.n, 1) % MOUTHS.length] },
+  brows:    { list: BROWS,    driver: 'nonce byte 2',     fn: h => BROWS[nb(h.n, 2) % BROWS.length] },
+  glasses:  { list: GLASSES,  driver: 'merkleroot[4]',    fn: h => GLASSES[byte(h.mr, 4) % GLASSES.length] },
+  border:   { list: BORDERS,  driver: 'merkleroot[3]',    fn: h => BORDERS[byte(h.mr, 3) % BORDERS.length] },
+  nature:   { list: NATURES,  driver: 'timestamp hour%7', fn: h => NATURES[(Math.floor(h.t / 3600) % 24) % NATURES.length] },
+  ecoMark:  { list: ECOS,     driver: 'block_hash[31]',   fn: h => ECOS[byte(h.hash, 31) % ECOS.length] },
+};
+
+// ---------- OVERLAYS ----------
+const has = (n, pat) => String(n).includes(pat);
+const OVERLAYS = {
+  flameborn: {
+    color: 'flame', label: 'flameborn',
+    anchor:   h => has(h.h, '666'),
+    spread:   h => nb(h.n, 0) === 0x66,
+    combined: h => has(h.h, '666') || nb(h.n, 0) === 0x66,
+    logic:    `height contains "666" OR nonce_byte0 === 0x66`,
+  },
+  blazedBluntie: {
+    color: 'blaze', label: 'blazedBluntie',
+    anchor:   h => has(h.h, '420'),
+    spread:   h => nb(h.n, 0) === 0x42,
+    combined: h => has(h.h, '420') || nb(h.n, 0) === 0x42,
+    logic:    `height contains "420" OR nonce_byte0 === 0x42`,
+  },
+  natSigil: {
+    color: 'nat', label: 'NAT SIGIL',
+    anchor:   h => has(h.h, '111'),
+    spread:   h => byte(h.mr, 0) === nb(h.n, 0),
+    combined: h => has(h.h, '111') || byte(h.mr, 0) === nb(h.n, 0),
+    logic:    `height contains "111" OR merkleroot[0] === nonce_byte0`,
+  },
+  Hi: {
+    color: 'hi', label: 'Hi element',
+    anchor:   () => false,
+    spread:   h => byte(h.hash, 0) === byte(h.mr, 0),
+    combined: h => byte(h.hash, 0) === byte(h.mr, 0),
+    logic:    `block_hash[0] === merkleroot[0]`,
+  },
+};
+
+// ---------- RENDER ----------
+function render(HEADERS) {
+  const TOTAL = HEADERS.length;
+
+  // Compute base dial distributions
+  const dialCounts = {};
+  for (const [key, m] of Object.entries(MAPPING)) {
+    const counts = new Map();
+    for (const val of m.list) counts.set(val, 0);
+    for (const h of HEADERS) {
+      const v = m.fn(h);
+      counts.set(v, (counts.get(v) || 0) + 1);
+    }
+    dialCounts[key] = counts;
+  }
+
+  // Compute overlay totals
+  const overlayResults = {};
+  for (const [key, o] of Object.entries(OVERLAYS)) {
+    const anchorCount   = HEADERS.filter(o.anchor).length;
+    const spreadCount   = HEADERS.filter(o.spread).length;
+    const combinedCount = HEADERS.filter(o.combined).length;
+    overlayResults[key] = { anchorCount, spreadCount, combinedCount, meta: o };
+  }
+
+  // Compute composability (blocks with multiple overlays)
+  const flameAndNat  = HEADERS.filter(h => OVERLAYS.flameborn.combined(h) && OVERLAYS.natSigil.combined(h)).length;
+  const blazeAndNat  = HEADERS.filter(h => OVERLAYS.blazedBluntie.combined(h) && OVERLAYS.natSigil.combined(h)).length;
+  const flameAndHi   = HEADERS.filter(h => OVERLAYS.flameborn.combined(h) && OVERLAYS.Hi.combined(h)).length;
+  const allFour      = HEADERS.filter(h => OVERLAYS.flameborn.combined(h) && OVERLAYS.blazedBluntie.combined(h) && OVERLAYS.natSigil.combined(h) && OVERLAYS.Hi.combined(h)).length;
+
+  // Build DOM
+  const root = document.createElement('div');
+  document.body.appendChild(root);
+
+  // Top stats row
+  root.innerHTML = `
+    <section>
+      <div class="stat-row">
+        <div class="stat"><div class="val">${TOTAL.toLocaleString()}</div><div class="lbl">headers loaded</div></div>
+        <div class="stat"><div class="val">${new Date(HEADERS[0].t*1000).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div><div class="lbl">first block mined</div></div>
+        <div class="stat"><div class="val">${new Date(HEADERS[HEADERS.length-1].t*1000).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div><div class="lbl">last block mined</div></div>
+        <div class="stat"><div class="val">${((HEADERS[HEADERS.length-1].t - HEADERS[0].t) / 86400).toFixed(1)}</div><div class="lbl">days span</div></div>
+      </div>
+
+      <h2>overlay traits · real counts</h2>
+      <div class="overlay-grid">
+        ${Object.entries(overlayResults).map(([key, r]) => `
+          <div class="ovl ${r.meta.color}">
+            <div class="title">${r.meta.label}</div>
+            <div class="big">${r.combinedCount}</div>
+            <div class="breakdown">${(r.combinedCount/TOTAL*100).toFixed(2)}% of collection · ${r.anchorCount} anchor + ${r.spreadCount} byte-gate ${r.anchorCount ? '(minus overlap)' : ''}<br><code style="background:#1e1f28;padding:1px 4px;border-radius:3px;font-size:10px;color:#c5bfb4">${r.meta.logic}</code></div>
+          </div>
+        `).join('')}
+      </div>
+
+      <h2>overlay composability · blocks that get MORE than one</h2>
+      <div class="stat-row">
+        <div class="stat"><div class="val">${flameAndNat}</div><div class="lbl">flameborn + natSigil</div></div>
+        <div class="stat"><div class="val">${blazeAndNat}</div><div class="lbl">blazed + natSigil</div></div>
+        <div class="stat"><div class="val">${flameAndHi}</div><div class="lbl">flameborn + Hi</div></div>
+        <div class="stat"><div class="val">${allFour}</div><div class="lbl">all four (ghost tier)</div></div>
+      </div>
+
+      <h2>base dial distribution · one bar per possible trait value</h2>
+      <p class="sub">bars sorted from most common → least common per dial. Hot color = the winner. Purple = notably rare (&lt; ${(TOTAL/1000).toFixed(0)} = 1%).</p>
+    </section>
+
+    <section id="dials"></section>
+
+    <section>
+      <h2>ceremonial anchors</h2>
+      <div class="stat-row">
+        <div class="stat"><div class="val">1</div><div class="lbl">Genesis Prime (blk 1)</div></div>
+        <div class="stat"><div class="val">1</div><div class="lbl">BLAST-OFF Finale (blk 10,080)</div></div>
+      </div>
+    </section>
+
+    <footer>predictor v1 · reads design/series0-headers.json · locked mapping matches design doc §3</footer>
+  `;
+
+  // Build per-dial charts
+  const dialsEl = root.querySelector('#dials');
+  for (const [key, m] of Object.entries(MAPPING)) {
+    const counts = dialCounts[key];
+    // Sort by count desc
+    const entries = [...counts.entries()].sort((a,b) => b[1] - a[1]);
+    const max = entries[0][1];
+    const rareThresh = Math.floor(TOTAL / 100); // <1% flagged
+    const stdev = (() => {
+      const mean = TOTAL / m.list.length;
+      const variance = entries.reduce((s, [_, n]) => s + (n - mean)**2, 0) / m.list.length;
+      return Math.sqrt(variance).toFixed(1);
+    })();
+
+    const rows = entries.map(([val, n], i) => {
+      const pct = (n / TOTAL * 100).toFixed(2);
+      const w = (n / max * 100).toFixed(1);
+      const cls = i === 0 ? 'hot' : (n < rareThresh ? 'rare' : '');
+      return `<div class="bar-row ${cls}"><div class="lbl">${val}</div><div class="n">${n}</div><div class="track"><div class="fill" style="width:${w}%"></div></div><div class="pct">${pct}%</div></div>`;
+    }).join('');
+
+    const card = document.createElement('div');
+    card.className = 'card dial';
+    card.innerHTML = `
+      <div class="dial-hdr">
+        <span class="name">${key}</span>
+        <span class="meta">${m.list.length} slots · driver: <code>${m.driver}</code> · stdev ${stdev} · min ${entries[entries.length-1][1]} · max ${entries[0][1]}</span>
+      </div>
+      ${rows}
+    `;
+    dialsEl.appendChild(card);
+  }
+}
+
+boot();
+</script>
+
+</body>
+</html>

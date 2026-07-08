@@ -671,6 +671,37 @@ function thirdEye(cx, cy, r, sch, type = 'open') {
       return `<defs><clipPath id="ecl${cx}${cy}"><circle cx="${cx}" cy="${cy}" r="${r-6}"/></clipPath></defs>`
         + o + `<g clip-path="url(#ecl${cx}${cy})">${dark}</g>`;
     }
+    case 'natSigil': {
+      // NAT SIGIL — rare third-eye override, matches the NAT logo (hex nodes + orange core)
+      const NAT_ORANGE = '#F07E1B';
+      const bh = sch.border.replace('#','');
+      const bR = parseInt(bh.slice(0,2),16), bG = parseInt(bh.slice(2,4),16), bB = parseInt(bh.slice(4,6),16);
+      const lum = (0.2126*bR + 0.7152*bG + 0.0722*bB) / 255;
+      const ink = lum < 0.45 ? BASE.white : sch.border;
+      const nodeR = r * 0.66, dotR = r * 0.13, coreR = r * 0.19;
+      const halo = `<path d="M ${cx-r*1.2} ${cy-r*1.05} A ${r*1.2} ${r*0.5} 0 0 1 ${cx+r*1.2} ${cy-r*1.05}"
+        fill="none" stroke="${sch.a}" stroke-width="6" stroke-linecap="round"/>`;
+      const disc = `<circle cx="${cx}" cy="${cy}" r="${r}"
+        fill="${BASE.pupil}" stroke="${sch.border}" stroke-width="8"/>`;
+      const pos = [];
+      for (let i = 0; i < 6; i++) {
+        const a = (i*60 - 90) * Math.PI/180;
+        pos.push([cx + nodeR*Math.cos(a), cy + nodeR*Math.sin(a)]);
+      }
+      let spokes = '', ring = '', nodes = '';
+      for (const [nx, ny] of pos) {
+        spokes += `<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="${ink}" stroke-width="2.5" stroke-linecap="round" opacity="0.92"/>`;
+      }
+      for (let i = 0; i < 6; i++) {
+        const [x1,y1] = pos[i], [x2,y2] = pos[(i+1)%6];
+        ring += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${ink}" stroke-width="2.5" stroke-linecap="round" opacity="0.92"/>`;
+      }
+      for (const [nx, ny] of pos) {
+        nodes += `<circle cx="${nx}" cy="${ny}" r="${dotR}" fill="${ink}" stroke="${BASE.pupil}" stroke-width="1.5"/>`;
+      }
+      const core = `<circle cx="${cx}" cy="${cy}" r="${coreR}" fill="${NAT_ORANGE}" stroke="${BASE.pupil}" stroke-width="2"/>`;
+      return halo + disc + spokes + ring + nodes + core;
+    }
   }
   return '';
 }
@@ -805,6 +836,19 @@ function blockNumber(n, sch) {
     font-family="ui-monospace, 'SF Mono', Menlo, monospace"
     font-size="28" font-weight="700" fill="${sch.b}"
     letter-spacing="0.04em">${String(n).padStart(6,'0')}</text>`;
+}
+
+// -----------------------------------------------------------------------------
+// Echo badge — the block's outer symmetry mark (hash first byte == last byte).
+// Small double-chevron in the top-right, painted in scheme accent. ~0.4% rare.
+// -----------------------------------------------------------------------------
+function echoBadge(sch) {
+  const bx = TILE.x + TILE.w - 44;
+  const by = TILE.y + 116;
+  return `<g stroke="${sch.a}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M ${bx-18} ${by-11} L ${bx-4} ${by} L ${bx-18} ${by+11}"/>
+    <path d="M ${bx-6} ${by-11} L ${bx+8} ${by} L ${bx-6} ${by+11}"/>
+  </g>`;
 }
 
 // -----------------------------------------------------------------------------
@@ -1266,6 +1310,7 @@ const WHISPERS = {
   Bf: { field:'Block Fee', whisper:'I am what miners ate. Tip them or wait.' },
   Ie: { field:'Is Coinbase', whisper:'Yes or no. The first transaction always says yes.' },
   Ce: { field:'Coinbase', whisper:'I am the first one. I introduce the block to itself.' },
+  Hi: { field:'Handshake', whisper:'I am the block whose transactions bowed with the miner. My merkle root wears the shape of a rare hash. Only a handful of us exist in Series 0.' },
 
   // CEREMONIAL
   G:  { field:'Genesis', whisper:'I am the first. I am the one you remember when you remember nothing else. I do not speak. I am.' },
@@ -1723,6 +1768,127 @@ function unatomFromBlock(height) {
 }
 
 // -----------------------------------------------------------------------------
+// FIELD-DRIVEN TRAIT ROLL (Series 0 v2) — reads a real Bitcoin block header
+// object and returns a trait roll shaped identically to unatomFromBlock() but
+// derived from real block bytes. Zero PRNG. Locked mapping per design doc §3.
+// Header shape (from design/series0-headers.json): { h, hash, mr, t, n, bits, prev }
+// -----------------------------------------------------------------------------
+function _hexByte(hex, idx) {
+  return parseInt(hex.slice(idx*2, idx*2+2), 16);
+}
+function _nonceByte(nonce, idx) {
+  return (nonce >>> (24 - idx*8)) & 0xff;
+}
+
+// Reel lists for field-driven mapping (fixed order — locked contract).
+const _F_SCHEMES = ['graphite','bone','ember','frost','jade','bronze','void','obsidian','ash','signal','chalk','rust','aqua'];
+const _F_BORDERS = ['clean','heavy','thin','doubleLine','stitched','burntEdge','frostEdge','sealed','offset','notched','rivet','brokenCorner'];
+const _F_ECOS    = ['orbit','diamond','threeDot','btc'];
+const _F_NATURES = ['none','fire','water','ice','earth','void','aether'];
+
+// Normalize UNATOM lists that may be exposed as either arrays or keyed objects.
+function _asList(v) { return Array.isArray(v) ? v : Object.keys(v || {}); }
+
+function unatomFromHeader(header) {
+  const h = Number(header.h);
+
+  // Ceremonial 1-of-1 anchors — full trait override
+  if (h === 1) {
+    return { sym:'G', blk:1, scheme:'obsidian', border:'doubleLine',
+      thirdEye:'genesis', mood:'ancient', mouthKind:'noMouth',
+      drip:'crystalDrip', glasses:'none', brows:'arch', nature:'aether',
+      swagKind:'haloNode', eco:'diamond',
+      blazedBluntie:false, flameborn:false, natSigil:false, hi:false, echo:false,
+      ceremonial:'GENESIS_PRIME' };
+  }
+  if (h === BLAST_OFF) {
+    return { sym:'G', blk:h, scheme:'ember', border:'burntEdge',
+      thirdEye:'burn', mood:'hyperAware', mouthKind:'minerFang',
+      drip:'forkDrip', glasses:'none', brows:'raised', nature:'fire',
+      swagKind:'minerMark', eco:'btc',
+      blazedBluntie:false, flameborn:false, natSigil:false, hi:false, echo:false,
+      ceremonial:'BLAST_OFF_FINALE' };
+  }
+
+  // Legacy homage pins (Hal / Punk / Pizza / DogeE / Wojak / etc.) still win.
+  // They're memetic anchors baked into the collection identity.
+  const pin = pinFor(h);
+  if (pin) {
+    return { ...pin.traits, blk: h, pin: pin.key, pinLabel: pin.label,
+      natSigil:false, hi:false, echo:false };
+  }
+
+  // ---------- byte extraction ----------
+  const mr0 = _hexByte(header.mr, 0);
+  const mr1 = _hexByte(header.mr, 1);
+  const mr2 = _hexByte(header.mr, 2);
+  const mr3 = _hexByte(header.mr, 3);
+  const mr4 = _hexByte(header.mr, 4);
+  const nb0 = _nonceByte(header.n, 0);
+  const nb1 = _nonceByte(header.n, 1);
+  const nb2 = _nonceByte(header.n, 2);
+  const nb3 = _nonceByte(header.n, 3);
+  const hash0  = _hexByte(header.hash, 0);
+  const hash31 = _hexByte(header.hash, 31);
+  const hourUTC = Math.floor(header.t / 3600) % 24;
+
+  const moodKeys  = _asList(MOODS);
+  const mouthKeys = _asList(MOUTHS);
+  const browKeys  = _asList(BROWS);
+  const glassKeys = _asList(GLASSES);
+  const eyeKeys   = _asList(THIRD_EYES);
+  const dripKeys  = _asList(DRIPS);
+  const swagKeys  = _asList(SWAGS);
+
+  // ---------- reel-to-byte mapping (design doc §3) ----------
+  const scheme    = _F_SCHEMES[mr0 % _F_SCHEMES.length];
+  const border    = _F_BORDERS[mr3 % _F_BORDERS.length];
+  const drip      = dripKeys[mr1 % dripKeys.length];
+  const swagKind  = swagKeys[mr2 % swagKeys.length];
+  const glasses   = glassKeys[mr4 % glassKeys.length];
+  const mouthKind = mouthKeys[nb1 % mouthKeys.length];
+  const brows     = browKeys[nb2 % browKeys.length];
+  const mood      = moodKeys[nb0 % moodKeys.length];
+  let   thirdEye  = eyeKeys[nb3 % eyeKeys.length];
+  const nature    = _F_NATURES[hourUTC % _F_NATURES.length];
+  const eco       = _F_ECOS[hash31 % _F_ECOS.length];
+
+  // ---------- element category (weighted by hash byte 5, matches legacy split) ----------
+  const catRoll = _hexByte(header.hash, 5);
+  let cat;
+  if      (catRoll < 141) cat = CATEGORIES[0]; // ~55% block
+  else if (catRoll < 199) cat = CATEGORIES[1]; // ~23% tx
+  else if (catRoll < 230) cat = CATEGORIES[2]; // ~12% input
+  else if (catRoll < 248) cat = CATEGORIES[3]; // ~7%  output
+  else                    cat = CATEGORIES[4]; // ~3%  extra
+  let sym = cat.els[_hexByte(header.hash, 6) % cat.els.length];
+
+  // ---------- overlays (chain-derived, no PRNG) ----------
+  const heightStr = String(h);
+  const flameborn     = heightStr.includes('666') || nb0 === 0x66;
+  const blazedBluntie = heightStr.includes('420') || nb0 === 0x42;
+  const natSigil      = heightStr.includes('111') || (mr0 === nb0);
+
+  // Hi element — deep-zero merkle root (block waves in proof-of-work style).
+  // ~9 pieces across Series 0 — legendary tier.
+  const hi = (mr0 === 0x00) && (mr1 < 0x40);
+
+  // Echo badge — outer symmetry of block hash (first byte === last byte).
+  // ~37 pieces across Series 0.
+  const echo = (hash0 === hash31);
+
+  // Overrides
+  if (natSigil) thirdEye = 'natSigil';
+  if (hi)       sym = 'Hi';
+
+  return {
+    sym, blk: h, scheme, border, thirdEye, mood,
+    mouthKind, drip, glasses, brows, nature, swagKind, eco,
+    blazedBluntie, flameborn, natSigil, hi, echo,
+  };
+}
+
+// -----------------------------------------------------------------------------
 // Main composer
 // -----------------------------------------------------------------------------
 function unatomSVG(opts = {}) {
@@ -1735,6 +1901,7 @@ function unatomSVG(opts = {}) {
     mood        = 'calm',
     blazedBluntie = false,
     flameborn   = false,
+    echo        = false,
     pin         = null,
     mouthKind   = 'signalSmile',
     drip        = 'seedDrip',
@@ -1761,6 +1928,7 @@ function unatomSVG(opts = {}) {
     ${sideSwag}
     ${ecoMark(sch, eco)}
     ${showBlock ? blockNumber(blk, sch) : ''}
+    ${echo ? echoBadge(sch) : ''}
     ${thirdEye(CX, THIRD_EYE_CY, THIRD_EYE_R, sch, thirdEyeKind)}
     ${lowerEyes(sch, mood)}
     ${blazedBluntie ? blazedOverlay(sch, mood) : ''}
@@ -1786,6 +1954,7 @@ root.UNATOM = {
   PINS, pinFor, pinLocations,
   cyrb128, sfc32, rngForBlock,
   fromBlock: unatomFromBlock,
+  fromHeader: unatomFromHeader,
   svg: unatomSVG,
 };
 })(typeof window !== 'undefined' ? window : globalThis);
