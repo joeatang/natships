@@ -51,12 +51,10 @@
   function attach() {
     if (!document.body) { requestAnimationFrame(attach); return; }
     document.body.prepend(bar);
-    // Push page content down so nothing sits under the bar
+    // padding-top is reserved via CSS body{padding-top:34px} in natdrip-pulse.css
+    // so no post-render layout shift. We only add scroll-padding-top for anchor jumps.
     const isMobile = window.matchMedia('(max-width: 640px)').matches;
-    const barHeight = isMobile ? 28 : 34;
-    document.documentElement.style.setProperty('scroll-padding-top', barHeight + 'px');
-    document.body.style.paddingTop = ((parseFloat(getComputedStyle(document.body).paddingTop) || 0) + barHeight) + 'px';
-    // Clicking anywhere on the bar (except the CTA link itself) goes to claim
+    document.documentElement.style.setProperty('scroll-padding-top', (isMobile ? 28 : 34) + 'px');
     bar.addEventListener('click', (e) => {
       if (e.target.closest('.ndp-cta')) return;
       window.location.href = cfg.ctaHref;

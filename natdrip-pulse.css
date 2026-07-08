@@ -9,6 +9,14 @@
  *   <script src="/natdrip-pulse.js" defer></script>
  * -------------------------------------------------------------------------- */
 
+/* Reserve space for the bar from the FIRST paint so page content doesn't jump
+ * when JS attaches the bar. This eliminates the "slow-loading" perception
+ * caused by post-render layout shift. */
+body { padding-top: 34px; }
+@media (max-width: 640px) {
+  body { padding-top: 28px; }
+}
+
 .natdrip-bar {
   position: fixed;
   top: 0; left: 0; right: 0;
