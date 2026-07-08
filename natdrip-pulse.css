@@ -1,126 +1,160 @@
 /* -----------------------------------------------------------------------------
- * NATDRIP pulse ribbon — universal drop-in
+ * NATDRIP pulse bar · v2 · universal drop-in
+ *
+ * Legit live status bar (not a thin ribbon). Label + heartbeat + level word +
+ * activity count + tap-to-claim. Never exposes raw amounts.
  *
  * Include on any page:
  *   <link rel="stylesheet" href="/natdrip-pulse.css">
  *   <script src="/natdrip-pulse.js" defer></script>
- *
- * The script self-injects a fixed ribbon at the top of <body> and polls the
- * drip worker's /status endpoint every 30s. The ribbon color heat-maps the
- * remaining pool percentage; tapping/hovering reveals a vague level word +
- * recent activity. Never exposes raw amounts.
  * -------------------------------------------------------------------------- */
 
-.natdrip-ribbon {
+.natdrip-bar {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 9999;
-  height: 3px;
-  pointer-events: auto;
-  background: linear-gradient(90deg,
-    var(--ndp-color, #5dd0e3) 0%,
-    var(--ndp-color, #5dd0e3) var(--ndp-fill, 100%),
-    rgba(20,20,24,0.4) var(--ndp-fill, 100%),
-    rgba(20,20,24,0.4) 100%);
-  transition: background 800ms ease, height 200ms ease;
+  height: 34px;
+  padding: 0 14px;
+  background: rgba(10, 10, 12, 0.94);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--ndp-color, #5dd0e3);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 11px/1 ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(243, 238, 227, 0.85);
+  transition: border-color 800ms ease, box-shadow 800ms ease;
   cursor: pointer;
-  animation: ndp-idle 3.2s ease-in-out infinite;
+  user-select: none;
+  overflow: hidden;
 }
 
-@media (min-width: 700px) {
-  .natdrip-ribbon { height: 5px; }
+@media (max-width: 640px) {
+  .natdrip-bar { height: 28px; padding: 0 10px; gap: 6px; font-size: 10px; }
 }
 
-.natdrip-ribbon.ndp-active-flash {
-  animation: ndp-heartbeat 0.7s ease-out 1;
+/* Fill gradient sits underneath — visible on the right where empty */
+.natdrip-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--ndp-color, #5dd0e3) 22%, transparent) 0%,
+    color-mix(in srgb, var(--ndp-color, #5dd0e3) 14%, transparent) var(--ndp-fill, 100%),
+    rgba(255, 255, 255, 0.02) var(--ndp-fill, 100%),
+    rgba(255, 255, 255, 0.02) 100%);
+  z-index: -1;
+  pointer-events: none;
+  transition: background 800ms ease;
 }
 
-.natdrip-ribbon.ndp-dry {
-  animation: ndp-urgent 1.4s ease-in-out infinite;
+/* Heartbeat pulse dot */
+.ndp-dot {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ndp-color, #5dd0e3);
+  box-shadow: 0 0 8px var(--ndp-color, #5dd0e3), 0 0 3px var(--ndp-color, #5dd0e3);
+  animation: ndp-heartbeat 2.4s ease-in-out infinite;
 }
 
-.natdrip-ribbon.ndp-hidden {
+.natdrip-bar.ndp-dry .ndp-dot {
+  animation: ndp-heartbeat-urgent 1.1s ease-in-out infinite;
+}
+
+.natdrip-bar.ndp-active-flash .ndp-dot {
+  animation: ndp-active-flash 0.6s ease-out 1;
+}
+
+.ndp-brand {
+  color: var(--ndp-color, #5dd0e3);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  flex: 0 0 auto;
+}
+
+.ndp-sep {
+  color: rgba(243, 238, 227, 0.28);
+  font-weight: 400;
+  flex: 0 0 auto;
+}
+
+.ndp-status {
+  color: var(--ndp-color, #5dd0e3);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.ndp-activity {
+  color: rgba(243, 238, 227, 0.5);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: none;
+  flex: 1 1 auto;
+  text-align: right;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .ndp-activity { font-size: 9px; }
+}
+
+.ndp-cta {
+  color: var(--ndp-color, #5dd0e3);
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  padding-left: 10px;
+  margin-left: 4px;
+  border-left: 1px solid rgba(243, 238, 227, 0.15);
+  flex: 0 0 auto;
+}
+
+.ndp-cta:hover { text-decoration: underline; }
+
+/* Hidden state (pre-launch, error) */
+.natdrip-bar.ndp-hidden {
+  transform: translateY(-100%);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 400ms ease;
+  transition: transform 400ms ease, opacity 400ms ease;
 }
 
-@keyframes ndp-idle {
-  0%, 100% { opacity: 0.85; }
-  50%      { opacity: 1;    }
+/* Narrow-screen priority: hide non-essential parts */
+@media (max-width: 480px) {
+  .ndp-sep:nth-of-type(2), .ndp-activity { display: none; }
 }
 
 @keyframes ndp-heartbeat {
-  0%   { transform: scaleY(1);    filter: brightness(1);   }
-  30%  { transform: scaleY(1.8);  filter: brightness(1.7); }
-  60%  { transform: scaleY(1);    filter: brightness(1);   }
-  100% { transform: scaleY(1);    filter: brightness(1);   }
+  0%, 100% { transform: scale(1);    opacity: 1;   }
+  30%      { transform: scale(1.4);  opacity: 1;   }
+  60%      { transform: scale(1);    opacity: 0.7; }
 }
 
-@keyframes ndp-urgent {
-  0%, 100% { opacity: 0.7;  filter: brightness(1);   }
-  50%      { opacity: 1;    filter: brightness(1.6); }
+@keyframes ndp-heartbeat-urgent {
+  0%, 100% { transform: scale(1);   opacity: 1;   filter: brightness(1);   }
+  50%      { transform: scale(1.6); opacity: 1;   filter: brightness(1.7); }
 }
 
-/* Tooltip */
-.natdrip-tip {
-  position: fixed;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-8px);
-  z-index: 10000;
-  padding: 10px 16px;
-  background: #12131b;
-  color: #f0ebde;
-  border: 1px solid rgba(243,238,227,0.15);
-  border-radius: 10px;
-  font: 12px/1.4 ui-monospace, "SF Mono", Menlo, monospace;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 200ms ease, transform 200ms ease;
-  white-space: nowrap;
-  max-width: 90vw;
-}
-
-.natdrip-tip.ndp-show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(4px);
-  pointer-events: auto;
-}
-
-.natdrip-tip .ndp-level {
-  color: var(--ndp-color, #5dd0e3);
-  font-weight: 700;
-  margin-right: 6px;
-}
-
-.natdrip-tip .ndp-activity {
-  color: rgba(243,238,227,0.55);
-  font-size: 11px;
-  margin-left: 2px;
-}
-
-.natdrip-tip a.ndp-link {
-  display: block;
-  margin-top: 6px;
-  color: #f0962d;
-  text-decoration: none;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-}
-
-.natdrip-tip a.ndp-link:hover {
-  text-decoration: underline;
+@keyframes ndp-active-flash {
+  0%   { transform: scale(1);   }
+  25%  { transform: scale(2.0); filter: brightness(2); }
+  60%  { transform: scale(1.2); }
+  100% { transform: scale(1);   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .natdrip-ribbon,
-  .natdrip-ribbon.ndp-active-flash,
-  .natdrip-ribbon.ndp-dry {
-    animation: none;
-    opacity: 0.9;
-  }
+  .ndp-dot { animation: none; }
+  .natdrip-bar::before { transition: none; }
 }

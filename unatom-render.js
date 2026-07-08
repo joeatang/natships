@@ -1955,6 +1955,33 @@ root.UNATOM = {
   cyrb128, sfc32, rngForBlock,
   fromBlock: unatomFromBlock,
   fromHeader: unatomFromHeader,
+  loadHeaders: unatomLoadHeaders,
+  forBlock:    unatomForBlock,
   svg: unatomSVG,
 };
+
+// -----------------------------------------------------------------------------
+// Header cache + convenience wrappers
+// loadHeaders() fetches and caches the Series 0 header snapshot (2.7 MB, gzips
+// to ~600 KB) so pages can call fromHeader with real bytes. Idempotent.
+// forBlock(h) is the recommended callsite everywhere — uses fromHeader when
+// headers are loaded, falls back to fromBlock (legacy) otherwise.
+// -----------------------------------------------------------------------------
+let _hdrCache = null;
+let _hdrPromise = null;
+function unatomLoadHeaders(url) {
+  if (_hdrCache) return Promise.resolve(_hdrCache);
+  if (_hdrPromise) return _hdrPromise;
+  const src = url || '/design/series0-headers.json';
+  _hdrPromise = fetch(src, { cache: 'force-cache' })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(data => { _hdrCache = data; return data; })
+    .catch(err => { _hdrPromise = null; throw err; });
+  return _hdrPromise;
+}
+function unatomForBlock(h) {
+  const idx = Number(h) - 1;
+  if (_hdrCache && _hdrCache[idx]) return unatomFromHeader(_hdrCache[idx]);
+  return unatomFromBlock(Number(h));
+}
 })(typeof window !== 'undefined' ? window : globalThis);

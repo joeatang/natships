@@ -1050,7 +1050,7 @@ function paintWeather(w) {
 
 function summon(h) {
   STATE.block = h;
-  STATE.unatom = UNATOM.fromBlock(h);
+  STATE.unatom = UNATOM.forBlock(h);
   STATE.live = {};
   STATE.crumbs = [];
   STATE.belly = [];
@@ -1097,7 +1097,7 @@ function spinUnatom() {
     const h = frames[i];
     // Lightweight preview render — no full state reset mid-reel.
     STATE.block = h;
-    STATE.unatom = UNATOM.fromBlock(h);
+    STATE.unatom = UNATOM.forBlock(h);
     STATE.live = {};
     renderPortrait();
     paintIdent();
@@ -2504,11 +2504,22 @@ async function runAgain() {
 // ============================================================================
 
 async function boot() {
+  // Kick off headers load in parallel with weather — non-blocking; forBlock() falls back if not ready yet.
+  UNATOM.loadHeaders().catch(() => {});
   STATE.weather = await fetchWeather();
   paintWeather(STATE.weather);
   // Random Series 0 UNATOM on first load too — every visit shows variety.
   summon(rollSeriesBlock());
   setTimeout(() => { const b = $('boot'); if (b) b.style.display = 'none'; }, 320);
+
+  // Once headers arrive, re-render the current UNATOM with field-driven traits
+  UNATOM.loadHeaders().then(() => {
+    if (STATE.step === 'ready' && STATE.block) {
+      STATE.unatom = UNATOM.forBlock(STATE.block);
+      renderPortrait();
+      paintIdent();
+    }
+  }).catch(() => {});
 
   // Show drip teaser strip if campaign is active, then offer to resume a saved run
   loadDripStrip().then(maybeShowDripResume);

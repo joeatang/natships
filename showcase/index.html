@@ -88,21 +88,24 @@
   ];
 
   const grid = document.getElementById('grid');
-  for (const p of PICKS) {
-    const t = UNATOM.fromBlock(p.block);
-    const svg = UNATOM.svg(t);
-    const a = document.createElement('a');
-    a.href = '../pfp/?block=' + p.block;
-    a.className = 'tile' + (p.locked ? ' locked' : '');
-    a.innerHTML =
-      '<div class="badge">' + (p.locked ? '◇ locked' : '◇ curated') + '</div>' +
-      '<div class="frame">' + svg + '</div>' +
-      '<div class="meta">' +
-        '<span class="blk">#' + p.block.toLocaleString() + ' · ' + p.label + '</span>' +
-        '<span class="tag">' + p.tag + '</span>' +
-      '</div>';
-    grid.appendChild(a);
-  }
+  (async () => {
+    try { await UNATOM.loadHeaders(); } catch (e) { /* fall back silently */ }
+    for (const p of PICKS) {
+      const t = UNATOM.forBlock(p.block);
+      const svg = UNATOM.svg(t);
+      const a = document.createElement('a');
+      a.href = '../pfp/?block=' + p.block;
+      a.className = 'tile' + (p.locked ? ' locked' : '');
+      a.innerHTML =
+        '<div class="badge">' + (p.locked ? '◇ locked' : '◇ curated') + '</div>' +
+        '<div class="frame">' + svg + '</div>' +
+        '<div class="meta">' +
+          '<span class="blk">#' + p.block.toLocaleString() + ' · ' + p.label + '</span>' +
+          '<span class="tag">' + p.tag + '</span>' +
+        '</div>';
+      grid.appendChild(a);
+    }
+  })();
 </script>
 
 </body>

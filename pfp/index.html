@@ -59,7 +59,7 @@
   <button class="primary" id="savePng">save as png</button>
   <button id="copyLink">copy share link</button>
   <a class="ghost" href="../">▸ play NAT READY?</a>
-  <a class="ghost" href="../showcase/">← back to the 19</a>
+  <a class="ghost" href="../catalog/">← browse full catalog</a>
 </div>
 
 <nav>
@@ -74,10 +74,14 @@
 
 <script src="../unatom-render.js"></script>
 <script>
+(async () => {
   const params = new URLSearchParams(location.search);
   const block = Math.max(1, Math.min(10080, parseInt(params.get('block'), 10) || 10080));
 
-  const t = UNATOM.fromBlock(block);
+  // Load real Bitcoin headers so this UNATOM matches the field-driven catalog + eventual mint.
+  // Falls back to height-only if the headers file can't be reached.
+  try { await UNATOM.loadHeaders(); } catch (e) { /* fall back silently */ }
+  const t = UNATOM.forBlock(block);
 
   // Figure out element category
   let catLabel = '';
@@ -171,6 +175,7 @@
     a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); showToast('saved'); }, 100);
   }
+})();
 </script>
 
 </body>
