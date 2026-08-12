@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UNATOMS TCG — single card viewer</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin:0; padding:0; background:#0a0b10; color:#f0ebde;
+    font-family: system-ui, -apple-system, "Helvetica Neue", sans-serif; }
+  main { min-height:100vh; display:grid; place-items:center; padding: 40px 20px; gap: 24px; }
+  .card-wrap { width: min(500px, 100%); filter: drop-shadow(0 20px 50px rgba(0,0,0,0.55)); }
+  .card-wrap svg { width: 100%; height: auto; display: block; border-radius: 24px; }
+  .meta { max-width: 500px; color: #9a938b; font-size: 12px; text-align:center;
+    letter-spacing: 0.06em; text-transform: uppercase; }
+  .meta code { background:#1a1b23; padding:2px 6px; border-radius:3px; color:#f0ebde; }
+  .actions { display:flex; gap:12px; }
+  .actions button { background:#1a1b23; color:#f0ebde; border:1px solid #2a2b34;
+    padding: 10px 18px; border-radius: 8px; font-size: 12px; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer; font-family: inherit; }
+  .actions button:hover { background:#22232c; }
+</style>
+</head>
+<body>
+<main>
+  <div class="card-wrap" id="cardWrap"></div>
+  <div class="meta" id="meta"></div>
+  <div class="actions">
+    <button id="downloadSvg">Download SVG</button>
+    <button id="downloadPng">Download PNG</button>
+    <button id="flipBack">Show Back</button>
+  </div>
+</main>
+
+<script src="../unatom-render.js"></script>
+<script src="./card-frame.js"></script>
+<script>
+  // URL params — everything optional; sensible defaults.
+  // Examples:
+  //   ?block=10080&rarity=mythic&title=THE+WITNESS&cost=6&integrity=120
+  //     &signal=CONSENSUS+BURST&signalText=deal+INTEGRITY.+seal+one+BIT.
+  //     &whisper=I+am+the+first.+I+am+the+one+you+remember.
+  //     &strike=STRIKE+001+/+001
+  //     &blockLabel=BLK+%23TBD
+  //     &nature=aether
+  const q = new URLSearchParams(location.search);
+  const num = (k, d) => { const v = q.get(k); return v == null || v === '' ? d : Number(v); };
+  const str = (k, d) => { const v = q.get(k); return v == null ? d : v; };
+
+  const spec = {
+    block:            num('block', 10080),
+    rarity:           str('rarity', 'common'),
+    title:            str('title', undefined),
+    seriesRoman:      str('seriesRoman', 'I'),
+    blockHeightLabel: str('blockLabel', undefined),
+    cost:             num('cost', 3),
+    integrity:        num('integrity', 60),
+    nature:           str('nature', undefined),
+    signalName:       str('signal', 'PULSE'),
+    signalText:       str('signalText', undefined),
+    whisper:          str('whisper', undefined),
+    strike:           str('strike', undefined),
+  };
+  Object.keys(spec).forEach(k => spec[k] === undefined && delete spec[k]);
+
+  let showingBack = false;
+  const wrap = document.getElementById('cardWrap');
+  const meta = document.getElementById('meta');
+
+  function paint() {
+    if (showingBack) {
+      wrap.innerHTML = UNATOMS_TCG.renderBack();
+      meta.innerHTML = 'NAT SIGIL card back \u00b7 shared across every UNATOMS TCG card';
+    } else {
+      wrap.innerHTML = UNATOMS_TCG.render(spec);
+      meta.innerHTML = `block <code>${spec.block}</code> \u00b7 rarity <code>${spec.rarity}</code> \u00b7 series <code>${spec.seriesRoman || 'I'}</code>`;
+    }
+  }
+
+  document.getElementById('flipBack').addEventListener('click', () => {
+    showingBack = !showingBack;
+    document.getElementById('flipBack').textContent = showingBack ? 'Show Face' : 'Show Back';
+    paint();
+  });
+
+  document.getElementById('downloadSvg').addEventListener('click', () => {
+    const svg = wrap.querySelector('svg').outerHTML;
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (showingBack ? 'unatoms-back' : `unatoms-${spec.block}-${spec.rarity}`) + '.svg';
+    a.click();
+  });
+
+  document.getElementById('downloadPng').addEventListener('click', async () => {
+    const svg = wrap.querySelector('svg').outerHTML;
+    const w = UNATOMS_TCG.CARD_W * 2;   // 2× retina
+    const h = UNATOMS_TCG.CARD_H * 2;
+    const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    canvas.toBlob((blob) => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (showingBack ? 'unatoms-back' : `unatoms-${spec.block}-${spec.rarity}`) + '.png';
+      a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  });
+
+  paint();
+</script>
+</body>
+</html>

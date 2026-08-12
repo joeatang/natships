@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UNATOMS TCG — teaser reveal</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:#08090d; color:#f0ebde;
+    font-family: system-ui, -apple-system, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased; }
+
+  header { padding: 64px 32px 24px; max-width: 1280px; margin: 0 auto; text-align: center; }
+  header .kicker { font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 11px; letter-spacing: 6px; color:#9a938b; text-transform: uppercase; margin-bottom: 16px; }
+  header h1 { margin: 0 0 12px; font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(28px, 4vw, 44px); letter-spacing: 0.03em; font-weight: 500; }
+  header .tag { color:#F07E1B; font-size: 14px; letter-spacing: 6px; text-transform: uppercase;
+    font-family: ui-monospace, 'SF Mono', monospace; margin: 0; }
+  header .sub { color:#7d766c; font-size: 13px; line-height: 1.6; max-width: 620px; margin: 20px auto 0; }
+
+  section { max-width: 1280px; margin: 0 auto; padding: 40px 32px; }
+  .wave-label { font-family: ui-monospace,'SF Mono',monospace; font-size: 11px; letter-spacing: 6px;
+    color: #F07E1B; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+  .wave-title { font-family: Georgia, serif; font-size: 22px; text-align: center;
+    color: #f0ebde; margin: 0 0 6px; letter-spacing: 0.02em; }
+  .wave-caption { text-align: center; color: #7d766c; font-size: 13px; line-height: 1.6;
+    max-width: 640px; margin: 0 auto 40px; }
+
+  .single { display:grid; place-items:center; padding: 20px 0 60px; }
+  .card-shell { width: min(420px, 100%); filter: drop-shadow(0 30px 60px rgba(0,0,0,0.6));
+    transition: transform 0.4s ease; }
+  .card-shell:hover { transform: translateY(-6px) scale(1.015); }
+  .card-shell svg { width: 100%; height: auto; display: block; border-radius: 24px; }
+
+  .spread { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 22px; max-width: 1280px; margin: 0 auto; }
+  .spread .card-shell { width: 100%; filter: drop-shadow(0 16px 32px rgba(0,0,0,0.5)); }
+  .spread .card-shell .label { text-align:center; font-family: ui-monospace,monospace;
+    font-size: 10px; letter-spacing: 4px; color: #7d766c; margin-top: 12px; text-transform: uppercase; }
+
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, #2a2b34, transparent);
+    margin: 40px auto; max-width: 1280px; }
+
+  .rarity-legend { display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px;
+    max-width: 900px; margin: 24px auto 0; }
+  .rarity-item { background: #12131b; border: 1px solid #1e1f28; border-radius: 12px;
+    padding: 18px 12px; text-align: center; }
+  .rarity-item .glyph-wrap { width: 44px; height: 44px; margin: 0 auto 10px;
+    display: grid; place-items: center; }
+  .rarity-item .name { font-family: ui-monospace,'SF Mono',monospace; font-size: 10px;
+    letter-spacing: 3px; color: #f0ebde; text-transform: uppercase; margin: 0 0 4px; }
+  .rarity-item .rate { font-size: 10px; color: #7d766c; letter-spacing: 1px; }
+
+  footer { padding: 64px 32px 48px; text-align: center; color: #5a5852; font-size: 12px;
+    line-height: 1.7; }
+  footer .tag { color: #F07E1B; letter-spacing: 6px; font-family: ui-monospace, monospace;
+    text-transform: uppercase; }
+  footer a { color: #F07E1B; text-decoration: none; }
+  .noteband { max-width: 720px; margin: 0 auto; background: #12131b; border: 1px solid #1e1f28;
+    border-radius: 14px; padding: 18px 22px; font-size: 13px; line-height: 1.65; color: #b4ada2; }
+  .noteband strong { color: #F07E1B; }
+  .noteband code { background: #1e1f28; padding: 1px 6px; border-radius: 3px;
+    font-family: ui-monospace, monospace; font-size: 12px; }
+
+  @media (max-width: 640px) {
+    header { padding: 40px 20px 20px; }
+    section { padding: 30px 20px; }
+    .rarity-legend { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">Series I &middot; Reveal</div>
+  <h1>UNATOMS &mdash; The Trading Card Game of Digital Matter</h1>
+  <p class="tag">Play a bit. Close the block. Win the chain.</p>
+  <p class="sub">
+    Every card is a witness to a Bitcoin block. Rarity is decided by the chain,
+    not by us. The set walks the ledger forever &mdash; Series II begins where I ends.
+  </p>
+</header>
+
+<!-- ========== WAVE 1 · The Silent Reveal ========== -->
+<section>
+  <div class="wave-label">Wave 01 &middot; The Silent Reveal</div>
+  <h2 class="wave-title">Something is aligning.</h2>
+  <p class="wave-caption">
+    The card back is silent. No wordmark. Just the NAT SIGIL \u2014 six nodes, one core, holographic hex mesh.
+    When you fan a deck face-down, this is all you see.
+  </p>
+  <div class="single">
+    <div class="card-shell" id="w1-back"></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ========== WAVE 2 · The Hero ========== -->
+<section>
+  <div class="wave-label">Wave 02 &middot; The Hero Reveal</div>
+  <h2 class="wave-title">The Witness &mdash; Mythic 1-of-1</h2>
+  <p class="wave-caption">
+    One card exists. The block within Series I with the lowest hash value &mdash;
+    the hardest-mined block of the entire window. Not knowable until the series closes.
+    The chain decides who The Witness is.
+  </p>
+  <div class="single">
+    <div class="card-shell" id="w2-hero"></div>
+  </div>
+  <div class="noteband" style="margin-top: 30px;">
+    <strong>Placeholder note:</strong> the portrait art above is derived from
+    <code>block #10,080</code> (existing digital Series 0 BLAST-OFF) as a working stand-in.
+    Actual art will be re-derived from the true Series I lowest-hash block once
+    Series I closes on chain. Block number slot displayed as <code>BLK #TBD</code>.
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ========== WAVE 3 · The Six Natures ========== -->
+<section>
+  <div class="wave-label">Wave 03 &middot; The Six Natures</div>
+  <h2 class="wave-title">Six starters. Six schemes.</h2>
+  <p class="wave-caption">
+    One starter deck for each Nature type. Fire, Water, Air, Earth, Void, Aether &mdash;
+    the elemental grammar of the chain. Every UNATOM belongs to one.
+  </p>
+  <div class="spread" id="w3-spread"></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ========== WAVE 4 · Rarity Legend ========== -->
+<section>
+  <div class="wave-label">Wave 04 &middot; The Rarity Language</div>
+  <h2 class="wave-title">The chain decides. We only count.</h2>
+  <p class="wave-caption">
+    Adapted from Casey Rodarmor's Ordinal Theory. Every tier below is a position on the Bitcoin blockchain,
+    not a designer's choice. Non-arbitrary rarity. Un-fakeable.
+  </p>
+  <div class="rarity-legend" id="rarity-legend"></div>
+  <div class="noteband" style="margin-top: 40px;">
+    A UNATOMS TCG Series I window covers <strong>10,080 blocks</strong> of Bitcoin history.
+    That naturally produces exactly <strong>5 Rare cards</strong> (one per difficulty-adjustment boundary),
+    <strong>5 Legendary Ceremonials</strong>, and <strong>1 Mythic</strong> &mdash; The Witness.
+    Every count is a chain fact.
+  </div>
+</section>
+
+<footer>
+  <p class="tag">UNATOMS &middot; SERIES I</p>
+  <p>Play a bit. Close the block. Win the chain.</p>
+  <p style="margin-top: 20px;">
+    Preview build &middot; not for sale &middot; <a href="./card.html">single-card viewer</a>
+    &middot; <a href="./README.md">/tcg/README</a>
+  </p>
+</footer>
+
+<script src="../unatom-render.js"></script>
+<script src="./card-frame.js"></script>
+<script>
+  // ---- Wave 1 · back ----
+  document.getElementById('w1-back').innerHTML = UNATOMS_TCG.renderBack();
+
+  // ---- Wave 2 · Genesis Prime / The Witness (Mythic 1-of-1) ----
+  document.getElementById('w2-hero').innerHTML = UNATOMS_TCG.render({
+    block: 10080,                                 // placeholder art
+    rarity: 'mythic',
+    title: 'THE WITNESS',
+    seriesRoman: 'I',
+    blockHeightLabel: 'BLK #TBD',
+    cost: 6,
+    integrity: 120,
+    nature: 'aether',
+    signalName: 'CONSENSUS',
+    signalText: 'seal one BIT of any nature. draw two.',
+    whisper: 'I am the first. I am the one you remember when you remember nothing else. I do not speak. I am.',
+    strike: 'STRIKE 001 / 001 \u00b7 MYTHIC \u2726',
+  });
+
+  // ---- Wave 3 · six archetype starters ----
+  const spread = document.getElementById('w3-spread');
+  const NINETEEN_SIX = [
+    { block: 3113, rarity: 'rare',      title: 'FIRE KEEPER',     nature: 'fire',   cost: 3, integrity: 70,  signalName: 'IGNITE',   signalText: 'burn one BIT on the Block. deal 40.' },
+    { block: 8562, rarity: 'rare',      title: 'TIDE',            nature: 'water',  cost: 3, integrity: 80,  signalName: 'PULL',     signalText: 'return one BIT from the Void to the Block.' },
+    { block: 2973, rarity: 'rare',      title: 'COLD STORAGE',    nature: 'air',    cost: 4, integrity: 90,  signalName: 'FREEZE',   signalText: 'target UNATOM skips Signal next turn.' },
+    { block: 8542, rarity: 'uncommon',  title: 'PATCHED MINER',   nature: 'earth',  cost: 2, integrity: 60,  signalName: 'REBUILD',  signalText: 'heal 30. draw one.' },
+    { block: 9558, rarity: 'epic',      title: 'VOID KID',        nature: 'void',   cost: 4, integrity: 50,  signalName: 'DEVOUR',   signalText: 'send one BIT to the Void. gain 2 Matter.' },
+    { block: 4978, rarity: 'legendary', title: 'MEMEMOSES',       nature: 'aether', cost: 5, integrity: 100, signalName: 'REVEAL',   signalText: 'flip the top three cards of your Mempool. keep one.' },
+  ];
+  NINETEEN_SIX.forEach(spec => {
+    const shell = document.createElement('div');
+    shell.className = 'card-shell';
+    shell.innerHTML = UNATOMS_TCG.render({
+      ...spec,
+      seriesRoman: 'I',
+      blockHeightLabel: 'BLK #TBD',
+    });
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = spec.title + ' · ' + spec.nature.toUpperCase();
+    shell.appendChild(label);
+    spread.appendChild(shell);
+  });
+
+  // ---- Wave 4 · rarity legend ----
+  // Reuses UNATOMS_TCG.render() but only shows the rarity seal SVG
+  const legend = document.getElementById('rarity-legend');
+  const TIERS = [
+    { key: 'common',    rate: '\u2248 61.0%',  bullet: 'any block' },
+    { key: 'uncommon',  rate: '\u2248 32.5%',  bullet: 'digit pattern' },
+    { key: 'rare',      rate: '5 cards',       bullet: 'diff-adjust' },
+    { key: 'epic',      rate: '10 cards',      bullet: 'positional' },
+    { key: 'legendary', rate: '5 cards',       bullet: 'ceremonial' },
+    { key: 'mythic',    rate: '1 card',        bullet: 'the witness' },
+  ];
+  TIERS.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'rarity-item';
+    // Render the seal via a tiny inline SVG shell (60x60 viewBox)
+    const spec = UNATOMS_TCG.RARITY[t.key];
+    item.innerHTML = `
+      <div class="glyph-wrap">
+        <svg viewBox="0 0 60 60" width="44" height="44">
+          ${sealGlyphAt(t.key, 30, 30)}
+        </svg>
+      </div>
+      <div class="name">${spec.label}</div>
+      <div class="rate">${t.rate}</div>
+      <div class="rate" style="margin-top:4px; opacity:0.7;">${t.bullet}</div>
+    `;
+    legend.appendChild(item);
+  });
+
+  function sealGlyphAt(tier, cx, cy) {
+    // small mirror of raritySealSvg — reuse rendered card DOM as source of truth
+    // by asking UNATOMS_TCG to render a tiny throwaway and extracting.
+    // For simplicity, inline the same shape logic here.
+    const R = UNATOMS_TCG.RARITY[tier];
+    const ink = '#f0ebde';
+    const gFill = R.sealFill === 'transparent' ? ink : '#fafaf6';
+    let out = '';
+    if (R.glow) out += `<circle cx="${cx}" cy="${cy}" r="26" fill="#F07E1B" opacity="0.22"/>`;
+    out += `<circle cx="${cx}" cy="${cy}" r="20" fill="${R.sealFill}" stroke="${R.sealStroke}" stroke-width="2"/>`;
+    switch (R.glyphKind) {
+      case 'dot':       out += `<circle cx="${cx}" cy="${cy}" r="4" fill="${gFill}"/>`; break;
+      case 'halfmoon':  out += `<path d="M ${cx-9},${cy} A 9,9 0 0 1 ${cx+9},${cy} L ${cx-9},${cy} Z" fill="${gFill}"/>`; break;
+      case 'diamond':   out += `<polygon points="${cx},${cy-9} ${cx+9},${cy} ${cx},${cy+9} ${cx-9},${cy}" fill="${gFill}"/>`; break;
+      case 'triangle':  out += `<polygon points="${cx},${cy-10} ${cx+9},${cy+6} ${cx-9},${cy+6}" fill="${gFill}"/>`; break;
+      case 'hex': {
+        const pts = [];
+        for (let i = 0; i < 6; i++) {
+          const a = (i*60-30) * Math.PI/180;
+          pts.push(`${(cx + 10*Math.cos(a)).toFixed(1)},${(cy + 10*Math.sin(a)).toFixed(1)}`);
+        }
+        out += `<polygon points="${pts.join(' ')}" fill="${gFill}"/>`;
+        break;
+      }
+      case 'star':      out += `<path d="M ${cx},${cy-11} L ${cx+2.6},${cy-2.6} L ${cx+11},${cy}
+        L ${cx+2.6},${cy+2.6} L ${cx},${cy+11}
+        L ${cx-2.6},${cy+2.6} L ${cx-11},${cy}
+        L ${cx-2.6},${cy-2.6} Z" fill="${gFill}"/>`; break;
+    }
+    return out;
+  }
+</script>
+
+</body>
+</html>
